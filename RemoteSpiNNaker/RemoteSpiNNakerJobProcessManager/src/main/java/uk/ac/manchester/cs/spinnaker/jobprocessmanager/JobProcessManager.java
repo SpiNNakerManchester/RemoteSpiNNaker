@@ -85,7 +85,7 @@ public class JobProcessManager {
         }
 
         @Override
-        public void append(final String logMsg) {
+        public void append(String logMsg) {
             log("Process Output: " + logMsg);
             synchronized (this) {
                 cached.append(logMsg);
@@ -112,10 +112,9 @@ public class JobProcessManager {
     private Job job;
     private String projectId;
 
-    public JobProcessManager(final String serverUrl, final boolean deleteOnExit,
-            final boolean isLocal, final String executerId,
-            final boolean liveUploadOutput, final boolean requestMachine,
-            final String authToken) {
+	public JobProcessManager(String serverUrl, boolean deleteOnExit,
+			boolean isLocal, String executerId, boolean liveUploadOutput,
+			boolean requestMachine, String authToken) {
         this.serverUrl =
                 requireNonNull(serverUrl, "--serverUrl must be specified");
         this.executerId =
@@ -142,12 +141,12 @@ public class JobProcessManager {
 
             // Create a process to process the request
             log("Creating process from parameters");
-            final JobProcess<JobParameters> process =
-                    jobProcessFactory.createProcess(parameters);
-            logWriter = getLogWriter();
+			JobProcess<JobParameters> process = jobProcessFactory
+					.createProcess(parameters);
+			logWriter = getLogWriter();
 
-            // Read the machine
-            final Machine machine = getMachine();
+			// Read the machine
+			Machine machine = getMachine();
 
             // Execute the process
             log("Running job " + job.getId() + " on " + machine + " using "
@@ -158,13 +157,13 @@ public class JobProcessManager {
 
             // Get the exit status
             processOutcome(workingDirectory, process, logWriter.getLog());
-        } catch (final Exception error) {
+        } catch (Exception error) {
             reportFailure(error);
             exit(1);
         }
     }
 
-    private void reportFailure(final Throwable error) {
+    private void reportFailure(Throwable error) {
         if ((jobManager == null) || (job == null)) {
             log(error);
             return;
@@ -190,7 +189,7 @@ public class JobProcessManager {
         }
     }
 
-    public static void main(final String[] args) throws Exception {
+    public static void main(String[] args) throws Exception {
         String serverUrl = null;
         boolean deleteOnExit = false;
         boolean isLocal = false;
@@ -238,11 +237,14 @@ public class JobProcessManager {
 
     private static final int DEFAULT = -1;
 
-    private Machine getMachine() {
+    private Machine getMachine() throws Exception {
         // (get a 3 board machine just now)
         if (requestMachine) {
-            return new Machine(jobManager.getJobMachine(job.getId(), DEFAULT,
-                    DEFAULT, DEFAULT, DEFAULT));
+			SpinnakerMachine machine = jobManager.getJobMachine(job.getId(),
+					DEFAULT, DEFAULT, DEFAULT, DEFAULT);
+			if (machine == null)
+				throw new Exception("job machine was not allocated");
+        	return new Machine(machine);
         }
         return new Machine(serverUrl, job.getId());
     }
@@ -259,28 +261,24 @@ public class JobProcessManager {
      *             unreadable or the job being unsupported on the current
      *             architectural configuration.
      */
-    private JobParameters getJobParameters(final File workingDirectory)
+    private JobParameters getJobParameters(File workingDirectory)
             throws IOException {
-        final Map<String, JobParametersFactoryException> errors =
-                new HashMap<>();
-        final JobParameters parameters = JobParametersFactory
-                .getJobParameters(job, workingDirectory, errors);
+		Map<String, JobParametersFactoryException> errors = new HashMap<>();
+		JobParameters parameters = JobParametersFactory.getJobParameters(job,
+				workingDirectory, errors);
 
         if (parameters == null) {
-            if (!errors.isEmpty()) {
+            if (!errors.isEmpty())
                 throw new JobErrorsException(errors);
-            }
             // Miscellaneous other error
             throw new IOException(
                     "The job did not appear to be supported on this system");
         }
 
         // Get any requested input files
-        if (job.getInputData() != null) {
-            for (final DataItem input : job.getInputData()) {
+        if (job.getInputData() != null)
+            for (DataItem input : job.getInputData())
                 downloadFile(input.getUrl(), workingDirectory, null);
-            }
-        }
 
         return parameters;
     }
@@ -295,12 +293,12 @@ public class JobProcessManager {
     private void processOutcome(final File workingDirectory,
             final JobProcess<?> process, final String log)
             throws IOException, FileNotFoundException {
-        final Status status = process.getStatus();
+        Status status = process.getStatus();
         log("Process has finished with status " + status);
 
-        final List<File> outputs = process.getOutputs();
-        final List<String> outputsAsStrings = new ArrayList<>();
-        for (final File output : outputs) {
+        List<File> outputs = process.getOutputs();
+        List<String> outputsAsStrings = new ArrayList<>();
+        for (File output : outputs) {
             if (isLocal) {
                 outputsAsStrings.add(output.getAbsolutePath());
             } else {
@@ -311,34 +309,33 @@ public class JobProcessManager {
             }
         }
 
-        for (final ProvenanceItem item : process.getProvenance()) {
+        for (final ProvenanceItem item : process.getProvenance())
             jobManager.addProvenance(
                 job.getId(), item.getPath(), item.getValue());
-        }
 
         switch (status) {
-            case Error :
-                final Throwable error = process.getError();
-                String message = error.getMessage();
-                if (message == null) {
-                    message = "No Error Message";
-                }
-                jobManager.setJobError(projectId, job.getId(), message, log,
-                        workingDirectory.getAbsolutePath(), outputsAsStrings,
-                        new RemoteStackTrace(error));
-                break;
-            case Finished :
-                jobManager.setJobFinished(projectId, job.getId(), log,
-                        workingDirectory.getAbsolutePath(), outputsAsStrings);
+        case Error:
+        	Throwable error = process.getError();
+        	String message = error.getMessage();
+        	if (message == null) {
+        		message = "No Error Message";
+        	}
+        	jobManager.setJobError(projectId, job.getId(), message, log,
+        			workingDirectory.getAbsolutePath(), outputsAsStrings,
+        			new RemoteStackTrace(error));
+        	break;
+        case Finished:
+        	jobManager.setJobFinished(projectId, job.getId(), log,
+        			workingDirectory.getAbsolutePath(), outputsAsStrings);
 
-                // Clean up
-                process.cleanup();
-                if (deleteOnExit) {
-                    deleteQuietly(workingDirectory);
-                }
-                break;
-            default :
-                throw new IllegalStateException("Unknown status returned!");
+        	// Clean up
+        	process.cleanup();
+        	if (deleteOnExit) {
+        		deleteQuietly(workingDirectory);
+        	}
+        	break;
+        default:
+        	throw new IllegalStateException("Unknown status returned!");
         }
     }
 }
@@ -347,11 +344,11 @@ class Machine {
     SpinnakerMachine machine;
     String url;
 
-    Machine(final SpinnakerMachine machine) {
+    Machine(SpinnakerMachine machine) {
         this.machine = machine;
     }
 
-    Machine(final String baseUrl, final int id) {
+    Machine(String baseUrl, int id) {
         this.url = format("%sjob/%d/machine", baseUrl, id);
     }
 
@@ -381,7 +378,7 @@ abstract class JobManagerLogWriter implements LogWriter {
 
 class SimpleJobManagerLogWriter extends JobManagerLogWriter {
     @Override
-    public void append(final String logMsg) {
+    public void append(String logMsg) {
         log("Process Output: " + logMsg);
         synchronized (this) {
             cached.append(logMsg);
@@ -409,8 +406,7 @@ class JobErrorsException extends IOException {
         return buffer.toString();
     }
 
-    JobErrorsException(
-            final Map<String, JobParametersFactoryException> errors) {
-        super(buildMessage(errors));
-    }
+	JobErrorsException(Map<String, JobParametersFactoryException> errors) {
+		super(buildMessage(errors));
+	}
 }

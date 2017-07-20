@@ -204,14 +204,15 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
             nBoardsToRequest = (int) nBoardsExact;
         }
 
-        final SpinnakerMachine machine =
-                allocateMachineForJob(id, nBoardsToRequest);
+        SpinnakerMachine machine = allocateMachineForJob(id, nBoardsToRequest);
+        if (machine == null)
+        	return null;
         logger.info("Running " + id + " on " + machine.getMachineName());
-        final long resourceUsage = (long) ((runTime / 1000.0) * quotaNCores);
+        long resourceUsage = (long) ((runTime / 1000.0) * quotaNCores);
         logger.info("Resource usage " + resourceUsage);
         synchronized (jobResourceUsage) {
-            jobResourceUsage.put(id, resourceUsage);
-            jobNCores.put(id, quotaNCores);
+        	jobResourceUsage.put(id, resourceUsage);
+        	jobNCores.put(id, quotaNCores);
         }
         addProvenance(id, Arrays.asList(new String[]{"spinnaker_machine"}),
                 machine.getMachineName());
@@ -287,11 +288,14 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
             final int nBoardsToRequest) {
         final SpinnakerMachine machine =
                 machineManager.getNextAvailableMachine(nBoardsToRequest);
-        synchronized (allocatedMachines) {
-            if (!allocatedMachines.containsKey(id)) {
-                allocatedMachines.put(id, new ArrayList<SpinnakerMachine>());
+        if (machine != null) {
+            synchronized (allocatedMachines) {
+                if (!allocatedMachines.containsKey(id)) {
+                    allocatedMachines.put(id,
+                            new ArrayList<SpinnakerMachine>());
+                }
+                allocatedMachines.get(id).add(machine);
             }
-            allocatedMachines.get(id).add(machine);
         }
         return machine;
     }
