@@ -33,6 +33,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
+import uk.ac.manchester.cs.spinnaker.jobmanager.JobExecuter;
 import uk.ac.manchester.cs.spinnaker.jobmanager.JobStorage;
 
 public class DatabaseTests {
@@ -128,7 +129,16 @@ public class DatabaseTests {
 		in.setCode("do stuff with python");
 		in.setUserId("root");
 
-		storage.addJob(in, "abc-def");
+		storage.addJob(in, new JobExecuter() {
+			@Override
+			public String getExecuterId() {
+				return "abc-def";
+			}
+
+			@Override
+			public void startExecuter() {
+			}
+		});
 
 		Job out = storage.getJob("abc-def");
 		assertNotNull("must get the job back", out);

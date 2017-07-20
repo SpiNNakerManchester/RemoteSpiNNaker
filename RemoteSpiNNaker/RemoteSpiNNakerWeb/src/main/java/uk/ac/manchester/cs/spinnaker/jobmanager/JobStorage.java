@@ -31,6 +31,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.transaction.annotation.Transactional;
 
 import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
 import uk.ac.manchester.cs.spinnaker.jobmanager.JobStorage.DAO.State;
@@ -42,10 +43,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/** How state is stored. */
 public interface JobStorage {
 	void addJob(Job job);
 
-	void addJob(Job job, String executerId);
+	void addJob(Job job, JobExecuter executer);
 
 	Job getJob(String executerId);
 
@@ -83,6 +85,14 @@ public interface JobStorage {
 
 	List<SpinnakerMachine> getMachines(Job job);
 
+	/**
+	 * Get the list of machines associated with a job.
+	 * 
+	 * @return a list of machines, or <tt>null</tt> if there is no such job at
+	 *         all.
+	 */
+	List<SpinnakerMachine> getMachines(int id);
+
 	void addMachine(Job job, SpinnakerMachine machine);
 
 	void addXenVm(String id, XenVMDescriptor descriptor);
@@ -93,10 +103,24 @@ public interface JobStorage {
 
 	/**
 	 * Describe <i>all</i> the VMs that we know about.
+	 * 
 	 * @return a map of IDs to VM descriptors. Never <tt>null</tt>.
 	 */
 	Map<String, XenVMDescriptor> getXenVms();
 
+	/** Storage for spalloc; DELETE by job id */
+	SpinnakerMachine removeMachineAllocation(int jobId);
+
+	/** Storage for spalloc; DELETE by machine */
+	Integer removeMachineAllocation(SpinnakerMachine machine);
+
+	/** Storage for spalloc; CREATE/REPLACE */
+	void assignJobToMachine(int jobId, SpinnakerMachine machineAllocated);
+
+	/** Storage for spalloc; GET by machine */
+	Integer getJobForMachine(SpinnakerMachine machine);
+
+	/** Simple in-memory concurrent-safe storage. */
 	class Queue implements JobStorage {
 		private Map<String, Integer> map = new ConcurrentHashMap<>();
 		private Set<Integer> running = new ConcurrentSkipListSet<>();
@@ -107,6 +131,8 @@ public interface JobStorage {
 		private Map<Integer, Map<String, String>> provenance = new HashMap<>();
 		private Map<Integer, File> tempDir = new HashMap<>();
 		private Map<Integer, List<SpinnakerMachine>> machines = new ConcurrentHashMap<>();
+		private Map<Integer, SpinnakerMachine> spallocJob2Mach = new ConcurrentHashMap<>();
+		private Map<SpinnakerMachine, Integer> spallocMach2Job = new ConcurrentHashMap<>();
 
 		@Override
 		public void addJob(Job job) {
@@ -117,10 +143,10 @@ public interface JobStorage {
 		}
 
 		@Override
-		public void addJob(Job job, String executerId) {
+		public void addJob(Job job, JobExecuter executer) {
 			store.put(job.getId(), job);
-			if (executerId != null)
-				map.put(executerId, job.getId());
+			if (executer != null && executer.getExecuterId() != null)
+				map.put(executer.getExecuterId(), job.getId());
 			waiting.add(job.getId());
 		}
 
@@ -241,6 +267,18 @@ public interface JobStorage {
 		}
 
 		@Override
+		public List<SpinnakerMachine> getMachines(int jobid) {
+			if (getJob(jobid) == null)
+				return null;
+			synchronized (machines) {
+				List<SpinnakerMachine> m = machines.get(jobid);
+				if (m == null)
+					return emptyList();
+				return new ArrayList<>(m);
+			}
+		}
+
+		@Override
 		public void addMachine(Job job, SpinnakerMachine machine) {
 			synchronized (machines) {
 				List<SpinnakerMachine> m = machines.get(job.getId());
@@ -270,8 +308,37 @@ public interface JobStorage {
 		public Map<String, XenVMDescriptor> getXenVms() {
 			return emptyMap();
 		}
+
+		@Override
+		public SpinnakerMachine removeMachineAllocation(int jobId) {
+			SpinnakerMachine machine = spallocJob2Mach.remove(jobId);
+			if (machine != null)
+				spallocMach2Job.remove(machine);
+			return machine;
+		}
+
+		@Override
+		public Integer removeMachineAllocation(SpinnakerMachine machine) {
+			Integer jobId = spallocMach2Job.remove(machine);
+			if (machine != null)
+				spallocJob2Mach.remove(jobId);
+			return jobId;
+		}
+
+		@Override
+		public void assignJobToMachine(int jobId,
+				SpinnakerMachine machineAllocated) {
+			spallocJob2Mach.put(jobId, machineAllocated);
+			spallocMach2Job.put(machineAllocated, jobId);
+		}
+
+		@Override
+		public Integer getJobForMachine(SpinnakerMachine machine) {
+			return spallocMach2Job.get(machine);
+		}
 	}
 
+	/** Simple persistent storage. */
 	class DAO implements JobStorage {
 		private NamedParameterJdbcTemplate db;
 
@@ -308,7 +375,9 @@ public interface JobStorage {
 		private static final String ADD_PROV = "INSERT OR REPLACE INTO jobProvenance (id, provKey, provValue) "
 				+ "VALUES (:job, :key, :value)";
 		private static final String ADD_XENVM = "INSERT INTO xen (id,vm,disk,image,extraDisk,extraImage) "
-				+ "VALUES (:id,:vmid,:disk1id,:image1id,:disk2id,:image2id)";
+				+ "VALUES (:id, :vmid, :disk1id, :image1id, :disk2id, :image2id)";
+		private static final String ADD_SPALLOC = "INSERT OR REPLACE INTO spalloc (id, name, version, machine) "
+				+ "VALUES (:id, :name, :version, :machine)";
 
 		private static final String EXISTS_JOB = "SELECT EXISTS(1 AS b FROM job WHERE id = :id LIMIT 1)";
 		private static final String GET_JOB_BY_ID = "SELECT json FROM job WHERE id = :id LIMIT 1";
@@ -321,6 +390,8 @@ public interface JobStorage {
 		private static final String GET_MACH = "SELECT machine FROM jobMachines WHERE id = :job";
 		private static final String GET_XENVM = "SELECT vm AS vmid, disk AS disk1id, image AS image1id, extraDisk AS disk2id, extraImage AS image2id FROM xen WHERE id = :id LIMIT 1";
 		private static final String GET_XENVMS = "SELECT id, vm AS vmid, disk AS disk1id, image AS image1id, extraDisk AS disk2id, extraImage AS image2id FROM xen";
+		private static final String GET_SPALLOC_JOB = "SELECT id FROM spalloc WHERE name = :name AND version = :version LIMIT 1";
+		private static final String GET_SPALLOC_MACHINE = "SELECT machine FROM spalloc WHERE id = :id LIMIT 1";
 
 		private static final String SET_EXEC = "UPDATE job SET executer = :executer WHERE id = :job";
 		private static final String SET_STATE = "UPDATE job SET state = :state WHERE id = :job";
@@ -329,6 +400,7 @@ public interface JobStorage {
 		private static final String SET_RU = "UPDATE job SET resourceUsage = CAST(numCores * :seconds AS INTEGER) WHERE id = :job";
 
 		private static final String DELETE_XENVM = "DELETE FROM xen WHERE id = :id";
+		private static final String DELETE_SPALLOC = "DELETE FROM spalloc WHERE id = :id";
 
 		@Override
 		public void addJob(Job job) {
@@ -343,13 +415,16 @@ public interface JobStorage {
 		}
 
 		@Override
-		public void addJob(Job job, String executerId) {
+		public void addJob(Job job, JobExecuter executer) {
 			requireNonNull(job, "can only register real jobs");
 			requireNonNull(job.getId(), "can only register jobs with IDs");
 			db.update(
 					ADD_JOB,
-					where("job", job).and("json", JobMapper.map(job))
-							.and("executer", executerId)
+					where("job", job)
+							.and("json", JobMapper.map(job))
+							.and("executer",
+									executer == null ? null : executer
+											.getExecuterId())
 							.and("timestamp", new Date()));
 		}
 
@@ -452,8 +527,8 @@ public interface JobStorage {
 			return db.query(GET_PROV, where("job", job),
 					new MapExtractor<String>("provKey", "provValue") {
 						@Override
-						protected String extractColumn(ResultSet rs,
-								int column) throws SQLException {
+						protected String extractColumn(ResultSet rs, int column)
+								throws SQLException {
 							return rs.getString(column);
 						}
 					});
@@ -474,6 +549,15 @@ public interface JobStorage {
 		public List<SpinnakerMachine> getMachines(Job job) {
 			return db.query(GET_MACH, where("job", job), new SpinMachineMapper(
 					"machine"));
+		}
+
+		@Override
+		@Transactional
+		public List<SpinnakerMachine> getMachines(int jobId) {
+			if (getJob(jobId) == null)
+				return null;
+			return db.query(GET_MACH, where("job", jobId),
+					new SpinMachineMapper("machine"));
 		}
 
 		@Override
@@ -542,6 +626,45 @@ public interface JobStorage {
 							return map;
 						}
 					});
+		}
+
+		@Override
+		@Transactional
+		public SpinnakerMachine removeMachineAllocation(int jobId) {
+			try {
+				return db.queryForObject(GET_SPALLOC_MACHINE,
+						where("id", jobId), new SpinMachineMapper("machine"));
+			} finally {
+				db.update(DELETE_SPALLOC, where("id", jobId));
+			}
+		}
+
+		@Override
+		@Transactional
+		public Integer removeMachineAllocation(SpinnakerMachine machine) {
+			Integer id = getJobForMachine(machine);
+			if (id != null)
+				db.update(DELETE_SPALLOC, where("id", id));
+			return id;
+		}
+
+		@Override
+		@Transactional
+		public void assignJobToMachine(int jobId, SpinnakerMachine machine) {
+			db.update(
+					ADD_SPALLOC,
+					where(":id", jobId).and("name", machine.getMachineName())
+							.and("version", machine.getVersion())
+							.and("machine", machine.toString()));
+		}
+
+		@Override
+		@Transactional
+		public Integer getJobForMachine(SpinnakerMachine machine) {
+			return db.queryForObject(
+					GET_SPALLOC_JOB,
+					where("name", machine.getMachineName()).and("version",
+							machine.getVersion()), Integer.class);
 		}
 
 		@SuppressWarnings("serial")
@@ -649,7 +772,8 @@ class SpinMachineMapper extends SingleColumnMapper<SpinnakerMachine> {
 }
 
 /**
- * How to convert a {@linkplain ResultSet result set} into a {@linkplain Map map}.
+ * How to convert a {@linkplain ResultSet result set} into a {@linkplain Map
+ * map}.
  * 
  * @author Donal Fellows
  * @param <T>
@@ -661,8 +785,11 @@ abstract class MapExtractor<T> implements ResultSetExtractor<Map<String, T>> {
 
 	/**
 	 * Create an instance of this class.
-	 * @param key The name of the column containing the (string) key.
-	 * @param value The name of the column containing the value.
+	 * 
+	 * @param key
+	 *            The name of the column containing the (string) key.
+	 * @param value
+	 *            The name of the column containing the value.
 	 */
 	MapExtractor(String key, String value) {
 		keyColumn = key;
@@ -676,7 +803,7 @@ abstract class MapExtractor<T> implements ResultSetExtractor<Map<String, T>> {
 	 * 
 	 * @return The new empty modifiable map.
 	 */
-	protected Map<String,T> createMap() {
+	protected Map<String, T> createMap() {
 		return new LinkedHashMap<>();
 	}
 
@@ -699,5 +826,6 @@ abstract class MapExtractor<T> implements ResultSetExtractor<Map<String, T>> {
 	 * @param columnIndex
 	 *            The column that corresponds to the nominated value column.
 	 */
-	protected abstract T extractColumn(ResultSet rs, int columnIndex) throws SQLException;
+	protected abstract T extractColumn(ResultSet rs, int columnIndex)
+			throws SQLException;
 }

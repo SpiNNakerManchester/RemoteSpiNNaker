@@ -16,7 +16,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.URL;
 import java.util.ArrayList;
@@ -104,8 +103,6 @@ public class LocalJobExecuterFactory extends AbstractJobExecuterFactory {
 
 		private File outputLog = createTempFile("exec", ".log");
 		private Process process;
-		private IOException startException;
-
 		/**
 		 * Create a JobExecuter
 		 * 
@@ -175,10 +172,12 @@ public class LocalJobExecuterFactory extends AbstractJobExecuterFactory {
 				log.debug("Classpath: " + command.get(command.size() - 1));
 
 			command.add(JOB_PROCESS_MANAGER_MAIN_CLASS);
-			log.debug("Main command: " + JOB_PROCESS_MANAGER_MAIN_CLASS);
+			if (log.isDebugEnabled())
+				log.debug("Main command: " + JOB_PROCESS_MANAGER_MAIN_CLASS);
 			for (String argument : arguments) {
 				command.add(argument);
-				log.debug("Argument: " + argument);
+				if (log.isDebugEnabled())
+					log.debug("Argument: " + argument);
 			}
 			return command;
 		}
@@ -186,21 +185,18 @@ public class LocalJobExecuterFactory extends AbstractJobExecuterFactory {
 		private JobOutputPipe startSubprocess(List<String> command) {
 			ProcessBuilder builder = new ProcessBuilder(command);
 			builder.directory(jobExecuterDirectory);
-			log.debug("Working directory: " + jobExecuterDirectory);
+			if (log.isDebugEnabled())
+				log.debug("Working directory: " + jobExecuterDirectory);
 			builder.redirectErrorStream(true);
-			synchronized (this) {
-				try {
-					log.debug("Starting execution process");
-					process = builder.start();
-					return new JobOutputPipe(process.getInputStream(),
-							new PrintWriter(outputLog));
-				} catch (IOException e) {
-					log.error("Error running external job", e);
-					startException = e;
-					return null;
-				} finally {
-					notifyAll();
-				}
+			builder.redirectInput(new File("/dev/null"));
+			try {
+				log.debug("Starting execution process");
+				process = builder.start();
+				return new JobOutputPipe(process.getInputStream(),
+						new PrintWriter(outputLog));
+			} catch (IOException e) {
+				log.error("Error running external job", e);
+				return null;
 			}
 		}
 
@@ -217,28 +213,8 @@ public class LocalJobExecuterFactory extends AbstractJobExecuterFactory {
 			} catch (IOException e) {
 				log.warn("problem in reporting log", e);
 			}
-			jobManager.setExecutorExited(id, logToAppend.toString());
+			jobManager.setExecutorExited(this, logToAppend);
 			executorFinished(this);
-		}
-
-		/**
-		 * Gets an OutputStream which writes to the process stdin.
-		 * 
-		 * @return An OutputStream
-		 */
-		public OutputStream getProcessOutputStream() throws IOException {
-			synchronized (this) {
-				while ((process == null) && (startException == null)) {
-					try {
-						wait();
-					} catch (InterruptedException e) {
-						// Do Nothing
-					}
-				}
-				if (startException != null)
-					throw startException;
-				return process.getOutputStream();
-			}
 		}
 
 		/**

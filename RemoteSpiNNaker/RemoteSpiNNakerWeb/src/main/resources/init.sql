@@ -35,3 +35,11 @@ CREATE TABLE IF NOT EXISTS xen (
 	extraDisk TEXT,
 	extraImage TEXT
 );
+
+CREATE TABLE IF NOT EXISTS spalloc (
+	id INTEGER PRIMARY KEY ON CONFLICT ABORT,
+	name TEXT NOT NULL,
+	version TEXT NOT NULL,
+	machine TEXT,
+	UNIQUE (name, version) ON CONFLICT ABORT
+);

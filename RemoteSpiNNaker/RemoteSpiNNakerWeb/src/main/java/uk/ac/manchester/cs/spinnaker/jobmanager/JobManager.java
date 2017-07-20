@@ -67,8 +67,16 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     @Autowired
     private JobStorage storage;
 
-	private Logger logger = getLogger(getClass());
+    private Logger logger = getLogger(getClass());
 	private ThreadGroup threadGroup;
+
+	class Daemon extends Thread {
+		public Daemon(Runnable runnable, String title) {
+			super(threadGroup, runnable, title);
+			setDaemon(true);
+			start();
+		}
+	}
 
 	public JobManager(URL baseUrl) {
 		this.baseUrl = requireNonNull(baseUrl);
@@ -85,13 +93,14 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
 	/**{@inheritDoc}*/
 	@Override
 	@Transactional
-	public void addJob(Job job) throws IOException {
+	public String addJob(Job job) throws IOException {
 		requireNonNull(job);
 		logger.info("New job " + job.getId());
 
 		JobExecuter executer = jobExecuterFactory.createJobExecuter(baseUrl);
-		storage.addJob(job, executer.getExecuterId());
+		storage.addJob(job, executer);
 		executer.startExecuter();
+		return executer.getExecuterId();
 	}
 
 	/**
@@ -200,9 +209,13 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
 
 	/**{@inheritDoc}*/
 	@Override
-	@Transactional
+	// NOT @Transactional; this method waits...
 	public JobMachineAllocated checkMachineLease(int id, int waitTime) {
-		List<SpinnakerMachine> machines = storage.getMachines(findJob(id));
+		if (waitTime < 1)
+			waitTime = DEFAULT_LEASE_WAIT_TIME;
+		List<SpinnakerMachine> machines = storage.getMachines(id);
+		if (machines == null)
+			throw new WebApplicationException("bad job id", 400);
 
 		// Return false if any machine is gone
 		for (SpinnakerMachine machine : machines)
@@ -220,24 +233,34 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
 		return new JobMachineAllocated(true);
 	}
 
-	private void waitForAnyMachineStateChange(final int waitTime,
+	private SpinnakerMachine waitForAnyMachineStateChange(final int waitTime,
 			List<SpinnakerMachine> machines) {
-		final BlockingQueue<Object> stateChangeSync = new LinkedBlockingQueue<>();
-		for (final SpinnakerMachine machine : machines) {
-			Thread stateThread = new Thread(threadGroup, new Runnable() {
+		final BlockingQueue<SpinnakerMachine> queue = new LinkedBlockingQueue<>();
+		@SuppressWarnings("serial")
+		class Timeout extends SpinnakerMachine implements Runnable {
+			@Override
+			public void run() {
+				try {
+					Thread.sleep(waitTime);
+				} catch (InterruptedException e) {
+				}
+				queue.offer(this);
+			}
+		}
+		new Daemon(new Timeout(), "Timeout:" + waitTime);
+		for (final SpinnakerMachine machine : machines)
+			new Daemon(new Runnable() {
 				@Override
 				public void run() {
 					machineManager.waitForMachineStateChange(machine, waitTime);
-					stateChangeSync.offer(this);
+					queue.offer(machine);
 				}
 			}, "waiting for " + machine);
-			stateThread.setDaemon(true);
-			stateThread.start();
-		}
 		try {
-			stateChangeSync.take();
+			SpinnakerMachine m = queue.take();
+			return (m instanceof Timeout) ? null : m;
 		} catch (InterruptedException e) {
-			// Does Nothing
+			return null;
 		}
 	}
 
@@ -265,6 +288,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
 	@Transactional
 	public void addOutput(String projectId, int id, String output,
 			InputStream input) {
+		// FIXME what about projectId?
 		output = verifyFilename(output);
 		requireNonNull(input);
 		Job job = findJob(id);
@@ -404,12 +428,12 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
 	}
 
 	/**
-	 * @param executorId The ID of the executor that has executed.
-	 * @param logToAppend May be <tt>null</tt>
+	 * @param executor The executor that has executed.
+	 * @param logMessage May be <tt>null</tt>
 	 */
 	@Transactional
-	public void setExecutorExited(String executorId, String logToAppend) {
-		Job job = storage.getJob(requireNonNull(executorId));
+	protected void setExecutorExited(JobExecuter executor, Object logMessage) {
+		Job job = storage.getJob(requireNonNull(executor.getExecuterId()));
 		if (job != null) {
 			storage.assignNewExecutor(job, null);
 			int id = job.getId();
@@ -423,7 +447,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
 					if (prov.isEmpty())
 						prov = null;
 					String projectId = new File(job.getCollabId()).getName();
-					queueManager.setJobError(job, logToAppend,
+					queueManager.setJobError(job, String.valueOf(logMessage),
 							getOutputFiles(projectId, job, null, null),
 							new Exception("Job did not finish cleanly"),
 							resourceUsage, prov);
@@ -432,8 +456,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
 				}
 			}
 		} else {
-			logger.error("An executer has exited.  This could indicate an error!");
-			logger.error(logToAppend);
+			logger.error("An executer has exited. This could indicate an error!");
+			logger.error(String.valueOf(logMessage));
 
 			if (restartJobExecuterOnFailure)
 				restartExecuters();

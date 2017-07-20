@@ -24,6 +24,7 @@ import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
 public interface JobManagerInterface {
 	String APPLICATION_ZIP = "application/zip";
 	String JOB_PROCESS_MANAGER_ZIP = "RemoteSpiNNakerJobProcessManager.zip";
+	int DEFAULT_LEASE_WAIT_TIME = 10000;
 
 	/**
 	 * Get the next job to be run on the given executer.
@@ -51,11 +52,20 @@ public interface JobManagerInterface {
 			@QueryParam("nBoards") @DefaultValue("-1") int nBoards,
 			@QueryParam("runTime") @DefaultValue("-1") double runTime);
 
+	/**
+	 * Check if the lease on a machine is owned.
+	 * 
+	 * @param id
+	 *            The ID of the machine.
+	 * @param waitTime
+	 *            How long to wait, in milliseconds.
+	 * @return a description of whether the lease is satisfied.
+	 */
 	@GET
 	@Path("{id}/machine/checkLease")
 	@Produces(APPLICATION_JSON)
 	JobMachineAllocated checkMachineLease(@PathParam("id") int id,
-			@QueryParam("waitTime") @DefaultValue("10000") int waitTime);
+			@QueryParam("waitTime") @DefaultValue("-1") int waitTime);
 
 	@GET
 	@Path("{id}/machine/extendLease")

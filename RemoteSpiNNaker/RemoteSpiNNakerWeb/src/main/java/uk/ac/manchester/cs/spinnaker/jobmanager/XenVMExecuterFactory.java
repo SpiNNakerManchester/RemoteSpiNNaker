@@ -68,6 +68,7 @@ public class XenVMExecuterFactory extends AbstractJobExecuterFactory {
 	private JobManager jobManager;
 	@Autowired
 	private JobStorage storage;
+	/** Differs from the size of the executer map when a VM is being launched. */
 	private int nVirtualMachines = 0;
 
 	public XenVMExecuterFactory() {
@@ -78,10 +79,8 @@ public class XenVMExecuterFactory extends AbstractJobExecuterFactory {
 	@Order(LOWEST_PRECEDENCE)
 	void connectExistingVMs() {
 		for (Entry<String, XenVMDescriptor> e : storage.getXenVms().entrySet()) {
-			ExistingExecuter exec = new ExistingExecuter(e.getKey(),
-					e.getValue());
+			addExecutor(new ExistingExecuter(e.getKey(), e.getValue()));
 			nVirtualMachines++;
-			map.put(exec.getExecuterId(), exec);
 		}
 	}
 
@@ -98,12 +97,14 @@ public class XenVMExecuterFactory extends AbstractJobExecuterFactory {
 
 	private void waitToClaimVM() {
 		synchronized (lock) {
-			logger.debug(nVirtualMachines + " of " + maxNVirtualMachines
-					+ " in use");
+			if (logger.isDebugEnabled())
+				logger.debug(nVirtualMachines + " of " + maxNVirtualMachines
+						+ " in use");
 			while (nVirtualMachines >= maxNVirtualMachines) {
-				logger.debug("Waiting for a VM to become available ("
-						+ nVirtualMachines + " of " + maxNVirtualMachines
-						+ " in use)");
+				if (logger.isDebugEnabled())
+					logger.debug("Waiting for a VM to become available ("
+							+ nVirtualMachines + " of " + maxNVirtualMachines
+							+ " in use)");
 				try {
 					lock.wait();
 				} catch (InterruptedException e) {
@@ -116,12 +117,13 @@ public class XenVMExecuterFactory extends AbstractJobExecuterFactory {
 
 	@Override
 	protected void executorFinished(JobExecuter executor) {
+		storage.removeXenVm(executor.getExecuterId());
+		super.executorFinished(executor);
 		synchronized (lock) {
 			nVirtualMachines--;
-			logger.debug(nVirtualMachines + " of " + maxNVirtualMachines
-					+ " now in use");
-			storage.removeXenVm(executor.getExecuterId());
-			super.executorFinished(executor);
+			if (logger.isDebugEnabled())
+				logger.debug(nVirtualMachines + " of " + maxNVirtualMachines
+						+ " now in use");
 			lock.notifyAll();
 		}
 	}
@@ -258,13 +260,13 @@ public class XenVMExecuterFactory extends AbstractJobExecuterFactory {
 		XenVMDescriptor() {
 		}
 
-		XenVMDescriptor(XenConnection conn, VM vm, VBD disk1, VDI ifc1,
-				VBD disk2, VDI ifc2) throws XenAPIException, XmlRpcException {
-			this.vm = conn.getID(vm);
-			this.disk1 = conn.getID(disk1);
-			this.image1 = conn.getID(ifc1);
-			this.disk2 = conn.getID(disk2);
-			this.image2 = conn.getID(ifc2);
+		XenVMDescriptor(XenConnection conn, AbstractExecuter executor)
+				throws XenAPIException, XmlRpcException {
+			this.vm = conn.getID(executor.clonedVm);
+			this.disk1 = conn.getID(executor.disk);
+			this.image1 = conn.getID(executor.image);
+			this.disk2 = conn.getID(executor.extraDisk);
+			this.image2 = conn.getID(executor.extraImage);
 		}
 	}
 
@@ -309,11 +311,15 @@ public class XenVMExecuterFactory extends AbstractJobExecuterFactory {
 		public final void run() {
 			try (XenConnection conn = createVm()) {
 				waitForTermination(conn);
-				exit(null);
-				finishedWithVM(conn);
+				jobManager.setExecutorExited(this, "");
+				try {
+					finishedWithVM(conn);
+				} catch (Exception e) {
+					logger.error("Error deleting VM", e);
+				}
 			} catch (Exception e) {
 				logger.error("Error connecting to VM", e);
-				exit(e);
+				jobManager.setExecutorExited(this, e);
 			} finally {
 				executorFinished(this);
 			}
@@ -333,29 +339,19 @@ public class XenVMExecuterFactory extends AbstractJobExecuterFactory {
 			}
 		}
 
-		protected void finishedWithVM(XenConnection conn) {
-			try {
-				if (deleteOnExit && conn != null) {
-					if (disk != null)
-						conn.destroy(disk);
-					if (extraDisk != null)
-						conn.destroy(extraDisk);
-					if (image != null)
-						conn.destroy(image);
-					if (extraImage != null)
-						conn.destroy(extraImage);
-					if (clonedVm != null)
-						conn.destroy(clonedVm);
-				}
-				if (conn != null)
-					storage.removeXenVm(getExecuterId());
-			} catch (Exception e) {
-				logger.error("Error deleting VM");
+		protected void finishedWithVM(XenConnection conn) throws Exception {
+			if (deleteOnExit) {
+				if (disk != null)
+					conn.destroy(disk);
+				if (extraDisk != null)
+					conn.destroy(extraDisk);
+				if (image != null)
+					conn.destroy(image);
+				if (extraImage != null)
+					conn.destroy(extraImage);
+				if (clonedVm != null)
+					conn.destroy(clonedVm);
 			}
-		}
-
-		private void exit(Exception e) {
-			jobManager.setExecutorExited(uuid, e.getMessage());
 		}
 	}
 
@@ -385,7 +381,6 @@ public class XenVMExecuterFactory extends AbstractJobExecuterFactory {
 	}
 
 	class NewExecuter extends AbstractExecuter {
-		// Parameters from constructor
 		private final URL jobProcessManagerUrl;
 		private final String args;
 
@@ -418,7 +413,11 @@ public class XenVMExecuterFactory extends AbstractJobExecuterFactory {
 				extraImage = conn.createImage(image);
 				extraDisk = conn.createBlockDevice(clonedVm, extraImage);
 			} catch (XmlRpcException | IOException e) {
-				finishedWithVM(conn);
+				try {
+					finishedWithVM(conn);
+				} catch (Exception e2) {
+					e.addSuppressed(e2);
+				}
 				throw e;
 			}
 			conn.addData(clonedVm, "vm-data/nmpiurl", jobProcessManagerUrl);
@@ -427,8 +426,7 @@ public class XenVMExecuterFactory extends AbstractJobExecuterFactory {
 			if (shutdownOnExit)
 				conn.addData(clonedVm, "vm-data/shutdown", true);
 			conn.start(clonedVm);
-			storage.addXenVm(getExecuterId(), new XenVMDescriptor(conn,
-					clonedVm, disk, image, extraDisk, extraImage));
+			storage.addXenVm(getExecuterId(), new XenVMDescriptor(conn, this));
 			return conn;
 		}
 	}
