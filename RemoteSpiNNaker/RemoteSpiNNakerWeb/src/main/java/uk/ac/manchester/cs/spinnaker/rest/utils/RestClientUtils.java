@@ -159,6 +159,9 @@ public class RestClientUtils {
         ResteasyClient client = createRestClient(url, credentials, authScheme);
         for (Object provider : providers)
             client.register(provider);
+        if (providers.length == 0) {
+            client.register(new JacksonJsonProvider());
+        }
         return client.target(url.toString()).proxy(clazz);
     }
 
