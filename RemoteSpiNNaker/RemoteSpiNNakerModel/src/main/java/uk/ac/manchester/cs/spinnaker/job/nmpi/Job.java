@@ -5,6 +5,8 @@ import java.util.Map;
 
 import org.joda.time.DateTime;
 
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
@@ -24,13 +26,14 @@ public class Job implements QueueNextResponse {
     private String command;
     private String userId;
     private long resourceUsage;
-	@JsonSerialize(using = DateTimeSerialiser.class)
-	@JsonDeserialize(using = DateTimeDeserialiser.class)
-	private DateTime timestampCompletion;
-	@JsonSerialize(using = DateTimeSerialiser.class)
-	@JsonDeserialize(using = DateTimeDeserialiser.class)
-	private DateTime timestampSubmission;
-	private Object provenance;
+    @JsonSerialize(using = DateTimeSerialiser.class)
+    @JsonDeserialize(using = DateTimeDeserialiser.class)
+    private DateTime timestampCompletion;
+    @JsonSerialize(using = DateTimeSerialiser.class)
+    @JsonDeserialize(using = DateTimeDeserialiser.class)
+    private DateTime timestampSubmission;
+    private Object provenance;
+    private Map<String, Object> others;
 
     public String getCode() {
         return code;
@@ -150,5 +153,16 @@ public class Job implements QueueNextResponse {
 
     public void setProvenance(Object provenance) {
         this.provenance = provenance;
+    }
+
+    @JsonAnySetter
+    public void set(String name, Object value) {
+        System.err.println("Warning: Job contains unexpected item " + name);
+        others.put(name, value);
+    }
+
+    @JsonAnyGetter
+    public Map<String, Object> getOthers() {
+        return others;
     }
 }
