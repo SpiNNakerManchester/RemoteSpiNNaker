@@ -35,26 +35,4 @@ public class ProvenanceDataItems {
     public List<ProvenanceDataItem> getProvenanceDataItem() {
         return provenanceDataItem;
     }
-
-    private static void print(ProvenanceDataItems items, String prefix) {
-        String myPrefix = prefix + items.getName();
-        for (ProvenanceDataItems subItems : items.getProvenanceDataItems()) {
-            print(subItems, myPrefix + "/");
-        }
-        for (ProvenanceDataItem subItem : items.getProvenanceDataItem()) {
-            System.err.println(
-                myPrefix + "/" + subItem.getName() + ":" + subItem.getValue());
-        }
-    }
-
-    public static void main(String[] args) throws Exception {
-        JAXBContext jaxbContext = JAXBContext.newInstance(
-            ProvenanceDataItems.class);
-        Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-        ProvenanceDataItems items = (ProvenanceDataItems)
-            jaxbUnmarshaller.unmarshal(
-                new java.io.File("router_provenance.xml"));
-        print(items, "");
-    }
-
 }
