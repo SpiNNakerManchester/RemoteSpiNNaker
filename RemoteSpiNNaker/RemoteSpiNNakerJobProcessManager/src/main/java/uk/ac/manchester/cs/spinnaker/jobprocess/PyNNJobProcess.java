@@ -11,6 +11,8 @@ import static uk.ac.manchester.cs.spinnaker.utils.Log.log;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -24,6 +26,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.transform.Source;
+import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.io.filefilter.AbstractFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
@@ -38,6 +48,7 @@ import uk.ac.manchester.cs.spinnaker.utils.ThreadUtils;
  * A process for running PyNN jobs
  */
 public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
+    private static final String PROVENANCE_DIRECTORY = "provenance_data";
     private static final String SECTION = "Machine";
     private static final String SUBPROCESS_RUNNER = "python";
     private static final int FINALIZATION_DELAY = 1000;
@@ -50,12 +61,20 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         IGNORED_DIRECTORIES.add("application_generated_data_files");
         IGNORED_DIRECTORIES.add("reports");
     };
+    private static final String[] PROVENANCE_ITEMS_TO_ADD = new String[]{
+        "version_data/.*",
+        "router_provenance/total_multi_cast_sent_packets",
+        "router_provenance/total_created_packets",
+        "router_provenance/total_dropped_packets",
+        "router_provenance/total_missed_dropped_packets",
+        "router_provenance/total_lost_dropped_packets"
+    };
 
     private File workingDirectory = null;
     private Status status = null;
     private Throwable error = null;
     private List<File> outputs = new ArrayList<>();
-    private Map<String, String> provenance = new HashMap<>();
+    private Map<String, List<String>> provenance = new HashMap<>();
     ThreadGroup threadGroup;
 
     private static Set<File> gatherFiles(File directory) {
@@ -117,11 +136,15 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             // Execute the program
             int exitValue = runSubprocess(parameters, logWriter);
 
+            // Get the provenance data
+            gatherProvenance(workingDirectory);
+
             // Get any output files
             Set<File> allFiles = gatherFiles(workingDirectory);
             for (File file : allFiles)
                 if (!existingFiles.contains(file))
                     outputs.add(file);
+
 
             // If the exit is an error, mark an error
             if (exitValue > 127)
@@ -164,6 +187,97 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         }
     }
 
+    private void putProvenanceInMap(ProvenanceDataItems items, String path) {
+
+        // Create a path for this level in the tree
+        String myPath = path + items.getName();
+
+        // Add all nested items
+        for (ProvenanceDataItems subItems : items.getProvenanceDataItems()) {
+            putProvenanceInMap(subItems, myPath + "/");
+        }
+
+        // Add items from this level
+        for (ProvenanceDataItem subItem : items.getProvenanceDataItem()) {
+            String itemPath = myPath + "/" + subItem.getName();
+            for (String item : PROVENANCE_ITEMS_TO_ADD) {
+                if (itemPath.matches(item)) {
+                    if (!provenance.containsValue(item)) {
+                        provenance.put(item, new ArrayList<String>());
+                    }
+                    provenance.get(item).add(subItem.getValue());
+                }
+            }
+        }
+    }
+
+    private void addProvenance(File provenanceDirectory)
+            throws IOException, JAXBException {
+
+        // Get provenance data from files
+        for (File file : provenanceDirectory.listFiles()) {
+
+            // Only process XML files
+            if (file.getName().endsWith(".xml")) {
+                JAXBContext jaxbContext = JAXBContext.newInstance(
+                    ProvenanceDataItems.class);
+                Unmarshaller jaxbUnmarshaller =
+                    jaxbContext.createUnmarshaller();
+                Source source = new StreamSource(file);
+                ProvenanceDataItems items = (ProvenanceDataItems)
+                    jaxbUnmarshaller.unmarshal(source);
+                putProvenanceInMap(items, "");
+            }
+        }
+    }
+
+    private void zipProvenance(
+            ZipOutputStream reportsZip, File directory, String path)
+                throws IOException, JAXBException {
+
+        // Go through the report files and zip them up
+        byte[] buffer = new byte[8196];
+        for (File file : directory.listFiles()) {
+            if (file.isDirectory()) {
+                zipProvenance(reportsZip, file, path + "/" + file.getName());
+
+                // If the directory is the provenance directory, process it
+                if (file.getName().equals(PROVENANCE_DIRECTORY)) {
+                    addProvenance(file);
+                }
+            } else {
+                ZipEntry entry = new ZipEntry(path + "/" + file.getName());
+                reportsZip.putNextEntry(entry);
+                FileInputStream in = new FileInputStream(file);
+                int bytesRead = in.read(buffer);
+                while (bytesRead >= 0) {
+                    reportsZip.write(buffer, 0, bytesRead);
+                    bytesRead = in.read(buffer);
+                }
+                in.close();
+            }
+        }
+    }
+
+    private void gatherProvenance(File workingDirectory)
+            throws IOException, JAXBException {
+
+        // Find the reports folder
+        File reportsFolder = new File(workingDirectory, "reports");
+        if (reportsFolder.isDirectory()) {
+
+            // Create a zip file of the reports
+            ZipOutputStream reportsZip = new ZipOutputStream(
+                new FileOutputStream(
+                    new File(workingDirectory, "reports.zip")));
+
+            // Gather items into the reports zip, keeping an eye out for
+            // the "provenance data" folder
+            zipProvenance(reportsZip, reportsFolder, "reports");
+            reportsZip.close();
+        }
+    }
+
     @Override
     public Status getStatus() {
         return status;
@@ -180,7 +294,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
     }
 
     @Override
-    public Map<String, String> getProvenance() {
+    public Map<String, List<String>> getProvenance() {
         return provenance;
     }
 

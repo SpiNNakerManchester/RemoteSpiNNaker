@@ -294,8 +294,11 @@ public class JobProcessManager {
                             output.getName(), input);
                 }
 
-        for (Entry<String, String> item : process.getProvenance().entrySet()) {
-            jobManager.addProvenance(job.getId(), item.getKey(), item.getValue());
+        for (Entry<String, List<String>> item :
+                process.getProvenance().entrySet()) {
+            for (String value : item.getValue()) {
+                jobManager.addProvenance(job.getId(), item.getKey(), value);
+            }
         }
 
         switch (status) {

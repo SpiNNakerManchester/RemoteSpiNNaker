@@ -61,7 +61,7 @@ public interface JobProcess<P extends JobParameters> {
     *
     * @return A map of string to string.
     */
-    Map<String, String> getProvenance();
+    Map<String, List<String>> getProvenance();
 
     /**
     * Cleans up the job, removing any associated files
