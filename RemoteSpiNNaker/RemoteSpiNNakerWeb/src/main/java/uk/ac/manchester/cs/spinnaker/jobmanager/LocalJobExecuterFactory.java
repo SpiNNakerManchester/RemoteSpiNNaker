@@ -31,271 +31,272 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 
 public class LocalJobExecuterFactory implements JobExecuterFactory {
-	private static final String JOB_PROCESS_MANAGER_MAIN_CLASS = "uk.ac.manchester.cs.spinnaker.jobprocessmanager.JobProcessManager";
+    private static final String JOB_PROCESS_MANAGER_MAIN_CLASS = "uk.ac.manchester.cs.spinnaker.jobprocessmanager.JobProcessManager";
 
-	private static File getJavaExec() throws IOException {
-		File binDir = new File(System.getProperty("java.home"), "bin");
-		File exec = new File(binDir, "java");
-		if (!exec.canExecute())
-			exec = new File(binDir, "java.exe");
-		return exec;
-	}
+    private static File getJavaExec() throws IOException {
+        File binDir = new File(System.getProperty("java.home"), "bin");
+        File exec = new File(binDir, "java");
+        if (!exec.canExecute())
+            exec = new File(binDir, "java.exe");
+        return exec;
+    }
 
     @Value("${deleteJobsOnExit}")
-	private boolean deleteOnExit;
+    private boolean deleteOnExit;
     @Value("${liveUploadOutput}")
-	private boolean liveUploadOutput;
+    private boolean liveUploadOutput;
     @Value("${requestSpiNNakerMachine}")
-	private boolean requestSpiNNakerMachine;
-	private final ThreadGroup threadGroup;
+    private boolean requestSpiNNakerMachine;
+    private final ThreadGroup threadGroup;
 
-	private List<File> jobProcessManagerClasspath = new ArrayList<>();
-	private File jobExecuterDirectory = null;
-	private static Logger log = getLogger(Executer.class);
+    private List<File> jobProcessManagerClasspath = new ArrayList<>();
+    private File jobExecuterDirectory = null;
+    private static Logger log = getLogger(Executer.class);
 
-	public LocalJobExecuterFactory() {
-		this.threadGroup = new ThreadGroup("LocalJob");
-	}
+    public LocalJobExecuterFactory() {
+        this.threadGroup = new ThreadGroup("LocalJob");
+    }
 
-	@PostConstruct
-	void installJobExecuter() throws IOException {
-		// Find the JobManager resource
-		InputStream jobManagerStream = getClass().getResourceAsStream(
-				"/" + JOB_PROCESS_MANAGER_ZIP);
-		if (jobManagerStream == null)
-			throw new UnsatisfiedLinkError("/" + JOB_PROCESS_MANAGER_ZIP
-					+ " not found in classpath");
-		
-		// Create a temporary folder
-		jobExecuterDirectory = createTempFile("jobExecuter", "tmp");
-		jobExecuterDirectory.delete();
-		jobExecuterDirectory.mkdirs();
-		jobExecuterDirectory.deleteOnExit();
+    @PostConstruct
+    void installJobExecuter() throws IOException {
+        // Find the JobManager resource
+        InputStream jobManagerStream = getClass().getResourceAsStream(
+                "/" + JOB_PROCESS_MANAGER_ZIP);
+        if (jobManagerStream == null)
+            throw new UnsatisfiedLinkError("/" + JOB_PROCESS_MANAGER_ZIP
+                    + " not found in classpath");
 
-		// Extract the JobManager resources
-		try (ZipInputStream input = new ZipInputStream(jobManagerStream)) {
-			for (ZipEntry entry = input.getNextEntry(); entry != null; entry = input
-					.getNextEntry()) {
-				if (entry.isDirectory())
-					continue;
-				File entryFile = new File(jobExecuterDirectory, entry.getName());
-				forceMkdirParent(entryFile);
-				copyToFile(input, entryFile);
-				forceDeleteOnExit(entryFile);
+        // Create a temporary folder
+        jobExecuterDirectory = createTempFile("jobExecuter", "tmp");
+        jobExecuterDirectory.delete();
+        jobExecuterDirectory.mkdirs();
+        jobExecuterDirectory.deleteOnExit();
 
-				if (entryFile.getName().endsWith(".jar"))
-					jobProcessManagerClasspath.add(entryFile);
-			}
-		}
-	}
+        // Extract the JobManager resources
+        try (ZipInputStream input = new ZipInputStream(jobManagerStream)) {
+            for (ZipEntry entry = input.getNextEntry(); entry != null; entry = input
+                    .getNextEntry()) {
+                if (entry.isDirectory())
+                    continue;
+                File entryFile = new File(jobExecuterDirectory, entry.getName());
+                forceMkdirParent(entryFile);
+                copyToFile(input, entryFile);
+                forceDeleteOnExit(entryFile);
 
-	@Override
-	public JobExecuter createJobExecuter(JobManager manager, URL baseUrl)
-			throws IOException {
-		String uuid = UUID.randomUUID().toString();
-		List<String> arguments = new ArrayList<>();
-		arguments.add("--serverUrl");
-		arguments.add(requireNonNull(baseUrl).toString());
-		arguments.add("--local");
-		arguments.add("--executerId");
-		arguments.add(uuid);
-		if (deleteOnExit)
-			arguments.add("--deleteOnExit");
-		if (liveUploadOutput)
-			arguments.add("--liveUploadOutput");
-		if (requestSpiNNakerMachine)
-			arguments.add("--requestMachine");
+                if (entryFile.getName().endsWith(".jar"))
+                    jobProcessManagerClasspath.add(entryFile);
+            }
+        }
+    }
 
-		return new Executer(requireNonNull(manager), arguments, uuid);
-	}
+    @Override
+    public JobExecuter createJobExecuter(JobManager manager, URL baseUrl)
+            throws IOException {
+        String uuid = UUID.randomUUID().toString();
+        List<String> arguments = new ArrayList<>();
+        arguments.add("--serverUrl");
+        arguments.add(requireNonNull(baseUrl).toString());
+        arguments.add("--local");
+        arguments.add("--executerId");
+        arguments.add(uuid);
+        if (deleteOnExit)
+            arguments.add("--deleteOnExit");
+        if (liveUploadOutput)
+            arguments.add("--liveUploadOutput");
+        if (requestSpiNNakerMachine)
+            arguments.add("--requestMachine");
 
-	class Executer implements JobExecuter, Runnable {
-		private final JobManager jobManager;
-		private final List<String> arguments;
-		private final String id;
-		private final File javaExec;
+        return new Executer(requireNonNull(manager), arguments, uuid);
+    }
 
-		private File outputLog = createTempFile("exec", ".log");
-		private Process process;
-		private IOException startException;
+    class Executer implements JobExecuter, Runnable {
+        private final JobManager jobManager;
+        private final List<String> arguments;
+        private final String id;
+        private final File javaExec;
 
-		/**
-		 * Create a JobExecuter
-		 * 
-		 * @param arguments
-		 *            The arguments to use
-		 * @param id
-		 *            The id of the executer
-		 * @throws IOException
-		 *             If there is an error creating the log file
-		 */
-		Executer(JobManager jobManager, List<String> arguments, String id)
-				throws IOException {
-			this.jobManager = jobManager;
-			this.arguments = arguments;
-			this.id = id;
-			javaExec = getJavaExec();
-		}
+        private File outputLog = createTempFile("exec", ".log");
+        private Process process;
+        private IOException startException;
 
-		@Override
-		public String getExecuterId() {
-			return id;
-		}
+        /**
+        * Create a JobExecuter
+        *
+        * @param arguments
+        *            The arguments to use
+        * @param id
+        *            The id of the executer
+        * @throws IOException
+        *             If there is an error creating the log file
+        */
+        Executer(JobManager jobManager, List<String> arguments, String id)
+                throws IOException {
+            this.jobManager = jobManager;
+            this.arguments = arguments;
+            this.id = id;
+            javaExec = getJavaExec();
+        }
 
-		@Override
-		public void startExecuter() {
-			new Thread(threadGroup, this, "Executer (" + id + ")").start();
-		}
+        @Override
+        public String getExecuterId() {
+            return id;
+        }
 
-		/**
-		 * Runs the external job
-		 * 
-		 * @throws IOException
-		 *             If there is an error starting the job
-		 */
-		@Override
-		public void run() {
-			try (JobOutputPipe pipe = startSubprocess(constructArguments())) {
-				log.debug("Waiting for process to finish");
-				try {
-					process.waitFor();
-				} catch (InterruptedException e) {
-					// Do nothing; the thread will terminate shortly 
-				}
-				log.debug("Process finished, closing pipe");
-			}
+        @Override
+        public void startExecuter() {
+            new Thread(threadGroup, this, "Executer (" + id + ")").start();
+        }
 
-			reportResult();
-		}
+        /**
+        * Runs the external job
+        *
+        * @throws IOException
+        *             If there is an error starting the job
+        */
+        @Override
+        public void run() {
+            try (JobOutputPipe pipe = startSubprocess(constructArguments())) {
+                log.debug("Waiting for process to finish");
+                try {
+                    process.waitFor();
+                } catch (InterruptedException e) {
+                    // Do nothing; the thread will terminate shortly
+                }
+                log.debug("Process finished, closing pipe");
+            }
 
-		private List<String> constructArguments() {
-			List<String> command = new ArrayList<>();
-			command.add(javaExec.getAbsolutePath());
+            reportResult();
+        }
 
-			StringBuilder classPathBuilder = new StringBuilder();
-			String separator = "";
-			for (File file : jobProcessManagerClasspath) {
-				classPathBuilder.append(separator).append(file);
-				separator = pathSeparator;
-			}
-			command.add("-cp");
-			command.add(classPathBuilder.toString());
-			log.debug("Classpath: " + classPathBuilder);
+        private List<String> constructArguments() {
+            List<String> command = new ArrayList<>();
+            command.add(javaExec.getAbsolutePath());
 
-			command.add(JOB_PROCESS_MANAGER_MAIN_CLASS);
-			log.debug("Main command: " + JOB_PROCESS_MANAGER_MAIN_CLASS);
-			for (String argument : arguments) {
-				command.add(argument);
-				log.debug("Argument: " + argument);
-			}
-			return command;
-		}
+            StringBuilder classPathBuilder = new StringBuilder();
+            String separator = "";
+            for (File file : jobProcessManagerClasspath) {
+                classPathBuilder.append(separator).append(file);
+                separator = pathSeparator;
+            }
+            command.add("-cp");
+            command.add(classPathBuilder.toString());
+            log.debug("Classpath: " + classPathBuilder);
 
-		private JobOutputPipe startSubprocess(List<String> command) {
-			ProcessBuilder builder = new ProcessBuilder(command);
-			builder.directory(jobExecuterDirectory);
-			log.debug("Working directory: " + jobExecuterDirectory);
-			builder.redirectErrorStream(true);
-			JobOutputPipe pipe = null;
-			synchronized (this) {
-				try {
-					log.debug("Starting execution process");
-					process = builder.start();
-					log.debug("Starting pipe from process");
-					pipe = new JobOutputPipe(process.getInputStream(),
-							new PrintWriter(outputLog));
-					pipe.start();
-				} catch (IOException e) {
-					log.error("Error running external job", e);
-					startException = e;
-				}
-				notifyAll();
-			}
-			return pipe;
-		}
+            command.add(JOB_PROCESS_MANAGER_MAIN_CLASS);
+            log.debug("Main command: " + JOB_PROCESS_MANAGER_MAIN_CLASS);
+            for (String argument : arguments) {
+                command.add(argument);
+                log.debug("Argument: " + argument);
+            }
+            return command;
+        }
 
-		private void reportResult() {
-			StringBuilder logToAppend = new StringBuilder();
-			try (BufferedReader reader = new BufferedReader(new FileReader(
-					outputLog))) {
-				while (true) {
-					String line = reader.readLine();
-					while (line == null)
-						break;
-					logToAppend.append(line).append("\n");
-				}
-			} catch (IOException e) {
-				log.warn("problem in reporting log", e);
-			}
-			jobManager.setExecutorExited(id, logToAppend.toString());
-		}
+        private JobOutputPipe startSubprocess(List<String> command) {
+            ProcessBuilder builder = new ProcessBuilder(command);
+            builder.directory(jobExecuterDirectory);
+            log.debug("Working directory: " + jobExecuterDirectory);
+            builder.redirectErrorStream(true);
+            JobOutputPipe pipe = null;
+            synchronized (this) {
+                try {
+                    log.debug("Starting execution process");
+                    process = builder.start();
+                    log.debug("Starting pipe from process");
+                    pipe = new JobOutputPipe(process.getInputStream(),
+                            new PrintWriter(outputLog));
+                    pipe.start();
+                } catch (IOException e) {
+                    log.error("Error running external job", e);
+                    startException = e;
+                }
+                notifyAll();
+            }
+            return pipe;
+        }
 
-		/**
-		 * Gets an OutputStream which writes to the process stdin.
-		 * 
-		 * @return An OutputStream
-		 */
-		public OutputStream getProcessOutputStream() throws IOException {
-			synchronized (this) {
-				while ((process == null) && (startException == null)) {
-					try {
-						wait();
-					} catch (InterruptedException e) {
-						// Do Nothing
-					}
-				}
-				if (startException != null)
-					throw startException;
-				return process.getOutputStream();
-			}
-		}
+        private void reportResult() {
+            StringBuilder logToAppend = new StringBuilder();
+            try (BufferedReader reader = new BufferedReader(new FileReader(
+                    outputLog))) {
+                while (true) {
+                    String line = reader.readLine();
+                    if (line == null) {
+                        break;
+                    }
+                    logToAppend.append(line).append("\n");
+                }
+            } catch (IOException e) {
+                log.warn("problem in reporting log", e);
+            }
+            jobManager.setExecutorExited(id, logToAppend.toString());
+        }
 
-		/**
-		 * Gets the location of the process log file
-		 * 
-		 * @return The location of the log file
-		 */
-		public File getLogFile() {
-			return outputLog;
-		}
-	}
+        /**
+        * Gets an OutputStream which writes to the process stdin.
+        *
+        * @return An OutputStream
+        */
+        public OutputStream getProcessOutputStream() throws IOException {
+            synchronized (this) {
+                while ((process == null) && (startException == null)) {
+                    try {
+                        wait();
+                    } catch (InterruptedException e) {
+                        // Do Nothing
+                    }
+                }
+                if (startException != null)
+                    throw startException;
+                return process.getOutputStream();
+            }
+        }
 
-	class JobOutputPipe extends Thread implements AutoCloseable {
-		private final BufferedReader reader;
-		private final PrintWriter writer;
-		private volatile boolean done;
+        /**
+        * Gets the location of the process log file
+        *
+        * @return The location of the log file
+        */
+        public File getLogFile() {
+            return outputLog;
+        }
+    }
 
-		JobOutputPipe(InputStream input, PrintWriter output) {
-			super(threadGroup, "JobOutputPipe");
-			reader = new BufferedReader(new InputStreamReader(input));
-			writer = output;
-			done = false;
-			setDaemon(true);
-		}
+    class JobOutputPipe extends Thread implements AutoCloseable {
+        private final BufferedReader reader;
+        private final PrintWriter writer;
+        private volatile boolean done;
 
-		@Override
-		public void run() {
-			while (!done) {
-				String line;
-				try {
-					line = reader.readLine();
-				} catch (IOException e) {
-					break;
-				}
-				if (line == null)
-					break;
-				if (!line.isEmpty()) {
-					log.debug(line);
-					writer.println(line);
-				}
-			}
-			writer.close();
-		}
+        JobOutputPipe(InputStream input, PrintWriter output) {
+            super(threadGroup, "JobOutputPipe");
+            reader = new BufferedReader(new InputStreamReader(input));
+            writer = output;
+            done = false;
+            setDaemon(true);
+        }
 
-		@Override
-		public void close() {
-			done = true;
-			closeQuietly(reader);
-		}
-	}
+        @Override
+        public void run() {
+            while (!done) {
+                String line;
+                try {
+                    line = reader.readLine();
+                } catch (IOException e) {
+                    break;
+                }
+                if (line == null)
+                    break;
+                if (!line.isEmpty()) {
+                    log.debug(line);
+                    writer.println(line);
+                }
+            }
+            writer.close();
+        }
+
+        @Override
+        public void close() {
+            done = true;
+            closeQuietly(reader);
+        }
+    }
 }
