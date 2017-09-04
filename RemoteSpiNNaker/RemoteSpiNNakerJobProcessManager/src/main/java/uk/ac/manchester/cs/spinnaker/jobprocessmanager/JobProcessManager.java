@@ -172,8 +172,11 @@ public class JobProcessManager {
                 logWriter.stop();
                 log = logWriter.getLog();
             }
-
-            jobManager.setJobError(projectId, job.getId(), error.getMessage(),
+            String message = error.getMessage();
+            if (message == null) {
+                message = "No Error Message";
+            }
+            jobManager.setJobError(projectId, job.getId(), message,
                     log, "", new ArrayList<String>(), new RemoteStackTrace(
                             error));
         } catch (Throwable t) {
@@ -304,7 +307,11 @@ public class JobProcessManager {
         switch (status) {
         case Error:
             Throwable error = process.getError();
-            jobManager.setJobError(projectId, job.getId(), error.getMessage(),
+            String message = error.getMessage();
+            if (message == null) {
+                message = "No Error Message";
+            }
+            jobManager.setJobError(projectId, job.getId(), message,
                     log, workingDirectory.getAbsolutePath(), outputsAsStrings,
                     new RemoteStackTrace(error));
             break;

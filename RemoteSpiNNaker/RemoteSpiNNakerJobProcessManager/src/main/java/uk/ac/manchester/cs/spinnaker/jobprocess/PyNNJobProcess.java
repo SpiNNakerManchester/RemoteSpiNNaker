@@ -156,6 +156,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
                         + exitValue + ")");
             status = Finished;
         } catch (Throwable e) {
+            e.printStackTrace();
             error = e;
             status = Error;
         }
@@ -202,10 +203,10 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             String itemPath = myPath + "/" + subItem.getName();
             for (String item : PROVENANCE_ITEMS_TO_ADD) {
                 if (itemPath.matches(item)) {
-                    if (!provenance.containsValue(item)) {
-                        provenance.put(item, new ArrayList<String>());
+                    if (!provenance.containsKey(itemPath)) {
+                        provenance.put(itemPath, new ArrayList<String>());
                     }
-                    provenance.get(item).add(subItem.getValue());
+                    provenance.get(itemPath).add(subItem.getValue());
                 }
             }
         }
