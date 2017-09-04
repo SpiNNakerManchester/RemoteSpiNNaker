@@ -7,7 +7,7 @@ public class DataItem {
         // Does Nothing
     }
 
-    public DataItem(String url) {
+    public DataItem(final String url) {
         this.url = url;
     }
 
@@ -15,7 +15,7 @@ public class DataItem {
         return url;
     }
 
-    public void setUrl(String url) {
+    public void setUrl(final String url) {
         this.url = url;
     }
 }

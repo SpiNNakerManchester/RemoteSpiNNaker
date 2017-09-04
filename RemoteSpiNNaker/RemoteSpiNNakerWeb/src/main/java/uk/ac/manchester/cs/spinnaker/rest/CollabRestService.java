@@ -12,13 +12,13 @@ import uk.ac.manchester.cs.spinnaker.model.CollabPermissions;
 
 @Path("/collab/v0")
 public interface CollabRestService {
-	@GET
-	@Path("/collab/context/{contextId}")
-	@Produces(APPLICATION_JSON)
-	CollabContext getCollabContext(@PathParam("contextId") String contextId);
+    @GET
+    @Path("/collab/context/{contextId}")
+    @Produces(APPLICATION_JSON)
+    CollabContext getCollabContext(@PathParam("contextId") String contextId);
 
-	@GET
-	@Path("/collab/{id}/permissions")
-	@Produces(APPLICATION_JSON)
-	CollabPermissions getCollabPermissions(@PathParam("id") int id);
+    @GET
+    @Path("/collab/{id}/permissions")
+    @Produces(APPLICATION_JSON)
+    CollabPermissions getCollabPermissions(@PathParam("id") int id);
 }

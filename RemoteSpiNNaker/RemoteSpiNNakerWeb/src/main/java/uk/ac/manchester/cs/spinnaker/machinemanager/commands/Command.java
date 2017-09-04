@@ -6,21 +6,22 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class Command<A> {
-    private String command;
-    private List<A> args = new ArrayList<>();
-	private Map<String, String> kwargs = new HashMap<>();
+    private final String command;
+    private final List<A> args = new ArrayList<>();
+    private final Map<String, String> kwargs = new HashMap<>();
 
-	protected final void addKwArg(String key, Object value) {
-		kwargs.put(key, value.toString());
-	}
+    protected final void addKwArg(final String key, final Object value) {
+        kwargs.put(key, value.toString());
+    }
 
-	@SafeVarargs
-	protected final void addArg(A... values) {
-		for (A value: values)
-			args.add(value);
-	}
+    @SafeVarargs
+    protected final void addArg(final A... values) {
+        for (final A value : values) {
+            args.add(value);
+        }
+    }
 
-	public Command(String command) {
+    public Command(final String command) {
         this.command = command;
     }
 
@@ -32,7 +33,7 @@ public abstract class Command<A> {
         return args;
     }
 
-    public Map<String,String> getKwargs() {
+    public Map<String, String> getKwargs() {
         return kwargs;
     }
 }

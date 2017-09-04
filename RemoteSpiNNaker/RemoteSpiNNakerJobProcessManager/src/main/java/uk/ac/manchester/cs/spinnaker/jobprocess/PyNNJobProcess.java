@@ -36,237 +36,253 @@ import uk.ac.manchester.cs.spinnaker.utils.ThreadUtils;
  * A process for running PyNN jobs
  */
 public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
-	private static final String SECTION = "Machine";
-	private static final String SUBPROCESS_RUNNER = "python";
-	private static final int FINALIZATION_DELAY = 1000;
-	private static final Set<String> IGNORED_EXTENSIONS = new HashSet<>();
-	private static final Set<String> IGNORED_DIRECTORIES = new HashSet<>();
-	private static final Pattern ARGUMENT_FINDER = Pattern
-			.compile("([^\"]\\S*|\".+?\")\\s*");
-	static {
-		IGNORED_EXTENSIONS.add("pyc");
-		IGNORED_DIRECTORIES.add("application_generated_data_files");
-		IGNORED_DIRECTORIES.add("reports");
-	};
+    private static final String SECTION = "Machine";
+    private static final String SUBPROCESS_RUNNER = "python";
+    private static final int FINALIZATION_DELAY = 1000;
+    private static final Set<String> IGNORED_EXTENSIONS = new HashSet<>();
+    private static final Set<String> IGNORED_DIRECTORIES = new HashSet<>();
+    private static final Pattern ARGUMENT_FINDER = Pattern
+            .compile("([^\"]\\S*|\".+?\")\\s*");
+    static {
+        IGNORED_EXTENSIONS.add("pyc");
+        IGNORED_DIRECTORIES.add("application_generated_data_files");
+        IGNORED_DIRECTORIES.add("reports");
+    };
 
-	private File workingDirectory = null;
-	private Status status = null;
-	private Throwable error = null;
-	private List<File> outputs = new ArrayList<>();
-	ThreadGroup threadGroup;
+    private File workingDirectory = null;
+    private Status status = null;
+    private Throwable error = null;
+    private final List<File> outputs = new ArrayList<>();
+    ThreadGroup threadGroup;
 
-	private static Set<File> gatherFiles(File directory) {
-		return new LinkedHashSet<>(listFiles(directory, fileFilter(),
-				directoryFilter()));
-	}
+    private static Set<File> gatherFiles(final File directory) {
+        return new LinkedHashSet<>(
+                listFiles(directory, fileFilter(), directoryFilter()));
+    }
 
-	private static IOFileFilter fileFilter() {
-		return new AbstractFileFilter() {
-			@Override
-			public boolean accept(File file) {
-				return !IGNORED_EXTENSIONS
-						.contains(getExtension(file.getName()));
-			}
-		};
-	}
+    private static IOFileFilter fileFilter() {
+        return new AbstractFileFilter() {
+            @Override
+            public boolean accept(final File file) {
+                return !IGNORED_EXTENSIONS
+                        .contains(getExtension(file.getName()));
+            }
+        };
+    }
 
-	private static IOFileFilter directoryFilter() {
-		return new AbstractFileFilter() {
-			@Override
-			public boolean accept(File file) {
-				return !IGNORED_DIRECTORIES.contains(file.getName());
-			}
-		};
-	}
+    private static IOFileFilter directoryFilter() {
+        return new AbstractFileFilter() {
+            @Override
+            public boolean accept(final File file) {
+                return !IGNORED_DIRECTORIES.contains(file.getName());
+            }
+        };
+    }
 
-	@Override
-	public void execute(String machineUrl, SpinnakerMachine machine,
-			PyNNJobParameters parameters, LogWriter logWriter) {
-		try {
-			status = Running;
-			workingDirectory = new File(parameters.getWorkingDirectory());
+    @Override
+    public void execute(final String machineUrl, final SpinnakerMachine machine,
+            final PyNNJobParameters parameters, final LogWriter logWriter) {
+        try {
+            status = Running;
+            workingDirectory = new File(parameters.getWorkingDirectory());
 
-			// TODO: Deal with hardware configuration
-			File cfgFile = new File(workingDirectory, "spynnaker.cfg");
+            // TODO: Deal with hardware configuration
+            final File cfgFile = new File(workingDirectory, "spynnaker.cfg");
 
-			// Add the details of the machine
-			ConfigParser parser = new ConfigParser();
-			if (cfgFile.exists())
-				parser.read(cfgFile);
+            // Add the details of the machine
+            final ConfigParser parser = new ConfigParser();
+            if (cfgFile.exists()) {
+                parser.read(cfgFile);
+            }
 
-			if (!parser.hasSection(SECTION))
-				parser.addSection(SECTION);
-			if (machine != null) {
-				parser.set(SECTION, "machineName", machine.getMachineName());
-				parser.set(SECTION, "version", machine.getVersion());
-				parser.set(SECTION, "width", machine.getWidth());
-				parser.set(SECTION, "height", machine.getHeight());
-				String bmpDetails = machine.getBmpDetails();
-				if (bmpDetails != null)
-					parser.set(SECTION, "bmp_names", bmpDetails);
-			} else
-				parser.set(SECTION, "remote_spinnaker_url", machineUrl);
-			parser.write(cfgFile);
+            if (!parser.hasSection(SECTION)) {
+                parser.addSection(SECTION);
+            }
+            if (machine != null) {
+                parser.set(SECTION, "machineName", machine.getMachineName());
+                parser.set(SECTION, "version", machine.getVersion());
+                parser.set(SECTION, "width", machine.getWidth());
+                parser.set(SECTION, "height", machine.getHeight());
+                final String bmpDetails = machine.getBmpDetails();
+                if (bmpDetails != null) {
+                    parser.set(SECTION, "bmp_names", bmpDetails);
+                }
+            } else {
+                parser.set(SECTION, "remote_spinnaker_url", machineUrl);
+            }
+            parser.write(cfgFile);
 
-			// Keep existing files to compare to later
-			Set<File> existingFiles = gatherFiles(workingDirectory);
+            // Keep existing files to compare to later
+            final Set<File> existingFiles = gatherFiles(workingDirectory);
 
-			// Execute the program
-			int exitValue = runSubprocess(parameters, logWriter);
+            // Execute the program
+            final int exitValue = runSubprocess(parameters, logWriter);
 
-			// Get any output files
-			Set<File> allFiles = gatherFiles(workingDirectory);
-			for (File file : allFiles)
-				if (!existingFiles.contains(file))
-					outputs.add(file);
+            // Get any output files
+            final Set<File> allFiles = gatherFiles(workingDirectory);
+            for (final File file : allFiles) {
+                if (!existingFiles.contains(file)) {
+                    outputs.add(file);
+                }
+            }
 
-			// If the exit is an error, mark an error
-			if (exitValue > 127)
-				// Useful to distinguish this case
-				throw new Exception("Python exited with signal ("
-						+ (exitValue - 128) + ")");
-			if (exitValue != 0)
-				throw new Exception("Python exited with a non-zero code ("
-						+ exitValue + ")");
-			status = Finished;
-		} catch (Throwable e) {
-			error = e;
-			status = Error;
-		}
-	}
+            // If the exit is an error, mark an error
+            if (exitValue > 127) {
+                // Useful to distinguish this case
+                throw new Exception("Python exited with signal ("
+                        + (exitValue - 128) + ")");
+            }
+            if (exitValue != 0) {
+                throw new Exception("Python exited with a non-zero code ("
+                        + exitValue + ")");
+            }
+            status = Finished;
+        } catch (final Throwable e) {
+            error = e;
+            status = Error;
+        }
+    }
 
-	/** How to actually run a subprocess. */
-	private int runSubprocess(PyNNJobParameters parameters, LogWriter logWriter)
-			throws IOException, InterruptedException {
-		List<String> command = new ArrayList<>();
-		command.add(SUBPROCESS_RUNNER);
+    /** How to actually run a subprocess. */
+    private int runSubprocess(final PyNNJobParameters parameters,
+            final LogWriter logWriter)
+            throws IOException, InterruptedException {
+        final List<String> command = new ArrayList<>();
+        command.add(SUBPROCESS_RUNNER);
 
-		Matcher scriptMatcher = ARGUMENT_FINDER.matcher(parameters.getScript());
-		while (scriptMatcher.find())
-			command.add(scriptMatcher.group(1).replace("{system}", "spiNNaker"));
+        final Matcher scriptMatcher = ARGUMENT_FINDER
+                .matcher(parameters.getScript());
+        while (scriptMatcher.find()) {
+            command.add(
+                    scriptMatcher.group(1).replace("{system}", "spiNNaker"));
+        }
 
-		ProcessBuilder builder = new ProcessBuilder(command);
-		log("Running " + command + " in " + workingDirectory);
-		builder.directory(workingDirectory);
-		builder.redirectErrorStream(true);
-		Process process = builder.start();
+        final ProcessBuilder builder = new ProcessBuilder(command);
+        log("Running " + command + " in " + workingDirectory);
+        builder.directory(workingDirectory);
+        builder.redirectErrorStream(true);
+        final Process process = builder.start();
 
-		// Run a thread to gather the log
-		try (ReaderLogWriter logger = new ReaderLogWriter(
-				process.getInputStream(), logWriter)) {
-			logger.start();
+        // Run a thread to gather the log
+        try (ReaderLogWriter logger = new ReaderLogWriter(
+                process.getInputStream(), logWriter)) {
+            logger.start();
 
-			// Wait for the process to finish
-			return process.waitFor();
-		}
-	}
+            // Wait for the process to finish
+            return process.waitFor();
+        }
+    }
 
-	@Override
-	public Status getStatus() {
-		return status;
-	}
+    @Override
+    public Status getStatus() {
+        return status;
+    }
 
-	@Override
-	public Throwable getError() {
-		return error;
-	}
+    @Override
+    public Throwable getError() {
+        return error;
+    }
 
-	@Override
-	public List<File> getOutputs() {
-		return outputs;
-	}
+    @Override
+    public List<File> getOutputs() {
+        return outputs;
+    }
 
-	@Override
-	public void cleanup() {
-		// Does Nothing
-	}
+    @Override
+    public void cleanup() {
+        // Does Nothing
+    }
 
-	class ReaderLogWriter extends Thread implements AutoCloseable {
-		private final BufferedReader reader;
-		private final LogWriter writer;
+    class ReaderLogWriter extends Thread implements AutoCloseable {
+        private final BufferedReader reader;
+        private final LogWriter writer;
 
-		private boolean running;
+        private boolean running;
 
-		/**
-		 * Creates a new ReaderLogWriter with another reader.
-		 * 
-		 * @param reader
-		 *            The reader to read from
-		 * @param writer
-		 *            The writer to write to
-		 */
-		public ReaderLogWriter(Reader reader, LogWriter writer) {
-			super(threadGroup, "Reader Log Writer");
-			requireNonNull(reader);
-			if (reader instanceof BufferedReader)
-				this.reader = (BufferedReader) reader;
-			else
-				this.reader = new BufferedReader(reader);
-			this.writer = requireNonNull(writer);
-			setDaemon(true);
-		}
+        /**
+         * Creates a new ReaderLogWriter with another reader.
+         *
+         * @param reader
+         *            The reader to read from
+         * @param writer
+         *            The writer to write to
+         */
+        public ReaderLogWriter(final Reader reader, final LogWriter writer) {
+            super(threadGroup, "Reader Log Writer");
+            requireNonNull(reader);
+            if (reader instanceof BufferedReader) {
+                this.reader = (BufferedReader) reader;
+            } else {
+                this.reader = new BufferedReader(reader);
+            }
+            this.writer = requireNonNull(writer);
+            setDaemon(true);
+        }
 
-		/**
-		 * Creates a new ReaderLogWriter with an input stream. This will be
-		 * treated as a text stream using the system encoding.
-		 * 
-		 * @param input
-		 *            The input stream to read from.
-		 * @param writer
-		 *            The writer to write to.
-		 */
-		public ReaderLogWriter(InputStream input, LogWriter writer) {
-			this(new InputStreamReader(input), writer);
-		}
+        /**
+         * Creates a new ReaderLogWriter with an input stream. This will be
+         * treated as a text stream using the system encoding.
+         *
+         * @param input
+         *            The input stream to read from.
+         * @param writer
+         *            The writer to write to.
+         */
+        public ReaderLogWriter(final InputStream input,
+                final LogWriter writer) {
+            this(new InputStreamReader(input), writer);
+        }
 
-		@Override
-		public void run() {
-			try {
-				copyStream();
-			} catch (IOException | RuntimeException e) {
-				return;
-			} finally {
-				synchronized (this) {
-					running = false;
-					notifyAll();
-				}
-			}
-		}
+        @Override
+        public void run() {
+            try {
+                copyStream();
+            } catch (IOException | RuntimeException e) {
+                return;
+            } finally {
+                synchronized (this) {
+                    running = false;
+                    notifyAll();
+                }
+            }
+        }
 
-		@Override
-		public void start() {
-			running = true;
-			super.start();
-		}
+        @Override
+        public void start() {
+            running = true;
+            super.start();
+        }
 
-		private void copyStream() throws IOException {
-			while (!interrupted()) {
-				String line = reader.readLine();
-				if (line == null)
-					return;
-				writer.append(line + "\n");
-			}
-		}
+        private void copyStream() throws IOException {
+            while (!interrupted()) {
+                final String line = reader.readLine();
+                if (line == null) {
+                    return;
+                }
+                writer.append(line + "\n");
+            }
+        }
 
-		/**
-		 * Closes the reader/writer
-		 */
-		@Override
-		public void close() {
-			log("Waiting for log writer to exit...");
+        /**
+         * Closes the reader/writer
+         */
+        @Override
+        public void close() {
+            log("Waiting for log writer to exit...");
 
-			synchronized (this) {
-				try {
-					while (running)
-						wait();
-				} catch (InterruptedException e) {
-					// Does Nothing
-				}
-			}
+            synchronized (this) {
+                try {
+                    while (running) {
+                        wait();
+                    }
+                } catch (final InterruptedException e) {
+                    // Does Nothing
+                }
+            }
 
-			log("Log writer has exited");
-			closeQuietly(reader);
-			ThreadUtils.sleep(FINALIZATION_DELAY);
-		}
-	}
+            log("Log writer has exited");
+            closeQuietly(reader);
+            ThreadUtils.sleep(FINALIZATION_DELAY);
+        }
+    }
 }

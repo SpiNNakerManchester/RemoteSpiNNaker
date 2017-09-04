@@ -39,7 +39,7 @@ public class Job implements QueueNextResponse {
         return code;
     }
 
-    public void setCode(String code) {
+    public void setCode(final String code) {
         this.code = code;
     }
 
@@ -47,7 +47,7 @@ public class Job implements QueueNextResponse {
         return hardwareConfig;
     }
 
-    public void setHardwareConfig(Map<String, Object> hardwareConfig) {
+    public void setHardwareConfig(final Map<String, Object> hardwareConfig) {
         this.hardwareConfig = hardwareConfig;
     }
 
@@ -55,7 +55,7 @@ public class Job implements QueueNextResponse {
         return hardwarePlatform;
     }
 
-    public void setHardwarePlatform(String hardwarePlatform) {
+    public void setHardwarePlatform(final String hardwarePlatform) {
         this.hardwarePlatform = hardwarePlatform;
     }
 
@@ -63,7 +63,7 @@ public class Job implements QueueNextResponse {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(final Integer id) {
         this.id = id;
     }
 
@@ -71,7 +71,7 @@ public class Job implements QueueNextResponse {
         return inputData;
     }
 
-    public void setInputData(List<DataItem> inputData) {
+    public void setInputData(final List<DataItem> inputData) {
         this.inputData = inputData;
     }
 
@@ -79,7 +79,7 @@ public class Job implements QueueNextResponse {
         return outputData;
     }
 
-    public void setOutputData(List<DataItem> outputData) {
+    public void setOutputData(final List<DataItem> outputData) {
         this.outputData = outputData;
     }
 
@@ -87,7 +87,7 @@ public class Job implements QueueNextResponse {
         return collabId;
     }
 
-    public void setCollabId(String collabId) {
+    public void setCollabId(final String collabId) {
         this.collabId = collabId;
     }
 
@@ -95,7 +95,7 @@ public class Job implements QueueNextResponse {
         return resourceUri;
     }
 
-    public void setResourceUri(String resourceUri) {
+    public void setResourceUri(final String resourceUri) {
         this.resourceUri = resourceUri;
     }
 
@@ -103,7 +103,7 @@ public class Job implements QueueNextResponse {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(final String status) {
         this.status = status;
     }
 
@@ -111,7 +111,7 @@ public class Job implements QueueNextResponse {
         return timestampCompletion;
     }
 
-    public void setTimestampCompletion(DateTime timestampCompletion) {
+    public void setTimestampCompletion(final DateTime timestampCompletion) {
         this.timestampCompletion = timestampCompletion;
     }
 
@@ -119,7 +119,7 @@ public class Job implements QueueNextResponse {
         return timestampSubmission;
     }
 
-    public void setTimestampSubmission(DateTime timestampSubmission) {
+    public void setTimestampSubmission(final DateTime timestampSubmission) {
         this.timestampSubmission = timestampSubmission;
     }
 
@@ -127,7 +127,7 @@ public class Job implements QueueNextResponse {
         return command;
     }
 
-    public void setCommand(String command) {
+    public void setCommand(final String command) {
         this.command = command;
     }
 
@@ -135,7 +135,7 @@ public class Job implements QueueNextResponse {
         return userId;
     }
 
-    public void setUserId(String userId) {
+    public void setUserId(final String userId) {
         this.userId = userId;
     }
 
@@ -143,7 +143,7 @@ public class Job implements QueueNextResponse {
         return resourceUsage;
     }
 
-    public void setResourceUsage(long resourceUsage) {
+    public void setResourceUsage(final long resourceUsage) {
         this.resourceUsage = resourceUsage;
     }
 
@@ -151,12 +151,12 @@ public class Job implements QueueNextResponse {
         return provenance;
     }
 
-    public void setProvenance(Object provenance) {
+    public void setProvenance(final Object provenance) {
         this.provenance = provenance;
     }
 
     @JsonAnySetter
-    public void set(String name, Object value) {
+    public void set(final String name, final Object value) {
         System.err.println("Warning: Job contains unexpected item " + name);
         others.put(name, value);
     }

@@ -16,7 +16,7 @@ public class JobState {
         return state;
     }
 
-    public void setState(int state) {
+    public void setState(final int state) {
         this.state = state;
     }
 
@@ -24,7 +24,7 @@ public class JobState {
         return power;
     }
 
-    public void setPower(Boolean power) {
+    public void setPower(final Boolean power) {
         this.power = power;
     }
 
@@ -32,7 +32,7 @@ public class JobState {
         return keepAlive;
     }
 
-    public void setKeepAlive(double keepAlive) {
+    public void setKeepAlive(final double keepAlive) {
         this.keepAlive = keepAlive;
     }
 
@@ -40,7 +40,7 @@ public class JobState {
         return reason;
     }
 
-    public void setReason(String reason) {
+    public void setReason(final String reason) {
         this.reason = reason;
     }
 }

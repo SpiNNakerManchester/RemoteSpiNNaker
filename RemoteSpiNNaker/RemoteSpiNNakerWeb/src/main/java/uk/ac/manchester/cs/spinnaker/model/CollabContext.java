@@ -14,7 +14,7 @@ public class CollabContext {
         return appId;
     }
 
-    public void setAppId(String appId) {
+    public void setAppId(final String appId) {
         this.appId = appId;
     }
 
@@ -22,7 +22,7 @@ public class CollabContext {
         return collab;
     }
 
-    public void setCollab(Collab collab) {
+    public void setCollab(final Collab collab) {
         this.collab = collab;
     }
 
@@ -30,7 +30,7 @@ public class CollabContext {
         return context;
     }
 
-    public void setContext(String context) {
+    public void setContext(final String context) {
         this.context = context;
     }
 
@@ -38,7 +38,7 @@ public class CollabContext {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(final int id) {
         this.id = id;
     }
 
@@ -46,7 +46,7 @@ public class CollabContext {
         return name;
     }
 
-    public void setName(String name) {
+    public void setName(final String name) {
         this.name = name;
     }
 
@@ -54,7 +54,7 @@ public class CollabContext {
         return orderIndex;
     }
 
-    public void setOrderIndex(int orderIndex) {
+    public void setOrderIndex(final int orderIndex) {
         this.orderIndex = orderIndex;
     }
 
@@ -62,7 +62,7 @@ public class CollabContext {
         return parent;
     }
 
-    public void setParent(int parent) {
+    public void setParent(final int parent) {
         this.parent = parent;
     }
 
@@ -70,7 +70,7 @@ public class CollabContext {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(final String type) {
         this.type = type;
     }
 }

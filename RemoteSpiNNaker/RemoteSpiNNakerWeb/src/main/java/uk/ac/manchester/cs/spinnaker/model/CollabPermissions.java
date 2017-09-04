@@ -11,7 +11,7 @@ public class CollabPermissions {
         return delete;
     }
 
-    public void setDelete(boolean delete) {
+    public void setDelete(final boolean delete) {
         this.delete = delete;
     }
 
@@ -20,7 +20,7 @@ public class CollabPermissions {
         return update;
     }
 
-    public void setUpdate(boolean update) {
+    public void setUpdate(final boolean update) {
         this.update = update;
     }
 
