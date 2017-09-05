@@ -7,7 +7,7 @@ public class JobMachineAllocated {
         // Does Nothing
     }
 
-    public JobMachineAllocated(boolean allocated) {
+    public JobMachineAllocated(final boolean allocated) {
         this.allocated = allocated;
     }
 
@@ -15,7 +15,7 @@ public class JobMachineAllocated {
         return this.allocated;
     }
 
-    public void setAllocated(boolean allocated) {
+    public void setAllocated(final boolean allocated) {
         this.allocated = allocated;
     }
 }

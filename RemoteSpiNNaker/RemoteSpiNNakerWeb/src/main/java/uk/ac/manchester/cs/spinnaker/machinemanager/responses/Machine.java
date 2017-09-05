@@ -12,7 +12,7 @@ public class Machine {
         return name;
     }
 
-    public void setName(String name) {
+    public void setName(final String name) {
         this.name = name;
     }
 
@@ -20,7 +20,7 @@ public class Machine {
         return tags;
     }
 
-    public void setTags(List<String> tags) {
+    public void setTags(final List<String> tags) {
         this.tags = tags;
     }
 
@@ -28,7 +28,7 @@ public class Machine {
         return width;
     }
 
-    public void setWidth(int width) {
+    public void setWidth(final int width) {
         this.width = width;
     }
 
@@ -36,7 +36,7 @@ public class Machine {
         return height;
     }
 
-    public void setHeight(int height) {
+    public void setHeight(final int height) {
         this.height = height;
     }
 }

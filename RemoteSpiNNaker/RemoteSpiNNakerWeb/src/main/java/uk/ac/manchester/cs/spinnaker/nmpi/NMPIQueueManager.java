@@ -37,8 +37,8 @@ import uk.ac.manchester.cs.spinnaker.rest.utils.PropertyBasedDeserialiser;
  */
 public class NMPIQueueManager implements Runnable {
     /**
-    * The amount of time to sleep when an empty queue is detected.
-    */
+     * The amount of time to sleep when an empty queue is detected.
+     */
     private static final int EMPTY_QUEUE_SLEEP_MS = 10000;
 
     /** The queue to get jobs from */
@@ -51,7 +51,7 @@ public class NMPIQueueManager implements Runnable {
     private final Map<Integer, Job> jobCache = new HashMap<>();
     /** The log of the job so far */
     private final Map<Integer, NMPILog> jobLog = new HashMap<>();
-    private Logger logger = getLogger(getClass());
+    private final Logger logger = getLogger(getClass());
 
     /** The hardware identifier for the queue */
     @Value("${nmpi.hardware}")
@@ -66,19 +66,21 @@ public class NMPIQueueManager implements Runnable {
     @Value("${nmpi.password}")
     private String nmpiPassword;
     /**
-    * True if the password is an API key, False if the password should be used
-    * to obtain the key
-    */
+     * True if the password is an API key, False if the password should be used
+     * to obtain the key
+     */
     @Value("${nmpi.passwordIsApiKey}")
     private boolean nmpiPasswordIsApiKey;
 
     @PostConstruct
     private void initAPIClient() {
-        CustomJacksonJsonProvider provider = new CustomJacksonJsonProvider();
+        final CustomJacksonJsonProvider provider =
+                new CustomJacksonJsonProvider();
 
         @SuppressWarnings("serial")
-        class QueueResponseDeserialiser extends
-                PropertyBasedDeserialiser<QueueNextResponse> {
+        class QueueResponseDeserialiser
+                extends
+                    PropertyBasedDeserialiser<QueueNextResponse> {
             public QueueResponseDeserialiser() {
                 super(QueueNextResponse.class);
                 register("id", Job.class);
@@ -99,14 +101,14 @@ public class NMPIQueueManager implements Runnable {
     }
 
     /**
-    * Gets a job from the cache, or from the server if the job is not in the
-    * cache
-    *
-    * @param id
-    *            The id of the job
-    * @return The job
-    */
-    private Job getJob(int id) {
+     * Gets a job from the cache, or from the server if the job is not in the
+     * cache
+     *
+     * @param id
+     *            The id of the job
+     * @return The job
+     */
+    private Job getJob(final int id) {
         synchronized (jobCache) {
             Job job = jobCache.get(id);
             if (job == null) {
@@ -118,12 +120,12 @@ public class NMPIQueueManager implements Runnable {
     }
 
     /**
-    * Register a listener against the manager for new jobs
-    *
-    * @param listener
-    *            The listener to register
-    */
-    public void addListener(NMPIQueueListener listener) {
+     * Register a listener against the manager for new jobs
+     *
+     * @param listener
+     *            The listener to register
+     */
+    public void addListener(final NMPIQueueListener listener) {
         listeners.add(listener);
     }
 
@@ -133,53 +135,55 @@ public class NMPIQueueManager implements Runnable {
             try {
                 // logger.debug("Getting next job");
                 processResponse(queue.getNextJob(hardware));
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 logger.error("Error in getting next job", e);
                 sleep(EMPTY_QUEUE_SLEEP_MS);
             }
         }
     }
 
-    private void processResponse(QueueNextResponse response)
+    private void processResponse(final QueueNextResponse response)
             throws MalformedURLException {
-        if (response instanceof QueueEmpty)
+        if (response instanceof QueueEmpty) {
             sleep(EMPTY_QUEUE_SLEEP_MS);
-        else if (response instanceof Job)
+        } else if (response instanceof Job) {
             processResponse((Job) response);
-        else
+        } else {
             throw new IllegalStateException();
+        }
     }
 
-    private void processResponse(Job job) throws MalformedURLException {
+    private void processResponse(final Job job) throws MalformedURLException {
         synchronized (jobCache) {
             jobCache.put(job.getId(), job);
         }
         logger.debug("Job " + job.getId() + " received");
         try {
-            for (NMPIQueueListener listener : listeners)
+            for (final NMPIQueueListener listener : listeners) {
                 listener.addJob(job);
+            }
             logger.debug("Setting job status to queued");
-            job.setTimestampSubmission(job.getTimestampSubmission()
-                    .withZoneRetainFields(UTC));
+            job.setTimestampSubmission(
+                    job.getTimestampSubmission().withZoneRetainFields(UTC));
             job.setTimestampCompletion(null);
             job.setStatus("queued");
             logger.debug("Updating job status on server");
             queue.updateJob(job.getId(), job);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             logger.error("Error in executing job", e);
             setJobError(job.getId(), null, null, e, 0, null);
         }
     }
 
     /**
-    * Appends log messages to the log
-    *
-    * @param id
-    *            The id of the job
-    * @param logToAppend
-    *            The messages to append
-    */
-    public void appendJobLog(int id, String logToAppend) {
+     * Appends log messages to the log
+     *
+     * @param id
+     *            The id of the job
+     * @param logToAppend
+     *            The messages to append
+     */
+    public void appendJobLog(final int id, final String logToAppend) {
         NMPILog existingLog = jobLog.get(id);
         if (existingLog == null) {
             existingLog = new NMPILog();
@@ -190,35 +194,36 @@ public class NMPIQueueManager implements Runnable {
         queue.updateLog(id, existingLog);
     }
 
-    public void setJobRunning(int id) {
+    public void setJobRunning(final int id) {
         logger.debug("Job " + id + " is running");
-        Job job = getJob(id);
+        final Job job = getJob(id);
         job.setStatus("running");
         logger.debug("Updating job status on server");
         queue.updateJob(id, job);
     }
 
     /**
-    * Marks a job as finished successfully
-    *
-    * @param id
-    *            The id of the job
-    * @param logToAppend
-    *            Any additional log messages to append to the existing log
-    *            (null if none)
-    * @param outputs
-    *            The outputs of the job (null if none)
-    * @throws MalformedURLException
-    */
-    public void setJobFinished(int id, String logToAppend,
-            List<DataItem> outputs, long resourceUsage,
-            Map<String, String> provenance) throws MalformedURLException {
+     * Marks a job as finished successfully
+     *
+     * @param id
+     *            The id of the job
+     * @param logToAppend
+     *            Any additional log messages to append to the existing log
+     *            (null if none)
+     * @param outputs
+     *            The outputs of the job (null if none)
+     * @throws MalformedURLException
+     */
+    public void setJobFinished(final int id, final String logToAppend,
+            final List<DataItem> outputs, final long resourceUsage,
+            final Map<String, String> provenance) throws MalformedURLException {
         logger.debug("Job " + id + " is finished");
 
-        if (logToAppend != null)
+        if (logToAppend != null) {
             appendJobLog(id, logToAppend);
+        }
 
-        Job job = getJob(id);
+        final Job job = getJob(id);
         job.setStatus("finished");
         job.setOutputData(outputs);
         job.setTimestampCompletion(new DateTime(UTC));
@@ -230,35 +235,38 @@ public class NMPIQueueManager implements Runnable {
     }
 
     /**
-    * Marks a job as finished with an error
-    *
-    * @param id
-    *            The id of the job
-    * @param logToAppend
-    *            Any additional log messages to append to the existing log
-    *            (null if none)
-    * @param outputs
-    *            Any outputs generated, or null if none
-    * @param error
-    *            The error details
-    * @throws MalformedURLException
-    */
-    public void setJobError(int id, String logToAppend, List<DataItem> outputs,
-            Throwable error, long resourceUsage, Map<String, String> provenance)
+     * Marks a job as finished with an error
+     *
+     * @param id
+     *            The id of the job
+     * @param logToAppend
+     *            Any additional log messages to append to the existing log
+     *            (null if none)
+     * @param outputs
+     *            Any outputs generated, or null if none
+     * @param error
+     *            The error details
+     * @throws MalformedURLException
+     */
+    public void setJobError(final int id, final String logToAppend,
+            final List<DataItem> outputs, final Throwable error,
+            final long resourceUsage, final Map<String, String> provenance)
             throws MalformedURLException {
         logger.debug("Job " + id + " finished with an error");
-        StringWriter errors = new StringWriter();
+        final StringWriter errors = new StringWriter();
         error.printStackTrace(new PrintWriter(errors));
-        StringBuilder logMessage = new StringBuilder();
-        if (logToAppend != null)
+        final StringBuilder logMessage = new StringBuilder();
+        if (logToAppend != null) {
             logMessage.append(logToAppend);
-        if (jobLog.containsKey(id) || logMessage.length() > 0)
+        }
+        if (jobLog.containsKey(id) || (logMessage.length() > 0)) {
             logMessage.append("\n\n==================\n");
+        }
         logMessage.append("Error:\n");
         logMessage.append(errors.toString());
         appendJobLog(id, logMessage.toString());
 
-        Job job = getJob(id);
+        final Job job = getJob(id);
         job.setStatus("error");
         job.setTimestampCompletion(new DateTime(UTC));
         job.setOutputData(outputs);
@@ -270,8 +278,8 @@ public class NMPIQueueManager implements Runnable {
     }
 
     /**
-    * Close the manager
-    */
+     * Close the manager
+     */
     public void close() {
         done = true;
     }

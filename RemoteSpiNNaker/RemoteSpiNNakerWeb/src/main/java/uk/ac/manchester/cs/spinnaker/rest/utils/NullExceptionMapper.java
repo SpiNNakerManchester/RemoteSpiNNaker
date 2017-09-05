@@ -11,20 +11,22 @@ import org.slf4j.Logger;
 
 /**
  * Convert NPEs into complaints about their most likely causes, bad inputs.
- * 
+ *
  * @author Donal Fellows
  */
 @Provider
-public class NullExceptionMapper implements
-		ExceptionMapper<NullPointerException> {
-	private Logger log = getLogger(getClass());
+public class NullExceptionMapper
+        implements
+            ExceptionMapper<NullPointerException> {
+    private final Logger log = getLogger(getClass());
 
-	@Override
-	public Response toResponse(NullPointerException exception) {
-		String msg = exception.getMessage();
-		if (msg == null || msg.isEmpty())
-			msg = "bad parameter";
-		log.info("trapped exception in service method", exception);
-		return status(400).entity(msg).build();
-	}
+    @Override
+    public Response toResponse(final NullPointerException exception) {
+        String msg = exception.getMessage();
+        if ((msg == null) || msg.isEmpty()) {
+            msg = "bad parameter";
+        }
+        log.info("trapped exception in service method", exception);
+        return status(400).entity(msg).build();
+    }
 }

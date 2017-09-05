@@ -18,8 +18,8 @@ public class PyNNJobParameters implements JobParameters {
         // Does Nothing
     }
 
-    public PyNNJobParameters(String workingDirectory, String script,
-            Map<String, Object> hardwareConfiguration) {
+    public PyNNJobParameters(final String workingDirectory, final String script,
+            final Map<String, Object> hardwareConfiguration) {
         this.workingDirectory = workingDirectory;
         this.script = script;
         this.hardwareConfiguration = hardwareConfiguration;
@@ -29,7 +29,7 @@ public class PyNNJobParameters implements JobParameters {
         return workingDirectory;
     }
 
-    public void setWorkingDirectory(String workingDirectory) {
+    public void setWorkingDirectory(final String workingDirectory) {
         this.workingDirectory = workingDirectory;
     }
 
@@ -37,7 +37,7 @@ public class PyNNJobParameters implements JobParameters {
         return script;
     }
 
-    public void setScript(String script) {
+    public void setScript(final String script) {
         this.script = script;
     }
 
@@ -46,7 +46,7 @@ public class PyNNJobParameters implements JobParameters {
     }
 
     public void setHardwareConfiguration(
-            Map<String, Object> hardwareConfiguration) {
+            final Map<String, Object> hardwareConfiguration) {
         this.hardwareConfiguration = hardwareConfiguration;
     }
 }

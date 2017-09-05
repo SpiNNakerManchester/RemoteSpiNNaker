@@ -10,17 +10,19 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlRootElement(name="provenance_data_items")
+@XmlRootElement(name = "provenance_data_items")
 public class ProvenanceDataItems {
 
     @XmlAttribute
     private String name;
 
-    @XmlElement(name="provenance_data_items")
-    private List<ProvenanceDataItems> provenanceDataItems = new ArrayList<>();
+    @XmlElement(name = "provenance_data_items")
+    private final List<ProvenanceDataItems> provenanceDataItems =
+            new ArrayList<>();
 
-    @XmlElement(name="provenance_data_item")
-    private List<ProvenanceDataItem> provenanceDataItem = new ArrayList<>();
+    @XmlElement(name = "provenance_data_item")
+    private final List<ProvenanceDataItem> provenanceDataItem =
+            new ArrayList<>();
 
     public String getName() {
         return name;

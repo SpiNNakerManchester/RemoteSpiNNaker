@@ -15,34 +15,37 @@ import uk.ac.manchester.cs.spinnaker.job.pynn.PyNNJobParameters;
  * itself as a PyNN script.
  */
 class DirectPyNNJobParametersFactory extends JobParametersFactory {
-	private static final String ENCODING = "UTF-8";
+    private static final String ENCODING = "UTF-8";
 
-	@Override
-	public JobParameters getJobParameters(Job job, File workingDirectory)
-			throws UnsupportedJobException, JobParametersFactoryException {
-		if (!job.getCode().contains("import"))
-			throw new UnsupportedJobException();
+    @Override
+    public JobParameters getJobParameters(final Job job,
+            final File workingDirectory)
+            throws UnsupportedJobException, JobParametersFactoryException {
+        if (!job.getCode().contains("import")) {
+            throw new UnsupportedJobException();
+        }
 
-		try {
-			return constructParameters(job, workingDirectory);
-		} catch (IOException e) {
-			throw new JobParametersFactoryException("Error storing script", e);
-		} catch (Throwable e) {
-			throw new JobParametersFactoryException(
-					"General error with PyNN Script", e);
-		}
-	}
+        try {
+            return constructParameters(job, workingDirectory);
+        } catch (final IOException e) {
+            throw new JobParametersFactoryException("Error storing script", e);
+        } catch (final Throwable e) {
+            throw new JobParametersFactoryException(
+                    "General error with PyNN Script", e);
+        }
+    }
 
-	/** Constructs the parameters by writing the script into a local file. */
-	private JobParameters constructParameters(Job job, File workingDirectory)
-			throws FileNotFoundException, UnsupportedEncodingException {
-		File scriptFile = new File(workingDirectory, DEFAULT_SCRIPT_NAME);
-		PrintWriter writer = new PrintWriter(scriptFile, ENCODING);
-		writer.print(job.getCode());
-		writer.close();
+    /** Constructs the parameters by writing the script into a local file. */
+    private JobParameters constructParameters(final Job job,
+            final File workingDirectory)
+            throws FileNotFoundException, UnsupportedEncodingException {
+        final File scriptFile = new File(workingDirectory, DEFAULT_SCRIPT_NAME);
+        final PrintWriter writer = new PrintWriter(scriptFile, ENCODING);
+        writer.print(job.getCode());
+        writer.close();
 
-		return new PyNNJobParameters(workingDirectory.getAbsolutePath(),
-				DEFAULT_SCRIPT_NAME + SYSTEM_ARG, job.getHardwareConfig());
-	}
+        return new PyNNJobParameters(workingDirectory.getAbsolutePath(),
+                DEFAULT_SCRIPT_NAME + SYSTEM_ARG, job.getHardwareConfig());
+    }
 
 }

@@ -32,6 +32,9 @@ import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+
 import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
 import uk.ac.manchester.cs.spinnaker.machinemanager.commands.Command;
 import uk.ac.manchester.cs.spinnaker.machinemanager.commands.CreateJobCommand;
@@ -51,496 +54,521 @@ import uk.ac.manchester.cs.spinnaker.machinemanager.responses.ReturnResponse;
 import uk.ac.manchester.cs.spinnaker.rest.utils.PropertyBasedDeserialiser;
 import uk.ac.manchester.cs.spinnaker.utils.ThreadUtils;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-
 public class SpallocMachineManagerImpl implements MachineManager, Runnable {
-	private static final String MACHINE_VERSION = "5";
-	private static final String DEFAULT_TAG = "default";
+    private static final String MACHINE_VERSION = "5";
+    private static final String DEFAULT_TAG = "default";
 
-	public interface MachineNotificationReceiver {
-		/**
-		 * Indicates that a machine is no longer allocated
-		 * 
-		 * @param machine
-		 *            The machine that is no longer allocated
-		 */
-		void machineUnallocated(SpinnakerMachine machine);
-	}
+    public interface MachineNotificationReceiver {
+        /**
+         * Indicates that a machine is no longer allocated
+         *
+         * @param machine
+         *            The machine that is no longer allocated
+         */
+        void machineUnallocated(SpinnakerMachine machine);
+    }
 
     @Value("${spalloc.server}")
-	private String ipAddress;
+    private String ipAddress;
     @Value("${spalloc.port}")
-	private int port;
+    private int port;
     @Value("${spalloc.user.name}")
-	private String owner;
+    private String owner;
 
-	private ObjectMapper mapper = new ObjectMapper();
-	private Map<Integer, SpinnakerMachine> machinesAllocated = new HashMap<>();
-	private Map<SpinnakerMachine, Integer> jobByMachine = new HashMap<>();
-	private Map<Integer, JobState> machineState = new HashMap<>();
-	private Map<Integer, MachineNotificationReceiver> callbacks = new HashMap<>();
-	private Logger logger = getLogger(getClass());
-	private Comms comms = new Comms();
+    private final ObjectMapper mapper = new ObjectMapper();
+    private final Map<Integer, SpinnakerMachine> machinesAllocated =
+            new HashMap<>();
+    private final Map<SpinnakerMachine, Integer> jobByMachine = new HashMap<>();
+    private final Map<Integer, JobState> machineState = new HashMap<>();
+    private final Map<Integer, MachineNotificationReceiver> callbacks =
+            new HashMap<>();
+    private final Logger logger = getLogger(getClass());
+    private final Comms comms = new Comms();
 
-	private volatile boolean done = false;
-	private MachineNotificationReceiver callback = null;
+    private volatile boolean done = false;
+    private final MachineNotificationReceiver callback = null;
 
-	@SuppressWarnings("serial")
-	static private class ResponseBasedDeserializer extends
-			PropertyBasedDeserialiser<Response> {
-		ResponseBasedDeserializer() {
-			super(Response.class);
-			register("jobs_changed", JobsChangedResponse.class);
-			register("return", ReturnResponse.class);
-		}
-	}
+    @SuppressWarnings("serial")
+    static private class ResponseBasedDeserializer
+            extends
+                PropertyBasedDeserialiser<Response> {
+        ResponseBasedDeserializer() {
+            super(Response.class);
+            register("jobs_changed", JobsChangedResponse.class);
+            register("return", ReturnResponse.class);
+        }
+    }
 
-	public SpallocMachineManagerImpl() {
-		SimpleModule module = new SimpleModule();
-		module.addDeserializer(Response.class, new ResponseBasedDeserializer());
-		mapper.registerModule(module);
-		mapper.setPropertyNamingStrategy(CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES);
-		mapper.configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
-	}
+    public SpallocMachineManagerImpl() {
+        final SimpleModule module = new SimpleModule();
+        module.addDeserializer(Response.class, new ResponseBasedDeserializer());
+        mapper.registerModule(module);
+        mapper.setPropertyNamingStrategy(
+                CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES);
+        mapper.configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
+    }
 
-	ScheduledExecutorService scheduler;
+    ScheduledExecutorService scheduler;
 
-	@PostConstruct
-	void startThreads() {
-		final ThreadGroup group = new ThreadGroup("Spalloc");
-		scheduler = newScheduledThreadPool(1, new ThreadFactory() {
-			@Override
-			public Thread newThread(Runnable r) {
-				return new Thread(group, r, "Spalloc Keep Alive Handler");
-			}
-		});
+    @PostConstruct
+    void startThreads() {
+        final ThreadGroup group = new ThreadGroup("Spalloc");
+        scheduler = newScheduledThreadPool(1, new ThreadFactory() {
+            @Override
+            public Thread newThread(final Runnable r) {
+                return new Thread(group, r, "Spalloc Keep Alive Handler");
+            }
+        });
 
-		new Thread(group, this, "Spalloc Comms Interface").start();
+        new Thread(group, this, "Spalloc Comms Interface").start();
 
-		Thread t = new Thread(group, new Runnable() {
-			@Override
-			public void run() {
-				updateStateOfJobs();
-			}
-		}, "Spalloc JobState Update Notification Handler");
-		t.setDaemon(true);
-		t.start();
+        final Thread t = new Thread(group, new Runnable() {
+            @Override
+            public void run() {
+                updateStateOfJobs();
+            }
+        }, "Spalloc JobState Update Notification Handler");
+        t.setDaemon(true);
+        t.start();
 
-		scheduler.scheduleAtFixedRate(new Runnable() {
-			@Override
-			public void run() {
-				keepAllJobsAlive();
-			}
-		}, 5, 5, SECONDS);
-	}
+        scheduler.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                keepAllJobsAlive();
+            }
+        }, 5, 5, SECONDS);
+    }
 
-	// ------------------------------ COMMS ------------------------------
+    // ------------------------------ COMMS ------------------------------
 
-	private static boolean waitfor(Object obj) {
-		try {
-			obj.wait();
-			return false;
-		} catch (InterruptedException e) {
-			return true;
-		}
-	}
+    private static boolean waitfor(final Object obj) {
+        try {
+            obj.wait();
+            return false;
+        } catch (final InterruptedException e) {
+            return true;
+        }
+    }
 
-	class Comms {
-		private final BlockingQueue<ReturnResponse> responses = new LinkedBlockingQueue<>();
-		private final BlockingQueue<JobsChangedResponse> notifications = new LinkedBlockingQueue<>();
-		private Socket socket;
-		private BufferedReader reader;
-		private PrintWriter writer;
-		private volatile boolean connected = false;
+    class Comms {
+        private final BlockingQueue<ReturnResponse> responses =
+                new LinkedBlockingQueue<>();
+        private final BlockingQueue<JobsChangedResponse> notifications =
+                new LinkedBlockingQueue<>();
+        private Socket socket;
+        private BufferedReader reader;
+        private PrintWriter writer;
+        private volatile boolean connected = false;
 
-		private <T> T getNextResponse(Class<T> responseType) throws IOException {
-			ReturnResponse response;
-			try {
-				response = responses.take();
-			} catch (InterruptedException e) {
-				return null;
-			}
-			if (responseType == null)
-				return null;
-			return mapper.readValue(response.getReturnValue(), responseType);
-		}
+        private <T> T getNextResponse(final Class<T> responseType)
+                throws IOException {
+            ReturnResponse response;
+            try {
+                response = responses.take();
+            } catch (final InterruptedException e) {
+                return null;
+            }
+            if (responseType == null) {
+                return null;
+            }
+            return mapper.readValue(response.getReturnValue(), responseType);
+        }
 
-		private synchronized void waitForConnection() {
-			while (!connected) {
-				logger.debug("Waiting for connection");
-				if (waitfor(this))
-					break;
-			}
-		}
+        private synchronized void waitForConnection() {
+            while (!connected) {
+                logger.debug("Waiting for connection");
+                if (waitfor(this)) {
+                    break;
+                }
+            }
+        }
 
-		private void writeRequest(Command<?> request) throws IOException {
-			logger.trace("Sending message of type " + request.getCommand());
-			writer.println(mapper.writeValueAsString(request));
-			writer.flush();
-		}
+        private void writeRequest(final Command<?> request) throws IOException {
+            logger.trace("Sending message of type " + request.getCommand());
+            writer.println(mapper.writeValueAsString(request));
+            writer.flush();
+        }
 
-		private void readResponse() throws IOException {
-			// Note, assumes one response per line
-			String line = reader.readLine();
-			if (line == null) {
-				synchronized (this) {
-					connected = false;
-					notifyAll();
-				}
-				return;
-			}
+        private void readResponse() throws IOException {
+            // Note, assumes one response per line
+            final String line = reader.readLine();
+            if (line == null) {
+                synchronized (this) {
+                    connected = false;
+                    notifyAll();
+                }
+                return;
+            }
 
-			logger.trace("Received response: " + line);
-			Response response = mapper.readValue(line, Response.class);
-			logger.trace("Received response of type " + response);
-			if (response instanceof ReturnResponse)
-				responses.offer((ReturnResponse) response);
-			else if (response instanceof JobsChangedResponse)
-				notifications.offer((JobsChangedResponse) response);
-			else
-				logger.error("Unrecognized response: " + response);
-		}
+            logger.trace("Received response: " + line);
+            final Response response = mapper.readValue(line, Response.class);
+            logger.trace("Received response of type " + response);
+            if (response instanceof ReturnResponse) {
+                responses.offer((ReturnResponse) response);
+            } else if (response instanceof JobsChangedResponse) {
+                notifications.offer((JobsChangedResponse) response);
+            } else {
+                logger.error("Unrecognized response: " + response);
+            }
+        }
 
-		public void mainLoop() {
-			while (!done) {
-				try {
-					connect();
-				} catch (IOException e) {
-					if (!done)
-						logger.error("Could not connect to machine server", e);
-				}
-				try {
-					while (connected)
-						readResponse();
-				} catch (IOException e) {
-					logger.error("Error receiving", e);
-					if (!done)
-						disconnect();
-				}
-				if (!done) {
-					logger.warn("Disconnected from machine server...");
-					sleep(1000);
-				}
-			}
-		}
+        public void mainLoop() {
+            while (!done) {
+                try {
+                    connect();
+                } catch (final IOException e) {
+                    if (!done) {
+                        logger.error("Could not connect to machine server", e);
+                    }
+                }
+                try {
+                    while (connected) {
+                        readResponse();
+                    }
+                } catch (final IOException e) {
+                    logger.error("Error receiving", e);
+                    if (!done) {
+                        disconnect();
+                    }
+                }
+                if (!done) {
+                    logger.warn("Disconnected from machine server...");
+                    sleep(1000);
+                }
+            }
+        }
 
-		public synchronized void connect() throws IOException {
-			socket = new Socket(ipAddress, port);
-			reader = new BufferedReader(new InputStreamReader(
-					socket.getInputStream()));
-			writer = new PrintWriter(socket.getOutputStream());
+        public synchronized void connect() throws IOException {
+            socket = new Socket(ipAddress, port);
+            reader = new BufferedReader(
+                    new InputStreamReader(socket.getInputStream()));
+            writer = new PrintWriter(socket.getOutputStream());
 
-			connected = true;
-			// Send an empty JCR over
-			notifications.offer(new JobsChangedResponse());
-			notifyAll();
-		}
+            connected = true;
+            // Send an empty JCR over
+            notifications.offer(new JobsChangedResponse());
+            notifyAll();
+        }
 
-		public void disconnect() {
-			connected = false;
-			closeQuietly(writer);
-			closeQuietly(reader);
-			closeQuietly(socket);
-		}
+        public void disconnect() {
+            connected = false;
+            closeQuietly(writer);
+            closeQuietly(reader);
+            closeQuietly(socket);
+        }
 
-		public <T> T sendRequest(Command<?> request, Class<T> responseType)
-				throws IOException {
-			synchronized (SpallocMachineManagerImpl.this) {
-				waitForConnection();
-				writeRequest(request);
-				return getNextResponse(responseType);
-			}
-		}
+        public <T> T sendRequest(final Command<?> request,
+                final Class<T> responseType) throws IOException {
+            synchronized (SpallocMachineManagerImpl.this) {
+                waitForConnection();
+                writeRequest(request);
+                return getNextResponse(responseType);
+            }
+        }
 
-		public void sendRequest(Command<?> request) throws IOException {
-			synchronized (SpallocMachineManagerImpl.this) {
-				waitForConnection();
-				writeRequest(request);
-				getNextResponse(null);
-			}
-		}
+        public void sendRequest(final Command<?> request) throws IOException {
+            synchronized (SpallocMachineManagerImpl.this) {
+                waitForConnection();
+                writeRequest(request);
+                getNextResponse(null);
+            }
+        }
 
-		public List<Integer> getJobsChanged() throws InterruptedException {
-			return notifications.take().getJobsChanged();
-		}
-	}
+        public List<Integer> getJobsChanged() throws InterruptedException {
+            return notifications.take().getJobsChanged();
+        }
+    }
 
-	@Override
-	public void close() {
-		done = true;
-		comms.disconnect();
-	}
+    @Override
+    public void close() {
+        done = true;
+        comms.disconnect();
+    }
 
-	@Override
-	public void run() {
-		try {
-			comms.mainLoop();
-		} finally {
-			scheduler.shutdownNow();
-		}
-	}
+    @Override
+    public void run() {
+        try {
+            comms.mainLoop();
+        } finally {
+            scheduler.shutdownNow();
+        }
+    }
 
-	// ------------------------------ WIRE Job ------------------------------
+    // ------------------------------ WIRE Job ------------------------------
 
-	class Job {
-		final int id;
+    class Job {
+        final int id;
 
-		Job(int jobId) {
-			this.id = jobId;
-		}
+        Job(final int jobId) {
+            this.id = jobId;
+        }
 
-		JobMachineInfo getMachineInfo() throws IOException {
-			return comms.sendRequest(new GetJobMachineInfoCommand(id),
-					JobMachineInfo.class);
-		}
+        JobMachineInfo getMachineInfo() throws IOException {
+            return comms.sendRequest(new GetJobMachineInfoCommand(id),
+                    JobMachineInfo.class);
+        }
 
-		JobState getState() throws IOException {
-			return comms
-					.sendRequest(new GetJobStateCommand(id), JobState.class);
-		}
+        JobState getState() throws IOException {
+            return comms.sendRequest(new GetJobStateCommand(id),
+                    JobState.class);
+        }
 
-		void notify(boolean enable) throws IOException {
-			if (enable)
-				comms.sendRequest(new NotifyJobCommand(id));
-			else
-				comms.sendRequest(new NoNotifyJobCommand(id));
-		}
+        void notify(final boolean enable) throws IOException {
+            if (enable) {
+                comms.sendRequest(new NotifyJobCommand(id));
+            } else {
+                comms.sendRequest(new NoNotifyJobCommand(id));
+            }
+        }
 
-		void keepAlive() throws IOException {
-			comms.sendRequest(new JobKeepAliveCommand(id));
-		}
+        void keepAlive() throws IOException {
+            comms.sendRequest(new JobKeepAliveCommand(id));
+        }
 
-		void destroy() throws IOException {
-			comms.sendRequest(new DestroyJobCommand(id));
-		}
-	}
+        void destroy() throws IOException {
+            comms.sendRequest(new DestroyJobCommand(id));
+        }
+    }
 
-	Machine[] listMachines() throws IOException {
-		return comms.sendRequest(new ListMachinesCommand(), Machine[].class);
-	}
+    Machine[] listMachines() throws IOException {
+        return comms.sendRequest(new ListMachinesCommand(), Machine[].class);
+    }
 
-	Job createJob(int nBoards) throws IOException {
-		return new Job(comms.sendRequest(new CreateJobCommand(nBoards, owner),
-				Integer.class));
-	}
+    Job createJob(final int nBoards) throws IOException {
+        return new Job(comms.sendRequest(new CreateJobCommand(nBoards, owner),
+                Integer.class));
+    }
 
-	// ------------------------------ Job ------------------------------
+    // ------------------------------ Job ------------------------------
 
-	private void updateJobState(Job job) throws IOException {
-		logger.debug("Getting state of " + job.id);
-		JobState state = job.getState();
-		logger.debug("Job " + job + " is in state " + state.getState());
-		synchronized (machineState) {
-			machineState.put(job.id, state);
-			machineState.notifyAll();
-		}
+    private void updateJobState(final Job job) throws IOException {
+        logger.debug("Getting state of " + job.id);
+        final JobState state = job.getState();
+        logger.debug("Job " + job + " is in state " + state.getState());
+        synchronized (machineState) {
+            machineState.put(job.id, state);
+            machineState.notifyAll();
+        }
 
-		if (state.getState() == DESTROYED) {
-			SpinnakerMachine machine = machinesAllocated.remove(job);
-			if (machine == null) {
-				logger.error("Unrecognized job: " + job);
-				return;
-			}
-			jobByMachine.remove(machine);
-			MachineNotificationReceiver callback = callbacks.get(job);
-			if (callback != null)
-				callback.machineUnallocated(machine);
-		}
-	}
+        if (state.getState() == DESTROYED) {
+            final SpinnakerMachine machine = machinesAllocated.remove(job);
+            if (machine == null) {
+                logger.error("Unrecognized job: " + job);
+                return;
+            }
+            jobByMachine.remove(machine);
+            final MachineNotificationReceiver callback = callbacks.get(job);
+            if (callback != null) {
+                callback.machineUnallocated(machine);
+            }
+        }
+    }
 
-	private SpinnakerMachine getMachineForJob(Job job) throws IOException {
-		JobMachineInfo info = job.getMachineInfo();
-		return new SpinnakerMachine(info.getConnections().get(0).getHostname(),
-				MACHINE_VERSION, info.getWidth(), info.getHeight(), 1, null);
-	}
+    private SpinnakerMachine getMachineForJob(final Job job)
+            throws IOException {
+        final JobMachineInfo info = job.getMachineInfo();
+        return new SpinnakerMachine(info.getConnections().get(0).getHostname(),
+                MACHINE_VERSION, info.getWidth(), info.getHeight(), 1, null);
+    }
 
-	private JobState waitForStates(Job job, Integer... states) {
-		Set<Integer> set = new HashSet<>(asList(states));
-		synchronized (machineState) {
-			while (!machineState.containsKey(job.id)
-					|| !set.contains(machineState.get(job.id).getState())) {
-				logger.debug("Waiting for job " + job.id + " to get to one of "
-						+ states);
-				if (waitfor(machineState))
-					return null;
-			}
-			return machineState.get(job.id);
-		}
-	}
+    private JobState waitForStates(final Job job, final Integer... states) {
+        final Set<Integer> set = new HashSet<>(asList(states));
+        synchronized (machineState) {
+            while (!machineState.containsKey(job.id)
+                    || !set.contains(machineState.get(job.id).getState())) {
+                logger.debug("Waiting for job " + job.id + " to get to one of "
+                        + states);
+                if (waitfor(machineState)) {
+                    return null;
+                }
+            }
+            return machineState.get(job.id);
+        }
+    }
 
-	private static int MACHINE_WIDTH_FACTOR = 12;
-	private static int MACHINE_HEIGHT_FACTOR = 12;
+    private static int MACHINE_WIDTH_FACTOR = 12;
+    private static int MACHINE_HEIGHT_FACTOR = 12;
 
-	@Override
-	public List<SpinnakerMachine> getMachines() {
-		try {
-			List<SpinnakerMachine> machines = new ArrayList<>();
-			for (Machine machine : listMachines())
-				if (machine.getTags().contains(DEFAULT_TAG))
-					machines.add(new SpinnakerMachine(machine.getName(),
-							MACHINE_VERSION, machine.getWidth()
-									* MACHINE_WIDTH_FACTOR, machine.getHeight()
-									* MACHINE_HEIGHT_FACTOR, machine.getWidth()
-									* machine.getHeight(), null));
-			return machines;
-		} catch (IOException e) {
-			logger.error("Error getting machines", e);
-			return null;
-		}
-	}
+    @Override
+    public List<SpinnakerMachine> getMachines() {
+        try {
+            final List<SpinnakerMachine> machines = new ArrayList<>();
+            for (final Machine machine : listMachines()) {
+                if (machine.getTags().contains(DEFAULT_TAG)) {
+                    machines.add(new SpinnakerMachine(machine.getName(),
+                            MACHINE_VERSION,
+                            machine.getWidth() * MACHINE_WIDTH_FACTOR,
+                            machine.getHeight() * MACHINE_HEIGHT_FACTOR,
+                            machine.getWidth() * machine.getHeight(), null));
+                }
+            }
+            return machines;
+        } catch (final IOException e) {
+            logger.error("Error getting machines", e);
+            return null;
+        }
+    }
 
-	@Override
-	public SpinnakerMachine getNextAvailableMachine(int nBoards) {
-		Job job = null;
-		SpinnakerMachine machineAllocated = null;
+    @Override
+    public SpinnakerMachine getNextAvailableMachine(final int nBoards) {
+        Job job = null;
+        SpinnakerMachine machineAllocated = null;
 
-		while (job == null || machineAllocated == null) {
-			try {
-				job = createJob(nBoards);
+        while ((job == null) || (machineAllocated == null)) {
+            try {
+                job = createJob(nBoards);
 
-				logger.debug("Got machine " + job.id
-						+ ", requesting notifications");
-				job.notify(true);
-				JobState state = job.getState();
-				synchronized (machineState) {
-					machineState.put(job.id, state);
-				}
-				logger.debug("Notifications for " + job.id + " are on");
+                logger.debug(
+                        "Got machine " + job.id + ", requesting notifications");
+                job.notify(true);
+                JobState state = job.getState();
+                synchronized (machineState) {
+                    machineState.put(job.id, state);
+                }
+                logger.debug("Notifications for " + job.id + " are on");
 
-				state = waitForStates(job, READY, DESTROYED);
-				if (state.getState() == DESTROYED)
-					throw new RuntimeException(state.getReason());
+                state = waitForStates(job, READY, DESTROYED);
+                if (state.getState() == DESTROYED) {
+                    throw new RuntimeException(state.getReason());
+                }
 
-				machineAllocated = getMachineForJob(job);
-			} catch (IOException e) {
-				logger.error("Error getting machine - retrying", e);
-			}
-		}
+                machineAllocated = getMachineForJob(job);
+            } catch (final IOException e) {
+                logger.error("Error getting machine - retrying", e);
+            }
+        }
 
-		machinesAllocated.put(job.id, machineAllocated);
-		jobByMachine.put(machineAllocated, job.id);
-		if (callback != null)
-			callbacks.put(job.id, callback);
-		return machineAllocated;
-	}
+        machinesAllocated.put(job.id, machineAllocated);
+        jobByMachine.put(machineAllocated, job.id);
+        if (callback != null) {
+            callbacks.put(job.id, callback);
+        }
+        return machineAllocated;
+    }
 
-	@Override
-	public void releaseMachine(SpinnakerMachine machine) {
-		Integer jobId = jobByMachine.remove(machine);
-		if (jobId != null) {
-			Job job = new Job(jobId);
-			try {
-				logger.debug("Turning off notification for " + jobId);
-				job.notify(false);
-				logger.debug("Notifications for " + jobId + " are off");
-				machinesAllocated.remove(jobId);
-				synchronized (machineState) {
-					machineState.remove(jobId);
-				}
-				callbacks.remove(jobId);
-				job.destroy();
-				logger.debug("Job " + jobId + " destroyed");
-			} catch (IOException e) {
-				logger.error("Error releasing machine for " + jobId);
-			}
-		}
-	}
+    @Override
+    public void releaseMachine(final SpinnakerMachine machine) {
+        final Integer jobId = jobByMachine.remove(machine);
+        if (jobId != null) {
+            final Job job = new Job(jobId);
+            try {
+                logger.debug("Turning off notification for " + jobId);
+                job.notify(false);
+                logger.debug("Notifications for " + jobId + " are off");
+                machinesAllocated.remove(jobId);
+                synchronized (machineState) {
+                    machineState.remove(jobId);
+                }
+                callbacks.remove(jobId);
+                job.destroy();
+                logger.debug("Job " + jobId + " destroyed");
+            } catch (final IOException e) {
+                logger.error("Error releasing machine for " + jobId);
+            }
+        }
+    }
 
-	@Override
-	public boolean isMachineAvailable(SpinnakerMachine machine) {
-		Integer jobId = jobByMachine.get(machine);
-		if (jobId == null)
-			return false;
-		logger.debug("Job " + jobId + " still available");
-		return true;
-	}
+    @Override
+    public boolean isMachineAvailable(final SpinnakerMachine machine) {
+        final Integer jobId = jobByMachine.get(machine);
+        if (jobId == null) {
+            return false;
+        }
+        logger.debug("Job " + jobId + " still available");
+        return true;
+    }
 
-	@Override
-	public boolean waitForMachineStateChange(SpinnakerMachine machine,
-			int waitTime) {
-		Integer jobId = jobByMachine.get(machine);
-		if (jobId == null)
-			return true;
+    @Override
+    public boolean waitForMachineStateChange(final SpinnakerMachine machine,
+            final int waitTime) {
+        final Integer jobId = jobByMachine.get(machine);
+        if (jobId == null) {
+            return true;
+        }
 
-		synchronized (machineState) {
-			JobState state = machineState.get(jobId);
-			try {
-				machineState.wait(waitTime);
-			} catch (InterruptedException e) {
-				// Does Nothing
-			}
-			JobState newState = machineState.get(jobId);
-			return (newState != null) && newState.equals(state);
-		}
-	}
+        synchronized (machineState) {
+            final JobState state = machineState.get(jobId);
+            try {
+                machineState.wait(waitTime);
+            } catch (final InterruptedException e) {
+                // Does Nothing
+            }
+            final JobState newState = machineState.get(jobId);
+            return (newState != null) && newState.equals(state);
+        }
+    }
 
-	private void keepAllJobsAlive() {
-		List<Integer> jobIds;
-		synchronized (machineState) {
-			jobIds = new ArrayList<>(machineState.keySet());
-		}
-		for (int jobId : jobIds)
-			try {
-				new Job(jobId).keepAlive();
-			} catch (IOException e) {
-				logger.error("Error keeping machine " + jobId + " alive");
-			}
-	}
+    private void keepAllJobsAlive() {
+        List<Integer> jobIds;
+        synchronized (machineState) {
+            jobIds = new ArrayList<>(machineState.keySet());
+        }
+        for (final int jobId : jobIds) {
+            try {
+                new Job(jobId).keepAlive();
+            } catch (final IOException e) {
+                logger.error("Error keeping machine " + jobId + " alive");
+            }
+        }
+    }
 
-	private void updateStateOfJobs() {
-		try {
-			while (!done)
-				for (int jobId : comms.getJobsChanged())
-					try {
-						updateJobState(new Job(jobId));
-					} catch (IOException e) {
-						logger.error("Error getting job state", e);
-					}
-		} catch (InterruptedException e) {
-			logger.warn("interrupt of job state updating");
-		}
-	}
+    private void updateStateOfJobs() {
+        try {
+            while (!done) {
+                for (final int jobId : comms.getJobsChanged()) {
+                    try {
+                        updateJobState(new Job(jobId));
+                    } catch (final IOException e) {
+                        logger.error("Error getting job state", e);
+                    }
+                }
+            }
+        } catch (final InterruptedException e) {
+            logger.warn("interrupt of job state updating");
+        }
+    }
 
-	// --------------------------- DEMO/TEST CODE ---------------------------
+    // --------------------------- DEMO/TEST CODE ---------------------------
 
-	public static class Demo {
-		private static void msg(String msg, Object... args) {
-			System.out.println(String.format(msg, args));
-		}
+    public static class Demo {
+        private static void msg(final String msg, final Object... args) {
+            System.out.println(String.format(msg, args));
+        }
 
-		public static void main(String[] args) throws Exception {
-			final SpallocMachineManagerImpl manager = new SpallocMachineManagerImpl();
-			manager.ipAddress = "10.0.0.3";
-			manager.port = 22244;
-			manager.owner = "test";
-			manager.startThreads();
+        public static void main(final String[] args) throws Exception {
+            final SpallocMachineManagerImpl manager =
+                    new SpallocMachineManagerImpl();
+            manager.ipAddress = "10.0.0.3";
+            manager.port = 22244;
+            manager.owner = "test";
+            manager.startThreads();
 
-			for (SpinnakerMachine machine : manager.getMachines())
-				msg("%d x %d", machine.getWidth(), machine.getHeight());
-			final SpinnakerMachine machine = manager.getNextAvailableMachine(1);
+            for (final SpinnakerMachine machine : manager.getMachines()) {
+                msg("%d x %d", machine.getWidth(), machine.getHeight());
+            }
+            final SpinnakerMachine machine = manager.getNextAvailableMachine(1);
 
-			Thread t = new Thread(new Runnable() {
-				@Override
-				public void run() {
-					boolean available = manager.isMachineAvailable(machine);
-					while (available) {
-						msg("Waiting for Machine to go");
-						manager.waitForMachineStateChange(machine, 10000);
-						available = manager.isMachineAvailable(machine);
-					}
-					msg("Machine gone");
-				}
-			});
-			t.start();
+            final Thread t = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    boolean available = manager.isMachineAvailable(machine);
+                    while (available) {
+                        msg("Waiting for Machine to go");
+                        manager.waitForMachineStateChange(machine, 10000);
+                        available = manager.isMachineAvailable(machine);
+                    }
+                    msg("Machine gone");
+                }
+            });
+            t.start();
 
-			msg("Machine %s allocated", machine.getMachineName());
-			ThreadUtils.sleep(20000);
-			msg("Machine %s is available: %s", machine.getMachineName(),
-					manager.isMachineAvailable(machine));
-			manager.releaseMachine(machine);
-			msg("Machine %s deallocated", machine.getMachineName());
-			manager.close();
-		}
-	}
+            msg("Machine %s allocated", machine.getMachineName());
+            ThreadUtils.sleep(20000);
+            msg("Machine %s is available: %s", machine.getMachineName(),
+                    manager.isMachineAvailable(machine));
+            manager.releaseMachine(machine);
+            msg("Machine %s deallocated", machine.getMachineName());
+            manager.close();
+        }
+    }
 }
