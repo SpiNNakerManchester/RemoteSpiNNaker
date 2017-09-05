@@ -43,7 +43,6 @@ import uk.ac.manchester.cs.spinnaker.output.OutputManagerImpl;
 import uk.ac.manchester.cs.spinnaker.rest.OutputManager;
 import uk.ac.manchester.cs.spinnaker.rest.utils.NullExceptionMapper;
 
-@SuppressWarnings("unused")
 @Configuration
 // @EnableGlobalMethodSecurity(prePostEnabled=true, proxyTargetClass=true)
 // @EnableWebSecurity
