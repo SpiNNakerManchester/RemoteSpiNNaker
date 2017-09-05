@@ -103,14 +103,14 @@ public class DirectClientAuthenticationFilter extends OncePerRequestFilter {
             final HttpServletResponse response, final Credentials credentials)
             throws IOException, ServletException {
         // create token from credential
-        final ClientAuthenticationToken token = new ClientAuthenticationToken(
-                credentials, client.getName());
+        final ClientAuthenticationToken token =
+                new ClientAuthenticationToken(credentials, client.getName());
         token.setDetails(detailsSource.buildDetails(request));
 
         try {
             // authenticate
-            final Authentication auth = authenticationManager
-                    .authenticate(token);
+            final Authentication auth =
+                    authenticationManager.authenticate(token);
             logger.debug("authentication: {}", auth);
             SecurityContextHolder.getContext().setAuthentication(auth);
         } catch (final AuthenticationException e) {

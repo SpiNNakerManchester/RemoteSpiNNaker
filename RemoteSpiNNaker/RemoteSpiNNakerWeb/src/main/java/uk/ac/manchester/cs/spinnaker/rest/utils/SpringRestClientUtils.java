@@ -11,10 +11,11 @@ import org.pac4j.springframework.security.authentication.ClientAuthenticationTok
 public class SpringRestClientUtils {
     public static <T> T createOIDCClient(final URL url, final Class<T> clazz) {
         try {
-            final ClientAuthenticationToken clientAuth = (ClientAuthenticationToken) getContext()
-                    .getAuthentication();
-            final OidcProfile oidcProfile = (OidcProfile) clientAuth
-                    .getUserProfile();
+            final ClientAuthenticationToken clientAuth =
+                    (ClientAuthenticationToken) getContext()
+                            .getAuthentication();
+            final OidcProfile oidcProfile =
+                    (OidcProfile) clientAuth.getUserProfile();
             return createBearerClient(url, oidcProfile.getIdTokenString(),
                     clazz);
         } catch (final ClassCastException e) {

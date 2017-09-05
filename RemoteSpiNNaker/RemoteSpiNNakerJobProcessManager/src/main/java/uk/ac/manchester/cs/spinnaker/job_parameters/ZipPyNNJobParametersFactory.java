@@ -58,8 +58,8 @@ class ZipPyNNJobParametersFactory extends JobParametersFactory {
         }
     }
 
-    private static final CompressionType[] SUPPORTED_TYPES = new CompressionType[]{
-        BZIP2, GZIP};
+    private static final CompressionType[] SUPPORTED_TYPES =
+            new CompressionType[]{BZIP2, GZIP};
 
     private boolean extractAutodetectedArchive(final File output,
             final File workingDirectory) throws IOException {
@@ -108,16 +108,16 @@ class ZipPyNNJobParametersFactory extends JobParametersFactory {
         final File output = downloadFile(url, workingDirectory, null);
 
         /* Test if there is a recognised archive */
-        boolean archiveExtracted = extractAutodetectedArchive(output,
-                workingDirectory);
+        boolean archiveExtracted =
+                extractAutodetectedArchive(output, workingDirectory);
 
         /*
          * If the archive wasn't extracted by the last line, try the known
          * formats
          */
         if (!archiveExtracted) {
-            archiveExtracted = extractArchiveUsingKnownFormats(workingDirectory,
-                    output);
+            archiveExtracted =
+                    extractArchiveUsingKnownFormats(workingDirectory, output);
         }
 
         /*

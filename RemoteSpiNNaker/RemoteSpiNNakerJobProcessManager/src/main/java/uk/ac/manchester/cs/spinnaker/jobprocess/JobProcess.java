@@ -56,11 +56,11 @@ public interface JobProcess<P extends JobParameters> {
     List<File> getOutputs();
 
     /**
-    * Gets any provenance data from the job.  Should always return a map, but
-    * this map can be empty if there is no provenance.
-    *
-    * @return A map of string to string.
-    */
+     * Gets any provenance data from the job. Should always return a map, but
+     * this map can be empty if there is no provenance.
+     *
+     * @return A map of string to string.
+     */
     Map<String, List<String>> getProvenance();
 
     /**

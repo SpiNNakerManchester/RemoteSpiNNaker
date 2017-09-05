@@ -54,27 +54,25 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
     private static final int FINALIZATION_DELAY = 1000;
     private static final Set<String> IGNORED_EXTENSIONS = new HashSet<>();
     private static final Set<String> IGNORED_DIRECTORIES = new HashSet<>();
-    private static final Pattern ARGUMENT_FINDER = Pattern
-            .compile("([^\"]\\S*|\".+?\")\\s*");
+    private static final Pattern ARGUMENT_FINDER =
+            Pattern.compile("([^\"]\\S*|\".+?\")\\s*");
     static {
         IGNORED_EXTENSIONS.add("pyc");
         IGNORED_DIRECTORIES.add("application_generated_data_files");
         IGNORED_DIRECTORIES.add("reports");
     };
     private static final String[] PROVENANCE_ITEMS_TO_ADD = new String[]{
-        "version_data/.*",
-        "router_provenance/total_multi_cast_sent_packets",
+        "version_data/.*", "router_provenance/total_multi_cast_sent_packets",
         "router_provenance/total_created_packets",
         "router_provenance/total_dropped_packets",
         "router_provenance/total_missed_dropped_packets",
-        "router_provenance/total_lost_dropped_packets"
-    };
+        "router_provenance/total_lost_dropped_packets"};
 
     private File workingDirectory = null;
     private Status status = null;
     private Throwable error = null;
     private final List<File> outputs = new ArrayList<>();
-    private Map<String, List<String>> provenance = new HashMap<>();
+    private final Map<String, List<String>> provenance = new HashMap<>();
     ThreadGroup threadGroup;
 
     private static Set<File> gatherFiles(final File directory) {
@@ -176,8 +174,8 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         final List<String> command = new ArrayList<>();
         command.add(SUBPROCESS_RUNNER);
 
-        final Matcher scriptMatcher = ARGUMENT_FINDER
-                .matcher(parameters.getScript());
+        final Matcher scriptMatcher =
+                ARGUMENT_FINDER.matcher(parameters.getScript());
         while (scriptMatcher.find()) {
             command.add(
                     scriptMatcher.group(1).replace("{system}", "spiNNaker"));
@@ -190,8 +188,8 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         final Process process = builder.start();
 
         // Run a thread to gather the log
-        try (ReaderLogWriter logger = new ReaderLogWriter(
-                process.getInputStream(), logWriter)) {
+        try (ReaderLogWriter logger =
+                new ReaderLogWriter(process.getInputStream(), logWriter)) {
             logger.start();
 
             // Wait for the process to finish
@@ -199,20 +197,22 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         }
     }
 
-    private void putProvenanceInMap(ProvenanceDataItems items, String path) {
+    private void putProvenanceInMap(final ProvenanceDataItems items,
+            final String path) {
 
         // Create a path for this level in the tree
-        String myPath = path + items.getName();
+        final String myPath = path + items.getName();
 
         // Add all nested items
-        for (ProvenanceDataItems subItems : items.getProvenanceDataItems()) {
+        for (final ProvenanceDataItems subItems : items
+                .getProvenanceDataItems()) {
             putProvenanceInMap(subItems, myPath + "/");
         }
 
         // Add items from this level
-        for (ProvenanceDataItem subItem : items.getProvenanceDataItem()) {
-            String itemPath = myPath + "/" + subItem.getName();
-            for (String item : PROVENANCE_ITEMS_TO_ADD) {
+        for (final ProvenanceDataItem subItem : items.getProvenanceDataItem()) {
+            final String itemPath = myPath + "/" + subItem.getName();
+            for (final String item : PROVENANCE_ITEMS_TO_ADD) {
                 if (itemPath.matches(item)) {
                     if (!provenance.containsKey(itemPath)) {
                         provenance.put(itemPath, new ArrayList<String>());
@@ -223,33 +223,34 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         }
     }
 
-    private void addProvenance(File provenanceDirectory)
+    private void addProvenance(final File provenanceDirectory)
             throws IOException, JAXBException {
 
         // Get provenance data from files
-        for (File file : provenanceDirectory.listFiles()) {
+        for (final File file : provenanceDirectory.listFiles()) {
 
             // Only process XML files
             if (file.getName().endsWith(".xml")) {
-                JAXBContext jaxbContext = JAXBContext.newInstance(
-                    ProvenanceDataItems.class);
-                Unmarshaller jaxbUnmarshaller =
-                    jaxbContext.createUnmarshaller();
-                Source source = new StreamSource(file);
-                ProvenanceDataItems items = (ProvenanceDataItems)
-                    jaxbUnmarshaller.unmarshal(source);
+                final JAXBContext jaxbContext =
+                        JAXBContext.newInstance(ProvenanceDataItems.class);
+                final Unmarshaller jaxbUnmarshaller =
+                        jaxbContext.createUnmarshaller();
+                final Source source = new StreamSource(file);
+                final ProvenanceDataItems items =
+                        (ProvenanceDataItems) jaxbUnmarshaller
+                                .unmarshal(source);
                 putProvenanceInMap(items, "");
             }
         }
     }
 
-    private void zipProvenance(
-            ZipOutputStream reportsZip, File directory, String path)
-                throws IOException, JAXBException {
+    private void zipProvenance(final ZipOutputStream reportsZip,
+            final File directory, final String path)
+            throws IOException, JAXBException {
 
         // Go through the report files and zip them up
-        byte[] buffer = new byte[8196];
-        for (File file : directory.listFiles()) {
+        final byte[] buffer = new byte[8196];
+        for (final File file : directory.listFiles()) {
             if (file.isDirectory()) {
                 zipProvenance(reportsZip, file, path + "/" + file.getName());
 
@@ -258,9 +259,10 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
                     addProvenance(file);
                 }
             } else {
-                ZipEntry entry = new ZipEntry(path + "/" + file.getName());
+                final ZipEntry entry =
+                        new ZipEntry(path + "/" + file.getName());
                 reportsZip.putNextEntry(entry);
-                FileInputStream in = new FileInputStream(file);
+                final FileInputStream in = new FileInputStream(file);
                 int bytesRead = in.read(buffer);
                 while (bytesRead >= 0) {
                     reportsZip.write(buffer, 0, bytesRead);
@@ -271,17 +273,17 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         }
     }
 
-    private void gatherProvenance(File workingDirectory)
+    private void gatherProvenance(final File workingDirectory)
             throws IOException, JAXBException {
 
         // Find the reports folder
-        File reportsFolder = new File(workingDirectory, "reports");
+        final File reportsFolder = new File(workingDirectory, "reports");
         if (reportsFolder.isDirectory()) {
 
             // Create a zip file of the reports
-            ZipOutputStream reportsZip = new ZipOutputStream(
-                new FileOutputStream(
-                    new File(workingDirectory, "reports.zip")));
+            final ZipOutputStream reportsZip =
+                    new ZipOutputStream(new FileOutputStream(
+                            new File(workingDirectory, "reports.zip")));
 
             // Gather items into the reports zip, keeping an eye out for
             // the "provenance data" folder

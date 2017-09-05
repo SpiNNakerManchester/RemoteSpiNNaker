@@ -76,10 +76,12 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
     private String owner;
 
     private final ObjectMapper mapper = new ObjectMapper();
-    private final Map<Integer, SpinnakerMachine> machinesAllocated = new HashMap<>();
+    private final Map<Integer, SpinnakerMachine> machinesAllocated =
+            new HashMap<>();
     private final Map<SpinnakerMachine, Integer> jobByMachine = new HashMap<>();
     private final Map<Integer, JobState> machineState = new HashMap<>();
-    private final Map<Integer, MachineNotificationReceiver> callbacks = new HashMap<>();
+    private final Map<Integer, MachineNotificationReceiver> callbacks =
+            new HashMap<>();
     private final Logger logger = getLogger(getClass());
     private final Comms comms = new Comms();
 
@@ -149,8 +151,10 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
     }
 
     class Comms {
-        private final BlockingQueue<ReturnResponse> responses = new LinkedBlockingQueue<>();
-        private final BlockingQueue<JobsChangedResponse> notifications = new LinkedBlockingQueue<>();
+        private final BlockingQueue<ReturnResponse> responses =
+                new LinkedBlockingQueue<>();
+        private final BlockingQueue<JobsChangedResponse> notifications =
+                new LinkedBlockingQueue<>();
         private Socket socket;
         private BufferedReader reader;
         private PrintWriter writer;
@@ -532,7 +536,8 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
         }
 
         public static void main(final String[] args) throws Exception {
-            final SpallocMachineManagerImpl manager = new SpallocMachineManagerImpl();
+            final SpallocMachineManagerImpl manager =
+                    new SpallocMachineManagerImpl();
             manager.ipAddress = "10.0.0.3";
             manager.port = 22244;
             manager.owner = "test";
