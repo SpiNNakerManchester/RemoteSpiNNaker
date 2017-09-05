@@ -51,8 +51,8 @@ public class JobProcessManager {
     private static final int UPDATE_INTERVAL = 500;
 
     /** The factory for converting parameters into processes. */
-    private static final JobProcessFactory jobProcessFactory = new JobProcessFactory(
-            "JobProcess");
+    private static final JobProcessFactory jobProcessFactory =
+            new JobProcessFactory("JobProcess");
     static {
         jobProcessFactory.addMapping(PyNNJobParameters.class,
                 PyNNJobProcess.class);
@@ -116,10 +116,10 @@ public class JobProcessManager {
             final boolean isLocal, final String executerId,
             final boolean liveUploadOutput, final boolean requestMachine,
             final String authToken) {
-        this.serverUrl = requireNonNull(serverUrl,
-                "--serverUrl must be specified");
-        this.executerId = requireNonNull(executerId,
-                "--executerId must be specified");
+        this.serverUrl =
+                requireNonNull(serverUrl, "--serverUrl must be specified");
+        this.executerId =
+                requireNonNull(executerId, "--executerId must be specified");
         this.deleteOnExit = deleteOnExit;
         this.isLocal = isLocal;
         this.liveUploadOutput = liveUploadOutput;
@@ -142,8 +142,8 @@ public class JobProcessManager {
 
             // Create a process to process the request
             log("Creating process from parameters");
-            final JobProcess<JobParameters> process = jobProcessFactory
-                    .createProcess(parameters);
+            final JobProcess<JobParameters> process =
+                    jobProcessFactory.createProcess(parameters);
             logWriter = getLogWriter();
 
             // Read the machine
@@ -180,9 +180,8 @@ public class JobProcessManager {
             if (message == null) {
                 message = "No Error Message";
             }
-            jobManager.setJobError(projectId, job.getId(), message,
-                    log, "", new ArrayList<String>(),
-                    new RemoteStackTrace(error));
+            jobManager.setJobError(projectId, job.getId(), message, log, "",
+                    new ArrayList<String>(), new RemoteStackTrace(error));
         } catch (final Throwable t) {
             // Exception while reporting exception...
             log(t);
@@ -262,7 +261,8 @@ public class JobProcessManager {
     */
     private JobParameters getJobParameters(final File workingDirectory)
             throws IOException {
-        final Map<String, JobParametersFactoryException> errors = new HashMap<>();
+        final Map<String, JobParametersFactoryException> errors =
+                new HashMap<>();
         final JobParameters parameters = JobParametersFactory
                 .getJobParameters(job, workingDirectory, errors);
 
@@ -311,9 +311,9 @@ public class JobProcessManager {
             }
         }
 
-        for (Entry<String, List<String>> item :
-                process.getProvenance().entrySet()) {
-            for (String value : item.getValue()) {
+        for (final Entry<String, List<String>> item : process.getProvenance()
+                .entrySet()) {
+            for (final String value : item.getValue()) {
                 jobManager.addProvenance(job.getId(), item.getKey(), value);
             }
         }
@@ -325,8 +325,8 @@ public class JobProcessManager {
             if (message == null) {
                 message = "No Error Message";
             }
-            jobManager.setJobError(projectId, job.getId(), message,
-                    log, workingDirectory.getAbsolutePath(), outputsAsStrings,
+            jobManager.setJobError(projectId, job.getId(), message, log,
+                    workingDirectory.getAbsolutePath(), outputsAsStrings,
                     new RemoteStackTrace(error));
             break;
         case Finished:

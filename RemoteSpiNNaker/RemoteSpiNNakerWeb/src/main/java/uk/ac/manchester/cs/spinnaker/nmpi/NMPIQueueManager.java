@@ -74,7 +74,8 @@ public class NMPIQueueManager implements Runnable {
 
     @PostConstruct
     private void initAPIClient() {
-        final CustomJacksonJsonProvider provider = new CustomJacksonJsonProvider();
+        final CustomJacksonJsonProvider provider =
+                new CustomJacksonJsonProvider();
 
         @SuppressWarnings("serial")
         class QueueResponseDeserialiser

@@ -29,8 +29,8 @@ public class FileDownloader {
 			if (cdl.startsWith("form-data") || cdl.startsWith("attachment")) {
                 final ParameterParser parser = new ParameterParser();
 				parser.setLowerCaseNames(true);
-                final Map<String, String> params = parser
-                        .parse(contentDisposition, ';');
+                final Map<String, String> params =
+                        parser.parse(contentDisposition, ';');
                 if (params.containsKey("filename")) {
 					return params.get("filename").trim();
 			}
@@ -59,8 +59,8 @@ public class FileDownloader {
 		requireNonNull(workingDirectory);
 
 		// Open a connection
-        final URLConnection urlConnection = requireNonNull(url)
-                .openConnection();
+        final URLConnection urlConnection =
+                requireNonNull(url).openConnection();
 		urlConnection.setDoInput(true);
 
 		if (urlConnection instanceof HttpsURLConnection) {

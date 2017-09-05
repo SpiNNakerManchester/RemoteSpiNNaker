@@ -44,8 +44,8 @@ public abstract class RemoteSpiNNakerAPI {
         return client.target(url).proxy(JobManagerInterface.class);
     }
 
-    private static ClientRequestFilter getBasicAuthFilter(
-            final String authToken) {
+    private static ClientRequestFilter
+            getBasicAuthFilter(final String authToken) {
         final String payload = "Basic " + encodeBytes(authToken.getBytes(UTF8));
         return new ClientRequestFilter() {
             @Override

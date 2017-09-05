@@ -52,7 +52,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     private static final double CORES_PER_CHIP = 15.0;
     private static final String PROVENANCE_SEPARATOR = "; ";
     public static final String JOB_PROCESS_MANAGER_JAR =
-        "RemoteSpiNNakerJobProcessManager.jar";
+            "RemoteSpiNNakerJobProcessManager.jar";
 
     @Autowired
     private MachineManager machineManager;
@@ -67,14 +67,16 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     private boolean restartJobExecuterOnFailure;
 
     private final Logger logger = getLogger(getClass());
-    private final Map<Integer, List<SpinnakerMachine>> allocatedMachines = new HashMap<>();
+    private final Map<Integer, List<SpinnakerMachine>> allocatedMachines =
+            new HashMap<>();
     private final BlockingQueue<Job> jobsToRun = new LinkedBlockingQueue<>();
     private final Map<String, JobExecuter> jobExecuters = new HashMap<>();
     private final Map<String, Job> executorJobId = new HashMap<>();
     private final Map<Integer, File> jobOutputTempFiles = new HashMap<>();
     private final Map<Integer, Long> jobNCores = new HashMap<>();
     private final Map<Integer, Long> jobResourceUsage = new HashMap<>();
-    private final Map<Integer, Map<String, String>> jobProvenance = new HashMap<>();
+    private final Map<Integer, Map<String, String>> jobProvenance =
+            new HashMap<>();
     private ThreadGroup threadGroup;
 
     public JobManager(final URL baseUrl) {
@@ -108,8 +110,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
      * method.
      */
     private void launchExecuter() throws IOException {
-        final JobExecuter executer = jobExecuterFactory.createJobExecuter(this,
-                baseUrl);
+        final JobExecuter executer =
+                jobExecuterFactory.createJobExecuter(this, baseUrl);
         jobExecuters.put(executer.getExecuterId(), executer);
         executer.startExecuter();
     }
@@ -185,8 +187,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
             nBoardsToRequest = (int) nBoardsExact;
         }
 
-        final SpinnakerMachine machine = allocateMachineForJob(id,
-                nBoardsToRequest);
+        final SpinnakerMachine machine =
+                allocateMachineForJob(id, nBoardsToRequest);
         logger.info("Running " + id + " on " + machine.getMachineName());
         final long resourceUsage = (long) ((runTime / 1000.0) * quotaNCores);
         logger.info("Resource usage " + resourceUsage);
@@ -202,8 +204,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     /** Get a machine to run the job on */
     private SpinnakerMachine allocateMachineForJob(final int id,
             final int nBoardsToRequest) {
-        final SpinnakerMachine machine = machineManager
-                .getNextAvailableMachine(nBoardsToRequest);
+        final SpinnakerMachine machine =
+                machineManager.getNextAvailableMachine(nBoardsToRequest);
         synchronized (allocatedMachines) {
             if (!allocatedMachines.containsKey(id)) {
                 allocatedMachines.put(id, new ArrayList<SpinnakerMachine>());
@@ -258,7 +260,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
 
     private void waitForAnyMachineStateChange(final int waitTime,
             final List<SpinnakerMachine> machines) {
-        final BlockingQueue<Object> stateChangeSync = new LinkedBlockingQueue<>();
+        final BlockingQueue<Object> stateChangeSync =
+                new LinkedBlockingQueue<>();
         for (final SpinnakerMachine machine : machines) {
             final Thread stateThread = new Thread(threadGroup, new Runnable() {
                 @Override
@@ -340,12 +343,10 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
             if (!jobProvenance.containsKey(id)) {
                 jobProvenance.put(id, new HashMap<String, String>());
             }
-            Map<String, String> provenance = jobProvenance.get(id);
+            final Map<String, String> provenance = jobProvenance.get(id);
             if (provenance.containsKey(requireNonNull(item))) {
-                provenance.put(
-                    item,
-                    provenance.get(item) + PROVENANCE_SEPARATOR
-                    + requireNonNull(value));
+                provenance.put(item, provenance.get(item) + PROVENANCE_SEPARATOR
+                        + requireNonNull(value));
             } else {
                 provenance.put(item, requireNonNull(value));
             }
@@ -402,8 +403,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     /** @return <tt>true</tt> if there were machines removed by this. */
     private boolean releaseAllocatedMachines(final int id) {
         synchronized (allocatedMachines) {
-            final List<SpinnakerMachine> machines = allocatedMachines
-                    .remove(id);
+            final List<SpinnakerMachine> machines =
+                    allocatedMachines.remove(id);
             if (machines != null) {
                 for (final SpinnakerMachine machine : machines) {
                     machineManager.releaseMachine(machine);
@@ -428,8 +429,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         logger.debug("Marking job " + id + " as error");
         releaseAllocatedMachines(id);
 
-        final Exception exception = reconstructRemoteException(error,
-                stackTrace);
+        final Exception exception =
+                reconstructRemoteException(error, stackTrace);
         // Do these before anything that can throw
         final long resourceUsage = getResourceUsage(id);
         final Map<String, String> prov = getProvenance(id);
@@ -443,7 +444,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         }
     }
 
-    private static final StackTraceElement[] STE_TMPL = new StackTraceElement[0];
+    private static final StackTraceElement[] STE_TMPL =
+            new StackTraceElement[0];
 
     private Exception reconstructRemoteException(final String error,
             final RemoteStackTrace stackTrace) {
@@ -472,8 +474,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
                 try {
                     final long resourceUsage = getResourceUsage(id);
                     final Map<String, String> prov = getProvenance(id);
-                    final String projectId = new File(job.getCollabId())
-                            .getName();
+                    final String projectId =
+                            new File(job.getCollabId()).getName();
                     queueManager.setJobError(id, logToAppend,
                             getOutputFiles(projectId, id, null, null),
                             new Exception("Job did not finish cleanly"),
@@ -511,8 +513,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
 
     @Override
     public Response getJobProcessManager() {
-        final InputStream jobManagerStream = getClass()
-                .getResourceAsStream("/" + JOB_PROCESS_MANAGER_ZIP);
+        final InputStream jobManagerStream =
+                getClass().getResourceAsStream("/" + JOB_PROCESS_MANAGER_ZIP);
         if (jobManagerStream == null) {
             throw new UnsatisfiedLinkError(
                     JOB_PROCESS_MANAGER_ZIP + " not found in classpath");

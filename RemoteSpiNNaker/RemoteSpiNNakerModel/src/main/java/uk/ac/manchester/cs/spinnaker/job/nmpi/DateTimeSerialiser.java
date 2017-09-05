@@ -12,8 +12,8 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 public class DateTimeSerialiser extends StdSerializer<DateTime> {
-    private static final DateTimeFormatter FORMAT = DateTimeFormat
-            .forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS");
+    private static final DateTimeFormatter FORMAT =
+            DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS");
 
     public DateTimeSerialiser() {
         super(DateTime.class);

@@ -15,7 +15,7 @@ import java.lang.annotation.Target;
 public @interface JobParametersTypeName {
     /**
      * The type name
-     * 
+     *
      * @return The type name
      */
     String value();

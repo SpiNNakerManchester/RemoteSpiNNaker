@@ -26,7 +26,8 @@ public class WebApplicationConfig implements WebApplicationInitializer {
      * The name of the <i>system property</i> that describes where to load
      * configuration properties from.
      */
-    public static final String LOCATION_PROPERTY = "remotespinnaker.properties.location";
+    public static final String LOCATION_PROPERTY =
+            "remotespinnaker.properties.location";
     private static final String FILTER_NAME = "springSecurityFilterChain";
     private static final boolean ADD_FILTER = false;
     private static final boolean ADD_SERVLET = true;
@@ -50,9 +51,10 @@ public class WebApplicationConfig implements WebApplicationInitializer {
         }
     }
 
-    private ContextLoaderListener getContextLoaderListener(
-            final PropertySource<?> properties) {
-        final AnnotationConfigWebApplicationContext annotationConfig = new AnnotationConfigWebApplicationContext();
+    private ContextLoaderListener
+            getContextLoaderListener(final PropertySource<?> properties) {
+        final AnnotationConfigWebApplicationContext annotationConfig =
+                new AnnotationConfigWebApplicationContext();
         annotationConfig.getEnvironment().getPropertySources()
                 .addFirst(properties);
         annotationConfig.register(RemoteSpinnakerBeans.class);

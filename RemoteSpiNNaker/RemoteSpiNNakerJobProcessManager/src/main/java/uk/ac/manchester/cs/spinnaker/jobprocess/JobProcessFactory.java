@@ -27,7 +27,9 @@ public class JobProcessFactory {
      * guaranteed by the {@link #addMapping(Class,Class)} method, which is the
      * only place that this map should be modified.
      */
-    private final Map<Class<? extends JobParameters>, Class<? extends JobProcess<? extends JobParameters>>> typeMap = new HashMap<>();
+    private final Map<Class<? extends JobParameters>,
+            Class<? extends JobProcess<? extends JobParameters>>> typeMap =
+                    new HashMap<>();
 
     /**
      * Adds a new type mapping.
@@ -58,16 +60,16 @@ public class JobProcessFactory {
      * @throws InstantiationException
      *             If there is an error creating the class
      */
-    public <P extends JobParameters> JobProcess<P> createProcess(
-            final P parameters)
-            throws InstantiationException, IllegalAccessException {
+    public <P extends JobParameters> JobProcess<P>
+            createProcess(final P parameters)
+                    throws InstantiationException, IllegalAccessException {
         /*
          * We know that this is of the correct type, because the addMapping
          * method will only allow the correct type mapping in
          */
         @SuppressWarnings("unchecked")
-        final Class<JobProcess<P>> processType = (Class<JobProcess<P>>) typeMap
-                .get(parameters.getClass());
+        final Class<JobProcess<P>> processType =
+                (Class<JobProcess<P>>) typeMap.get(parameters.getClass());
 
         final JobProcess<P> process = processType.newInstance();
 
@@ -93,8 +95,8 @@ public class JobProcessFactory {
     private static void setField(final Object instance, final String fieldName,
             final Object value) {
         try {
-            final Field threadGroupField = instance.getClass()
-                    .getDeclaredField(fieldName);
+            final Field threadGroupField =
+                    instance.getClass().getDeclaredField(fieldName);
             threadGroupField.setAccessible(true);
             threadGroupField.set(instance, value);
         } catch (NoSuchFieldException | SecurityException

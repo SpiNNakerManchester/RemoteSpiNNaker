@@ -31,7 +31,8 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 
 public class LocalJobExecuterFactory implements JobExecuterFactory {
-    private static final String JOB_PROCESS_MANAGER_MAIN_CLASS = "uk.ac.manchester.cs.spinnaker.jobprocessmanager.JobProcessManager";
+    private static final String JOB_PROCESS_MANAGER_MAIN_CLASS =
+            "uk.ac.manchester.cs.spinnaker.jobprocessmanager.JobProcessManager";
 
     private static File getJavaExec() throws IOException {
         final File binDir = new File(System.getProperty("java.home"), "bin");
@@ -61,8 +62,8 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
     @PostConstruct
     void installJobExecuter() throws IOException {
         // Find the JobManager resource
-        final InputStream jobManagerStream = getClass()
-                .getResourceAsStream("/" + JOB_PROCESS_MANAGER_ZIP);
+        final InputStream jobManagerStream =
+                getClass().getResourceAsStream("/" + JOB_PROCESS_MANAGER_ZIP);
         if (jobManagerStream == null) {
             throw new UnsatisfiedLinkError(
                     "/" + JOB_PROCESS_MANAGER_ZIP + " not found in classpath");
@@ -76,14 +77,13 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
 
         // Extract the JobManager resources
         try (ZipInputStream input = new ZipInputStream(jobManagerStream)) {
-            for (ZipEntry entry = input
-                    .getNextEntry(); entry != null; entry = input
-                            .getNextEntry()) {
+            for (ZipEntry entry = input.getNextEntry(); entry != null;
+                    entry = input.getNextEntry()) {
                 if (entry.isDirectory()) {
                     continue;
                 }
-                final File entryFile = new File(jobExecuterDirectory,
-                        entry.getName());
+                final File entryFile =
+                        new File(jobExecuterDirectory, entry.getName());
                 forceMkdirParent(entryFile);
                 copyToFile(input, entryFile);
                 forceDeleteOnExit(entryFile);
@@ -225,8 +225,8 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
 
         private void reportResult() {
             final StringBuilder logToAppend = new StringBuilder();
-            try (BufferedReader reader = new BufferedReader(
-                    new FileReader(outputLog))) {
+            try (BufferedReader reader =
+                    new BufferedReader(new FileReader(outputLog))) {
                 while (true) {
                     final String line = reader.readLine();
                     if (line == null) {

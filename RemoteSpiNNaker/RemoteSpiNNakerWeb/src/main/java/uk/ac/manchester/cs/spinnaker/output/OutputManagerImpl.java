@@ -200,8 +200,8 @@ public class OutputManagerImpl implements OutputManager {
 
             try {
                 if (!download) {
-                    final String contentType = probeContentType(
-                            resultFile.toPath());
+                    final String contentType =
+                            probeContentType(resultFile.toPath());
                     if (contentType != null) {
                         logger.debug("File has content type " + contentType);
                         return Response.ok(resultFile, contentType).build();
@@ -278,8 +278,8 @@ public class OutputManagerImpl implements OutputManager {
             final int id, final String serverUrl, final String storageId,
             final String filePath, final String userId, final String token) {
         // TODO projectId and id? What's going on?
-        final File idDirectory = new File(getProjectDirectory(projectId),
-                String.valueOf(id));
+        final File idDirectory =
+                new File(getProjectDirectory(projectId), String.valueOf(id));
         if (!idDirectory.canRead()) {
             logger.debug(idDirectory + " was not found");
             return Response.status(NOT_FOUND).build();
@@ -345,8 +345,8 @@ public class OutputManagerImpl implements OutputManager {
                     removeDirectory(jobDirectory);
                 }
 
-                try (PrintWriter purgedFileWriter = new PrintWriter(
-                        getPurgeFile(jobDirectory))) {
+                try (PrintWriter purgedFileWriter =
+                        new PrintWriter(getPurgeFile(jobDirectory))) {
                     purgedFileWriter.println(currentTimeMillis());
                 } catch (final IOException e) {
                     logger.error("Error writing purge file", e);

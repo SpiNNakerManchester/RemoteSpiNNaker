@@ -38,17 +38,18 @@ public abstract class JobParametersFactory {
             throws UnsupportedJobException, JobParametersFactoryException;
 
     /** The factories for converting jobs into parameters. */
-    private static final JobParametersFactory[] JOB_PARAMETER_FACTORIES = new JobParametersFactory[]{
-        new GitPyNNJobParametersFactory(), new ZipPyNNJobParametersFactory(),
-        new DirectPyNNJobParametersFactory()};
+    private static final JobParametersFactory[] JOB_PARAMETER_FACTORIES =
+            new JobParametersFactory[]{new GitPyNNJobParametersFactory(),
+                new ZipPyNNJobParametersFactory(),
+                new DirectPyNNJobParametersFactory()};
 
     public static JobParameters getJobParameters(final Job job,
             final File workingDirectory,
             final Map<String, JobParametersFactoryException> errors) {
         for (final JobParametersFactory factory : JOB_PARAMETER_FACTORIES) {
             try {
-                final JobParameters parameters = factory.getJobParameters(job,
-                        workingDirectory);
+                final JobParameters parameters =
+                        factory.getJobParameters(job, workingDirectory);
                 if (parameters != null) {
                     return parameters;
                 }

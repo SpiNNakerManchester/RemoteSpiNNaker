@@ -62,8 +62,8 @@ public class SpinnakerMachine
                     + value + "\" - missing start and end brackets");
         }
 
-        final String[] parts = value.substring(1, value.length() - 1)
-                .split(":");
+        final String[] parts =
+                value.substring(1, value.length() - 1).split(":");
         if (parts.length != 6) {
             throw new IllegalArgumentException(
                     "Wrong number of :-separated arguments - " + parts.length
@@ -112,7 +112,7 @@ public class SpinnakerMachine
 
     /**
      * Sets the name of the machine
-     * 
+     *
      * @param machineName
      *            The name of the machine
      */
@@ -122,7 +122,7 @@ public class SpinnakerMachine
 
     /**
      * Gets the version of the machine
-     * 
+     *
      * @return The version of the machine
      */
     public String getVersion() {
@@ -131,7 +131,7 @@ public class SpinnakerMachine
 
     /**
      * Sets the version of the machine
-     * 
+     *
      * @param version
      *            The version of the machine
      */
@@ -141,7 +141,7 @@ public class SpinnakerMachine
 
     /**
      * Gets the width of the machine
-     * 
+     *
      * @return The width of the machine
      */
     public int getWidth() {
@@ -150,7 +150,7 @@ public class SpinnakerMachine
 
     /**
      * Sets the width of the machine
-     * 
+     *
      * @param width
      *            The width of the machine
      */
@@ -160,7 +160,7 @@ public class SpinnakerMachine
 
     /**
      * Gets the height of the machine
-     * 
+     *
      * @return The height of the machine
      */
     public int getHeight() {
@@ -169,7 +169,7 @@ public class SpinnakerMachine
 
     /**
      * Sets the height of the machine
-     * 
+     *
      * @param height
      *            The height of the machine
      */
@@ -184,7 +184,7 @@ public class SpinnakerMachine
 
     /**
      * Gets the number of boards in the machine
-     * 
+     *
      * @return The number of boards in the machine
      */
     public int getnBoards() {
@@ -193,7 +193,7 @@ public class SpinnakerMachine
 
     /**
      * Sets the number of boards in the machine
-     * 
+     *
      * @param nBoards
      *            The number of boards in the machine
      */
@@ -203,7 +203,7 @@ public class SpinnakerMachine
 
     /**
      * Gets the BMP details of the machine
-     * 
+     *
      * @return The BMP details of the machine
      */
     public String getBmpDetails() {
@@ -212,7 +212,7 @@ public class SpinnakerMachine
 
     /**
      * Sets the BMP details of the machine
-     * 
+     *
      * @param bmpDetails
      *            The BMP details of the machine
      */

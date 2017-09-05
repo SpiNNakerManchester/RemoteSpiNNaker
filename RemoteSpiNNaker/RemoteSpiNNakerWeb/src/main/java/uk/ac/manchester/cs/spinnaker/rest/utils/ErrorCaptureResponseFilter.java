@@ -21,9 +21,10 @@ import org.slf4j.Logger;
 // Only public because of the annotation
 @Provider
 public class ErrorCaptureResponseFilter implements ClientResponseFilter {
-    private final CustomJacksonJsonProvider provider = new CustomJacksonJsonProvider();
-    private static final Logger log = getLogger(
-            ErrorCaptureResponseFilter.class);
+    private final CustomJacksonJsonProvider provider =
+            new CustomJacksonJsonProvider();
+    private static final Logger log =
+            getLogger(ErrorCaptureResponseFilter.class);
     public volatile boolean writeToLog = true;
 
     private static final String INDENT = "    ";// 4 spaces
@@ -39,8 +40,8 @@ public class ErrorCaptureResponseFilter implements ClientResponseFilter {
         if ((family == CLIENT_ERROR) || (family == SERVER_ERROR)) {
             log.trace("Error when sending request:");
             log.trace(INDENT + "Headers:");
-            final MultivaluedMap<String, String> headers = requestContext
-                    .getStringHeaders();
+            final MultivaluedMap<String, String> headers =
+                    requestContext.getStringHeaders();
             for (final String headerName : headers.keySet()) {
                 for (final String headerValue : headers.get(headerName)) {
                     log.trace(IND2 + headerName + ": " + headerValue);
@@ -61,8 +62,8 @@ public class ErrorCaptureResponseFilter implements ClientResponseFilter {
     private String getRequestAsJSON(final ClientRequestContext requestContext) {
         try {
             final StringWriter jsonWriter = new StringWriter();
-            try (OutputStream jsonOutput = new WriterOutputStream(jsonWriter,
-                    "UTF-8")) {
+            try (OutputStream jsonOutput =
+                    new WriterOutputStream(jsonWriter, "UTF-8")) {
                 provider.writeTo(requestContext.getEntity(),
                         requestContext.getEntityClass(),
                         requestContext.getEntityType(),

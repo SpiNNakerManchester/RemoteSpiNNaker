@@ -18,7 +18,9 @@ public class DeserializationTests {
     @Test
     public void machine()
             throws JsonParseException, JsonMappingException, IOException {
-        final String machine = "{\"name\":\"foo\",\"tags\":[\"a\",\"b c\"],\"width\":123,\"height\":456}";
+        final String machine =
+                "{\"name\":\"foo\",\"tags\":[\"a\",\"b c\"],\"width\":123,"
+                + "\"height\":456}";
         final Machine m = mapper.readValue(machine, Machine.class);
         assertNotNull(m);
 
@@ -31,8 +33,10 @@ public class DeserializationTests {
     @Test
     public void machineArray()
             throws JsonParseException, JsonMappingException, IOException {
-        final String machine = "[{\"name\":\"foo\",\"tags\":[\"a\",\"b c\"],\"width\":123,\"height\":456},"
-                + "{\"name\":\"bar\",\"width\":1,\"height\":2}]";
+        final String machine =
+                "[{\"name\":\"foo\",\"tags\":[\"a\",\"b c\"],\"width\":123,"
+                + "\"height\":456},{\"name\":\"bar\",\"width\":1,"
+                + "\"height\":2}]";
         final Machine[] m = mapper.readValue(machine, Machine[].class);
         assertNotNull(m);
 
@@ -54,8 +58,8 @@ public class DeserializationTests {
         final String machine = "{\"width\":123,\"height\":456,\"connections\":["
                 + "[[1,2],\"abcde\"],[[3,4],\"edcba\"]"
                 + "],\"machineName\":\"foo\"}";
-        final JobMachineInfo m = mapper.readValue(machine,
-                JobMachineInfo.class);
+        final JobMachineInfo m =
+                mapper.readValue(machine, JobMachineInfo.class);
         assertNotNull(m);
 
         assertEquals("foo", m.getMachineName());
@@ -75,7 +79,9 @@ public class DeserializationTests {
     @Test
     public void jobState()
             throws JsonParseException, JsonMappingException, IOException {
-        final String machine = "{\"state\":2,\"power\":true,\"keepAlive\":1.25,\"reason\":\"foo\"}";
+        final String machine =
+                "{\"state\":2,\"power\":true,\"keepAlive\":1.25,"
+                + "\"reason\":\"foo\"}";
         final JobState m = mapper.readValue(machine, JobState.class);
         assertNotNull(m);
 

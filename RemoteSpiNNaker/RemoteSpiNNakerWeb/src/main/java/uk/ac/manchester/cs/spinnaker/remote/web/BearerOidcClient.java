@@ -82,16 +82,16 @@ public class BearerOidcClient
     @Override
     public BearerCredentials getCredentials(final WebContext context)
             throws RequiresHttpAction {
-        final String authorization = context
-                .getRequestHeader(AUTHORIZATION_HEADER);
+        final String authorization =
+                context.getRequestHeader(AUTHORIZATION_HEADER);
         if ((authorization == null)
                 || !authorization.startsWith(BEARER_PREFIX)) {
             return null;
         }
 
         // Verify the access token
-        final String accessToken = authorization
-                .substring(BEARER_PREFIX.length());
+        final String accessToken =
+                authorization.substring(BEARER_PREFIX.length());
         if (accessToken.trim().isEmpty()) {
             return null;
         }
@@ -131,7 +131,8 @@ public class BearerOidcClient
         }
 
         final OidcProfile profile = new OidcProfile(token);
-        final UserInfoSuccessResponse userInfoSuccessResponse = (UserInfoSuccessResponse) userInfoResponse;
+        final UserInfoSuccessResponse userInfoSuccessResponse =
+                (UserInfoSuccessResponse) userInfoResponse;
         final UserInfo userInfo = userInfoSuccessResponse.getUserInfo();
         if (userInfo != null) {
             profile.addAttributes(userInfo.toJWTClaimsSet().getClaims());

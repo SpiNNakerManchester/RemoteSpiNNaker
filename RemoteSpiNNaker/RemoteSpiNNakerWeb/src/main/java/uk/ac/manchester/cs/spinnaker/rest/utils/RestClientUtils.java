@@ -56,19 +56,19 @@ public class RestClientUtils {
             final Credentials credentials, final AuthScheme authScheme) {
         try {
             final SchemeRegistry schemeRegistry = getSchemeRegistry();
-            final HttpContext localContext = getConnectionContext(url,
-                    credentials, authScheme);
+            final HttpContext localContext =
+                    getConnectionContext(url, credentials, authScheme);
 
             // Set up the connection
-            final ClientConnectionManager cm = new BasicClientConnectionManager(
-                    schemeRegistry);
+            final ClientConnectionManager cm =
+                    new BasicClientConnectionManager(schemeRegistry);
             final DefaultHttpClient httpClient = new DefaultHttpClient(cm);
-            final ApacheHttpClient4Engine engine = new ApacheHttpClient4Engine(
-                    httpClient, localContext);
+            final ApacheHttpClient4Engine engine =
+                    new ApacheHttpClient4Engine(httpClient, localContext);
 
             // Create and return a client
-            final ResteasyClient client = new ResteasyClientBuilder()
-                    .httpEngine(engine).build();
+            final ResteasyClient client =
+                    new ResteasyClientBuilder().httpEngine(engine).build();
             client.register(new ErrorCaptureResponseFilter());
             return client;
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
@@ -85,10 +85,11 @@ public class RestClientUtils {
         if (port == -1) {
             port = url.getDefaultPort();
         }
-        final HttpHost targetHost = new HttpHost(url.getHost(), port,
-                url.getProtocol());
+        final HttpHost targetHost =
+                new HttpHost(url.getHost(), port, url.getProtocol());
 
-        final CredentialsProvider credsProvider = new BasicCredentialsProvider();
+        final CredentialsProvider credsProvider =
+                new BasicCredentialsProvider();
         credsProvider.setCredentials(
                 new AuthScope(targetHost.getHostName(), targetHost.getPort()),
                 credentials);
@@ -165,8 +166,8 @@ public class RestClientUtils {
     public static <T> T createClient(final URL url,
             final Credentials credentials, final AuthScheme authScheme,
             final Class<T> clazz, final Object... providers) {
-        final ResteasyClient client = createRestClient(url, credentials,
-                authScheme);
+        final ResteasyClient client =
+                createRestClient(url, credentials, authScheme);
         for (final Object provider : providers) {
             client.register(provider);
         }
@@ -219,8 +220,8 @@ public class RestClientUtils {
                 new UsernamePasswordCredentials(username, apiKey),
                 new ConnectionIndependentScheme("ApiKey") {
                     @Override
-                    protected Header authenticate(
-                            final Credentials credentials) {
+                    protected Header
+                            authenticate(final Credentials credentials) {
                         return new BasicHeader(getAuthHeaderName(),
                                 "ApiKey " + username + ":" + apiKey);
                     }
@@ -243,8 +244,8 @@ public class RestClientUtils {
         return createClient(url, new UsernamePasswordCredentials("", token),
                 new ConnectionIndependentScheme("Bearer") {
                     @Override
-                    protected Header authenticate(
-                            final Credentials credentials) {
+                    protected Header
+                            authenticate(final Credentials credentials) {
                         return new BasicHeader(getAuthHeaderName(),
                                 "Bearer " + token);
                     }

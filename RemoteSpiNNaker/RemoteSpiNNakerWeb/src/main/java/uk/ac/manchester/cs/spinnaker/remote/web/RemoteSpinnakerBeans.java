@@ -121,7 +121,8 @@ public class RemoteSpinnakerBeans {
         // @Bean
         public ClientAuthenticationProvider clientProvider()
                 throws ParseException, MalformedURLException, IOException {
-            final ClientAuthenticationProvider provider = new ClientAuthenticationProvider();
+            final ClientAuthenticationProvider provider =
+                    new ClientAuthenticationProvider();
             provider.setClients(clients());
             return provider;
         }

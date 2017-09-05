@@ -227,8 +227,8 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
                 throws XmlRpcException, IOException {
             this.jobManager = jobManager;
             uuid = UUID.randomUUID().toString();
-            jobProcessManagerUrl = new URL(baseUrl,
-                    "job/" + JOB_PROCESS_MANAGER_ZIP);
+            jobProcessManagerUrl =
+                    new URL(baseUrl, "job/" + JOB_PROCESS_MANAGER_ZIP);
 
             final StringBuilder args = new StringBuilder("-jar ");
             args.append(JOB_PROCESS_MANAGER_JAR);

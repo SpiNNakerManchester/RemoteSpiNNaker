@@ -15,7 +15,8 @@ public class SerializationTests {
     public void testCreateJob() throws JsonProcessingException {
         final Command cmd = new CreateJobCommand(123, "abc def");
         assertEquals(
-                "{\"command\":\"create_job\",\"args\":[123],\"kwargs\":{\"owner\":\"abc def\"}}",
+                "{\"command\":\"create_job\",\"args\":[123],"
+                + "\"kwargs\":{\"owner\":\"abc def\"}}",
                 mapper.writeValueAsString(cmd));
     }
 
@@ -31,7 +32,8 @@ public class SerializationTests {
     public void testGetJobMachineInfo() throws JsonProcessingException {
         final Command cmd = new GetJobMachineInfoCommand(123);
         assertEquals(
-                "{\"command\":\"get_job_machine_info\",\"args\":[123],\"kwargs\":{}}",
+                "{\"command\":\"get_job_machine_info\",\"args\":[123],"
+                + "\"kwargs\":{}}",
                 mapper.writeValueAsString(cmd));
     }
 
