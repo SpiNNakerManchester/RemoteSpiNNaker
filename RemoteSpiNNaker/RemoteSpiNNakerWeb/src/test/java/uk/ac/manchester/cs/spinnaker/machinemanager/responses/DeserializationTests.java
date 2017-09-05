@@ -19,7 +19,8 @@ public class DeserializationTests {
     public void machine()
             throws JsonParseException, JsonMappingException, IOException {
         final String machine =
-                "{\"name\":\"foo\",\"tags\":[\"a\",\"b c\"],\"width\":123,\"height\":456}";
+                "{\"name\":\"foo\",\"tags\":[\"a\",\"b c\"],\"width\":123,"
+                + "\"height\":456}";
         final Machine m = mapper.readValue(machine, Machine.class);
         assertNotNull(m);
 
@@ -33,8 +34,9 @@ public class DeserializationTests {
     public void machineArray()
             throws JsonParseException, JsonMappingException, IOException {
         final String machine =
-                "[{\"name\":\"foo\",\"tags\":[\"a\",\"b c\"],\"width\":123,\"height\":456},"
-                        + "{\"name\":\"bar\",\"width\":1,\"height\":2}]";
+                "[{\"name\":\"foo\",\"tags\":[\"a\",\"b c\"],\"width\":123,"
+                + "\"height\":456},{\"name\":\"bar\",\"width\":1,"
+                + "\"height\":2}]";
         final Machine[] m = mapper.readValue(machine, Machine[].class);
         assertNotNull(m);
 
@@ -78,7 +80,8 @@ public class DeserializationTests {
     public void jobState()
             throws JsonParseException, JsonMappingException, IOException {
         final String machine =
-                "{\"state\":2,\"power\":true,\"keepAlive\":1.25,\"reason\":\"foo\"}";
+                "{\"state\":2,\"power\":true,\"keepAlive\":1.25,"
+                + "\"reason\":\"foo\"}";
         final JobState m = mapper.readValue(machine, JobState.class);
         assertNotNull(m);
 
