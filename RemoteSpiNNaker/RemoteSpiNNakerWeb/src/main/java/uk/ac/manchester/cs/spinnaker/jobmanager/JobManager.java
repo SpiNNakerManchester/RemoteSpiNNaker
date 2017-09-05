@@ -50,7 +50,9 @@ import uk.ac.manchester.cs.spinnaker.rest.OutputManager;
 public class JobManager implements NMPIQueueListener, JobManagerInterface {
     private static final double CHIPS_PER_BOARD = 48.0;
     private static final double CORES_PER_CHIP = 15.0;
-    public static final String JOB_PROCESS_MANAGER_JAR = "RemoteSpiNNakerJobProcessManager.jar";
+    private static final String PROVENANCE_SEPARATOR = "; ";
+    public static final String JOB_PROCESS_MANAGER_JAR =
+        "RemoteSpiNNakerJobProcessManager.jar";
 
     @Autowired
     private MachineManager machineManager;
@@ -192,6 +194,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
             jobResourceUsage.put(id, resourceUsage);
             jobNCores.put(id, quotaNCores);
         }
+        addProvenance(id, "spinnaker_machine", machine.getMachineName());
 
         return machine;
     }
@@ -337,8 +340,15 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
             if (!jobProvenance.containsKey(id)) {
                 jobProvenance.put(id, new HashMap<String, String>());
             }
-            jobProvenance.get(id).put(requireNonNull(item),
-                    requireNonNull(value));
+            Map<String, String> provenance = jobProvenance.get(id);
+            if (provenance.containsKey(requireNonNull(item))) {
+                provenance.put(
+                    item,
+                    provenance.get(item) + PROVENANCE_SEPARATOR
+                    + requireNonNull(value));
+            } else {
+                provenance.put(item, requireNonNull(value));
+            }
         }
     }
 

@@ -229,7 +229,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
                     new FileReader(outputLog))) {
                 while (true) {
                     final String line = reader.readLine();
-                    while (line == null) {
+                    if (line == null) {
                         break;
                     }
                     logToAppend.append(line).append("\n");

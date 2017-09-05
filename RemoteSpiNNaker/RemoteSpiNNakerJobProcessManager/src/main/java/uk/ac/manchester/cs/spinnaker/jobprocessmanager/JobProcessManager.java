@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.swing.Timer;
 
@@ -173,8 +174,11 @@ public class JobProcessManager {
                 logWriter.stop();
                 log = logWriter.getLog();
             }
-
-            jobManager.setJobError(projectId, job.getId(), error.getMessage(),
+            String message = error.getMessage();
+            if (message == null) {
+                message = "No Error Message";
+            }
+            jobManager.setJobError(projectId, job.getId(), message,
                     log, "", new ArrayList<String>(),
                     new RemoteStackTrace(error));
         } catch (final Throwable t) {
@@ -305,12 +309,22 @@ public class JobProcessManager {
             }
         }
 
+        for (Entry<String, List<String>> item :
+                process.getProvenance().entrySet()) {
+            for (String value : item.getValue()) {
+                jobManager.addProvenance(job.getId(), item.getKey(), value);
+            }
+        }
+
         switch (status) {
             case Error :
                 final Throwable error = process.getError();
-                jobManager.setJobError(projectId, job.getId(),
-                        error.getMessage(), log,
-                        workingDirectory.getAbsolutePath(), outputsAsStrings,
+                String message = error.getMessage();
+                if (message == null) {
+                    message = "No Error Message";
+                }
+                jobManager.setJobError(projectId, job.getId(), message,
+                        log, workingDirectory.getAbsolutePath(), outputsAsStrings,
                         new RemoteStackTrace(error));
                 break;
             case Finished :

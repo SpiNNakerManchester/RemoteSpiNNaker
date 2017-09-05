@@ -2,6 +2,7 @@ package uk.ac.manchester.cs.spinnaker.jobprocess;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 import uk.ac.manchester.cs.spinnaker.job.JobParameters;
 import uk.ac.manchester.cs.spinnaker.job.Status;
@@ -53,6 +54,14 @@ public interface JobProcess<P extends JobParameters> {
      * @return A list of output files.
      */
     List<File> getOutputs();
+
+    /**
+    * Gets any provenance data from the job.  Should always return a map, but
+    * this map can be empty if there is no provenance.
+    *
+    * @return A map of string to string.
+    */
+    Map<String, List<String>> getProvenance();
 
     /**
      * Cleans up the job, removing any associated files
