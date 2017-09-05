@@ -49,13 +49,15 @@ import uk.ac.manchester.cs.spinnaker.rest.utils.NullExceptionMapper;
 @Import(JaxRsConfig.class)
 public class RemoteSpinnakerBeans {
     @Bean
-    public static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
+    public static PropertySourcesPlaceholderConfigurer
+            propertySourcesPlaceholderConfigurer() {
         return new PropertySourcesPlaceholderConfigurer();
     }
 
     @Bean
     public static ConversionServiceFactoryBean conversionService() {
-        final ConversionServiceFactoryBean factory = new ConversionServiceFactoryBean();
+        final ConversionServiceFactoryBean factory =
+                new ConversionServiceFactoryBean();
         factory.setConverters(
                 singleton(new Converter<String, SpinnakerMachine>() {
                     @Override
