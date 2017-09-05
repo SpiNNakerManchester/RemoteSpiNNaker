@@ -23,18 +23,19 @@ import javax.net.ssl.X509TrustManager;
 import org.jboss.resteasy.util.ParameterParser;
 
 public class FileDownloader {
-	private static String getFileName(String contentDisposition) {
+    private static String getFileName(final String contentDisposition) {
 		if (contentDisposition != null) {
-			String cdl = contentDisposition.toLowerCase();
+            final String cdl = contentDisposition.toLowerCase();
 			if (cdl.startsWith("form-data") || cdl.startsWith("attachment")) {
-				ParameterParser parser = new ParameterParser();
+                final ParameterParser parser = new ParameterParser();
 				parser.setLowerCaseNames(true);
-				Map<String, String> params = parser.parse(contentDisposition,
-						';');
-				if (params.containsKey("filename"))
+                final Map<String, String> params = parser
+                        .parse(contentDisposition, ';');
+                if (params.containsKey("filename")) {
 					return params.get("filename").trim();
 			}
 		}
+        }
 		return null;
 	}
 
@@ -53,20 +54,22 @@ public class FileDownloader {
 	 * @throws NoSuchAlgorithmException
 	 * @throws KeyManagementException
 	 */
-	public static File downloadFile(URL url, File workingDirectory,
-			String defaultFilename) throws IOException {
+    public static File downloadFile(final URL url, final File workingDirectory,
+            final String defaultFilename) throws IOException {
 		requireNonNull(workingDirectory);
 
 		// Open a connection
-		URLConnection urlConnection = requireNonNull(url).openConnection();
+        final URLConnection urlConnection = requireNonNull(url)
+                .openConnection();
 		urlConnection.setDoInput(true);
 
-		if (urlConnection instanceof HttpsURLConnection)
+		if (urlConnection instanceof HttpsURLConnection) {
 			initVeryTrustingSSLContext((HttpsURLConnection) urlConnection);
+	    }
 
 		// Work out the output filename
-		File output = getTargetFile(url, workingDirectory, defaultFilename,
-				urlConnection);
+        final File output = getTargetFile(url, workingDirectory,
+                defaultFilename, urlConnection);
 
 		// Write the file
 		copy(urlConnection.getInputStream(), output.toPath());
@@ -117,18 +120,21 @@ public class FileDownloader {
 		}
 	}
 
-	private static File getTargetFile(URL url, File workingDirectory,
-			String defaultFilename, URLConnection urlConnection)
-			throws IOException {
-		String filename = getFileName(
-				urlConnection.getHeaderField("Content-Disposition"));
-		if (filename != null)
+	private static File getTargetFile(final URL url,
+            final File workingDirectory, final String defaultFilename,
+            final URLConnection urlConnection) throws IOException {
+        final String filename = getFileName(
+                urlConnection.getHeaderField("Content-Disposition"));
+        if (filename != null) {
 			return new File(workingDirectory, filename);
-		if (defaultFilename != null)
+        }
+        if (defaultFilename != null) {
 			return new File(workingDirectory, defaultFilename);
-		String path = url.getPath();
-		if (path.isEmpty())
+        }
+        final String path = url.getPath();
+        if (path.isEmpty()) {
 			return createTempFile("download", "file", workingDirectory);
+        }
 		return new File(workingDirectory, new File(path).getName());
 	}
 
@@ -145,8 +151,9 @@ public class FileDownloader {
 	 * @return The file downloaded
 	 * @throws IOException
 	 */
-	public static File downloadFile(String url, File workingDirectory,
-			String defaultFilename) throws IOException {
+    public static File downloadFile(final String url,
+            final File workingDirectory, final String defaultFilename)
+            throws IOException {
 		return downloadFile(new URL(url), workingDirectory, defaultFilename);
 	}
 }

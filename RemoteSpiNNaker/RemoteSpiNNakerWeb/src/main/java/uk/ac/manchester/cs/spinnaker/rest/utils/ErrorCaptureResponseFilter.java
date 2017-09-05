@@ -21,55 +21,59 @@ import org.slf4j.Logger;
 // Only public because of the annotation
 @Provider
 public class ErrorCaptureResponseFilter implements ClientResponseFilter {
-	private CustomJacksonJsonProvider provider = new CustomJacksonJsonProvider();
-	private static final Logger log = getLogger(ErrorCaptureResponseFilter.class);
-	public volatile boolean writeToLog = true;
+    private final CustomJacksonJsonProvider provider = new CustomJacksonJsonProvider();
+    private static final Logger log = getLogger(
+            ErrorCaptureResponseFilter.class);
+    public volatile boolean writeToLog = true;
 
-	private static final String INDENT = "    ";// 4 spaces
-	private static final String IND2 = INDENT + INDENT;
+    private static final String INDENT = "    ";// 4 spaces
+    private static final String IND2 = INDENT + INDENT;
 
-	@Override
-	public void filter(ClientRequestContext requestContext,
-			ClientResponseContext responseContext) throws IOException {
-		if (!writeToLog)
-			return;
-		Family family = responseContext.getStatusInfo().getFamily();
-		if ((family == CLIENT_ERROR) || (family == SERVER_ERROR)) {
-			log.trace("Error when sending request:");
-			log.trace(INDENT + "Headers:");
-			MultivaluedMap<String, String> headers = requestContext
-					.getStringHeaders();
-			for (String headerName : headers.keySet())
-				for (String headerValue : headers.get(headerName))
-					log.trace(IND2 + headerName + ": " + headerValue);
+    @Override
+    public void filter(final ClientRequestContext requestContext,
+            final ClientResponseContext responseContext) throws IOException {
+        if (!writeToLog) {
+            return;
+        }
+        final Family family = responseContext.getStatusInfo().getFamily();
+        if ((family == CLIENT_ERROR) || (family == SERVER_ERROR)) {
+            log.trace("Error when sending request:");
+            log.trace(INDENT + "Headers:");
+            final MultivaluedMap<String, String> headers = requestContext
+                    .getStringHeaders();
+            for (final String headerName : headers.keySet()) {
+                for (final String headerValue : headers.get(headerName)) {
+                    log.trace(IND2 + headerName + ": " + headerValue);
+                }
+            }
 
-			log.trace(INDENT + "Entity:");
-			log.trace(IND2 + requestContext.getEntity());
+            log.trace(INDENT + "Entity:");
+            log.trace(IND2 + requestContext.getEntity());
 
-			String json = getRequestAsJSON(requestContext);
-			if (json != null) {
-				log.trace(INDENT + "JSON version:");
-				log.trace(IND2 + json);
-			}
-		}
-	}
+            final String json = getRequestAsJSON(requestContext);
+            if (json != null) {
+                log.trace(INDENT + "JSON version:");
+                log.trace(IND2 + json);
+            }
+        }
+    }
 
-	private String getRequestAsJSON(ClientRequestContext requestContext) {
-		try {
-			StringWriter jsonWriter = new StringWriter();
-			try (OutputStream jsonOutput = new WriterOutputStream(jsonWriter,
-					"UTF-8")) {
-				provider.writeTo(requestContext.getEntity(),
-						requestContext.getEntityClass(),
-						requestContext.getEntityType(),
-						requestContext.getEntityAnnotations(),
-						requestContext.getMediaType(),
-						requestContext.getHeaders(), jsonOutput);
-			}
-			return jsonWriter.toString();
-		} catch (Exception e) {
-			log.trace("problem when converting request to JSON", e);
-			return null;
-		}
-	}
+    private String getRequestAsJSON(final ClientRequestContext requestContext) {
+        try {
+            final StringWriter jsonWriter = new StringWriter();
+            try (OutputStream jsonOutput = new WriterOutputStream(jsonWriter,
+                    "UTF-8")) {
+                provider.writeTo(requestContext.getEntity(),
+                        requestContext.getEntityClass(),
+                        requestContext.getEntityType(),
+                        requestContext.getEntityAnnotations(),
+                        requestContext.getMediaType(),
+                        requestContext.getHeaders(), jsonOutput);
+            }
+            return jsonWriter.toString();
+        } catch (final Exception e) {
+            log.trace("problem when converting request to JSON", e);
+            return null;
+        }
+    }
 }

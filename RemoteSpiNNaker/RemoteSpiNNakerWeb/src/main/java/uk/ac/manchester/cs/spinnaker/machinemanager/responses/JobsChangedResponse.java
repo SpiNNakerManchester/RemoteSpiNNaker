@@ -11,7 +11,7 @@ public class JobsChangedResponse implements Response {
         return jobsChanged;
     }
 
-    public void setJobsChanged(List<Integer> jobsChanged) {
+    public void setJobsChanged(final List<Integer> jobsChanged) {
         this.jobsChanged = jobsChanged;
     }
 }

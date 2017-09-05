@@ -12,7 +12,7 @@ public class JobMachineInfo {
         return width;
     }
 
-    public void setWidth(int width) {
+    public void setWidth(final int width) {
         this.width = width;
     }
 
@@ -20,7 +20,7 @@ public class JobMachineInfo {
         return height;
     }
 
-    public void setHeight(int height) {
+    public void setHeight(final int height) {
         this.height = height;
     }
 
@@ -28,7 +28,7 @@ public class JobMachineInfo {
         return connections;
     }
 
-    public void setConnections(List<Connection> connections) {
+    public void setConnections(final List<Connection> connections) {
         this.connections = connections;
     }
 
@@ -36,7 +36,7 @@ public class JobMachineInfo {
         return machineName;
     }
 
-    public void setMachineName(String machineName) {
+    public void setMachineName(final String machineName) {
         this.machineName = machineName;
     }
 }
