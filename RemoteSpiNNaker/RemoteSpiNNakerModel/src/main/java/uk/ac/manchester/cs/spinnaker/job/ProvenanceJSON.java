@@ -57,7 +57,7 @@ public class ProvenanceJSON {
             if (this.contents instanceof SubProperties) {
                 throw new RuntimeException(
                     "Can't add value \"" + value + "\" when already have"
-                    + "subproperties at " + path + ", " + startOffset);
+                    + " subproperties at " + path + ", " + startOffset);
             }
             if (this.contents == null) {
                 this.contents = new Value(value);

@@ -219,7 +219,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
                         new ProvenanceItem(pathList, subItem.getValue()));
                     System.err.println(
                             "Adding provenance path = " + pathList +
-                            ", value = " + subItem.getValue());;
+                            ", value = " + subItem.getValue());
                 }
             }
             pathList.pop();

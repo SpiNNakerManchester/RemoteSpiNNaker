@@ -341,6 +341,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     @Override
     public void addProvenance(final int id, final List<String> path,
             final String value) {
+        System.err.println("Adding provenance path = " + path + ", value = " + value);
 
         synchronized (jobProvenance) {
             if (!jobProvenance.containsKey(id)) {
