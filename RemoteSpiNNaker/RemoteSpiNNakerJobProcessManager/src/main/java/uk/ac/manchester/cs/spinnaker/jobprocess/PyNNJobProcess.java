@@ -201,7 +201,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
 
         // Create a path for this level in the tree
         final String myPath = path + items.getName();
-        pathList.push(items.getName());
+        pathList.addLast(items.getName());
 
         // Add all nested items
         for (final ProvenanceDataItems subItems : items
@@ -212,16 +212,16 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         // Add items from this level
         for (final ProvenanceDataItem subItem : items.getProvenanceDataItem()) {
             final String itemPath = myPath + "/" + subItem.getName();
-            pathList.push(subItem.getName());
+            pathList.addLast(subItem.getName());
             for (final String item : PROVENANCE_ITEMS_TO_ADD) {
                 if (itemPath.matches(item)) {
                     provenance.add(new ProvenanceItem(
                         new ArrayList<>(pathList), subItem.getValue()));
                 }
             }
-            pathList.pop();
+            pathList.removeLast();
         }
-        pathList.pop();
+        pathList.removeLast();
     }
 
     private void addProvenance(final File provenanceDirectory)
