@@ -341,7 +341,6 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     @Override
     public void addProvenance(final int id, final List<String> path,
             final String value) {
-        System.err.println("Adding provenance path = " + path + ", value = " + value);
 
         synchronized (jobProvenance) {
             if (!jobProvenance.containsKey(id)) {
@@ -353,14 +352,9 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     }
 
     private ProvenanceJSON getProvenance(final int id) {
-        ProvenanceJSON prov;
         synchronized (jobProvenance) {
-            prov = jobProvenance.remove(id);
+            return jobProvenance.remove(id);
         }
-        if (prov != null) {
-            prov = null;
-        }
-        return prov;
     }
 
     private long getResourceUsage(final int id) {
