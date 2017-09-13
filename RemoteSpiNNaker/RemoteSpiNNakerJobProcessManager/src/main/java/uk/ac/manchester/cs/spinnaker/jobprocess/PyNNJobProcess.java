@@ -217,6 +217,9 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
                 if (itemPath.matches(item)) {
                     provenance.add(
                         new ProvenanceItem(pathList, subItem.getValue()));
+                    System.err.println(
+                            "Adding provenance path = " + pathList +
+                            ", value = " + subItem.getValue());;
                 }
             }
             pathList.pop();
