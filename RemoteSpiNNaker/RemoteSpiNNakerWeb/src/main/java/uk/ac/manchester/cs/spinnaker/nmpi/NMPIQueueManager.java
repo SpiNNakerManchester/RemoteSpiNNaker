@@ -23,6 +23,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 
+import uk.ac.manchester.cs.spinnaker.job.ProvenanceJSON;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.DataItem;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.QueueEmpty;
@@ -216,7 +217,7 @@ public class NMPIQueueManager implements Runnable {
      */
     public void setJobFinished(final int id, final String logToAppend,
             final List<DataItem> outputs, final long resourceUsage,
-            final Map<String, String> provenance) throws MalformedURLException {
+            final ProvenanceJSON provenance) throws MalformedURLException {
         logger.debug("Job " + id + " is finished");
 
         if (logToAppend != null) {
@@ -250,7 +251,7 @@ public class NMPIQueueManager implements Runnable {
      */
     public void setJobError(final int id, final String logToAppend,
             final List<DataItem> outputs, final Throwable error,
-            final long resourceUsage, final Map<String, String> provenance)
+            final long resourceUsage, final ProvenanceJSON provenance)
             throws MalformedURLException {
         logger.debug("Job " + id + " finished with an error");
         final StringWriter errors = new StringWriter();
