@@ -201,35 +201,35 @@ public class JobProcessManager {
 
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
-            case "--serverUrl":
-                serverUrl = args[++i];
-                break;
-            case "--executerId":
-                executerId = args[++i];
-                break;
-            case "--deleteOnExit":
-                deleteOnExit = true;
-                break;
-            case "--local":
-                isLocal = true;
-                break;
-            case "--liveUploadOutput":
-                liveUploadOutput = true;
-                break;
-            case "--requestMachine":
-                requestMachine = true;
-                break;
-            case "--authToken":
-                try (BufferedReader r = new BufferedReader(
-                        new InputStreamReader(System.in))) {
-                    authToken = r.readLine();
-                }
-                break;
-            default:
+                case "--serverUrl" :
+                    serverUrl = args[++i];
+                    break;
+                case "--executerId" :
+                    executerId = args[++i];
+                    break;
+                case "--deleteOnExit" :
+                    deleteOnExit = true;
+                    break;
+                case "--local" :
+                    isLocal = true;
+                    break;
+                case "--liveUploadOutput" :
+                    liveUploadOutput = true;
+                    break;
+                case "--requestMachine" :
+                    requestMachine = true;
+                    break;
+                case "--authToken" :
+                    try (BufferedReader r = new BufferedReader(
+                            new InputStreamReader(System.in))) {
+                        authToken = r.readLine();
+                    }
+                    break;
+                default :
                     throw new IllegalArgumentException(
                             "unknown option: " + args[i]);
             }
-            }
+        }
 
         new JobProcessManager(serverUrl, deleteOnExit, isLocal, executerId,
                 liveUploadOutput, requestMachine, authToken).runJob();
@@ -248,17 +248,17 @@ public class JobProcessManager {
     }
 
     /**
-    * Sort out the parameters to a job. Includes downloading any necessary
-    * files.
-    *
-    * @param workingDirectory
-    *            The working directory for the job, used to write files.
-    * @return Description of the parameters.
-    * @throws IOException
-    *             If anything goes wrong, such as the parameters being
-    *             unreadable or the job being unsupported on the current
-    *             architectural configuration.
-    */
+     * Sort out the parameters to a job. Includes downloading any necessary
+     * files.
+     *
+     * @param workingDirectory
+     *            The working directory for the job, used to write files.
+     * @return Description of the parameters.
+     * @throws IOException
+     *             If anything goes wrong, such as the parameters being
+     *             unreadable or the job being unsupported on the current
+     *             architectural configuration.
+     */
     private JobParameters getJobParameters(final File workingDirectory)
             throws IOException {
         final Map<String, JobParametersFactoryException> errors =
@@ -319,28 +319,28 @@ public class JobProcessManager {
         }
 
         switch (status) {
-        case Error:
+            case Error :
                 final Throwable error = process.getError();
-            String message = error.getMessage();
-            if (message == null) {
-                message = "No Error Message";
-            }
-            jobManager.setJobError(projectId, job.getId(), message, log,
-                    workingDirectory.getAbsolutePath(), outputsAsStrings,
-                    new RemoteStackTrace(error));
-            break;
-        case Finished:
-            jobManager.setJobFinished(projectId, job.getId(), log,
-                    workingDirectory.getAbsolutePath(), outputsAsStrings);
-
-            // Clean up
-            process.cleanup();
-                if (deleteOnExit) {
-                deleteQuietly(workingDirectory);
+                String message = error.getMessage();
+                if (message == null) {
+                    message = "No Error Message";
                 }
-            break;
-        default:
-            throw new IllegalStateException("Unknown status returned!");
+                jobManager.setJobError(projectId, job.getId(), message, log,
+                        workingDirectory.getAbsolutePath(), outputsAsStrings,
+                        new RemoteStackTrace(error));
+                break;
+            case Finished :
+                jobManager.setJobFinished(projectId, job.getId(), log,
+                        workingDirectory.getAbsolutePath(), outputsAsStrings);
+
+                // Clean up
+                process.cleanup();
+                if (deleteOnExit) {
+                    deleteQuietly(workingDirectory);
+                }
+                break;
+            default :
+                throw new IllegalStateException("Unknown status returned!");
         }
     }
 }
@@ -393,23 +393,23 @@ class SimpleJobManagerLogWriter extends JobManagerLogWriter {
 
 @SuppressWarnings("serial")
 class JobErrorsException extends IOException {
-	private static final String MAIN_MSG = "The job type was recognised"
-			+ " by at least one factory, but could not be decoded.  The"
-			+ " errors are as follows:";
+    private static final String MAIN_MSG = "The job type was recognised"
+            + " by at least one factory, but could not be decoded.  The"
+            + " errors are as follows:";
 
-	private static String buildMessage(
-			Map<String, ? extends Exception> errors) {
-		StringWriter buffer = new StringWriter();
-		PrintWriter bufferWriter = new PrintWriter(buffer);
-		bufferWriter.println(MAIN_MSG);
-		for (String key : errors.keySet()) {
-			bufferWriter.print(key);
-			bufferWriter.println(":");
-			errors.get(key).printStackTrace(bufferWriter);
-			bufferWriter.println();
-		}
-		return buffer.toString();
-	}
+    private static String
+            buildMessage(Map<String, ? extends Exception> errors) {
+        StringWriter buffer = new StringWriter();
+        PrintWriter bufferWriter = new PrintWriter(buffer);
+        bufferWriter.println(MAIN_MSG);
+        for (String key : errors.keySet()) {
+            bufferWriter.print(key);
+            bufferWriter.println(":");
+            errors.get(key).printStackTrace(bufferWriter);
+            bufferWriter.println();
+        }
+        return buffer.toString();
+    }
 
     JobErrorsException(
             final Map<String, JobParametersFactoryException> errors) {
