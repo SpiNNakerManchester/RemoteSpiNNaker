@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * A NMPI job
@@ -32,7 +33,7 @@ public class Job implements QueueNextResponse {
     @JsonSerialize(using = DateTimeSerialiser.class)
     @JsonDeserialize(using = DateTimeDeserialiser.class)
     private DateTime timestampSubmission;
-    private Object provenance;
+    private ObjectNode provenance;
     private Map<String, Object> others;
 
     public String getCode() {
@@ -147,11 +148,11 @@ public class Job implements QueueNextResponse {
         this.resourceUsage = resourceUsage;
     }
 
-    public Object getProvenance() {
+    public ObjectNode getProvenance() {
         return provenance;
     }
 
-    public void setProvenance(final Object provenance) {
+    public void setProvenance(final ObjectNode provenance) {
         this.provenance = provenance;
     }
 
