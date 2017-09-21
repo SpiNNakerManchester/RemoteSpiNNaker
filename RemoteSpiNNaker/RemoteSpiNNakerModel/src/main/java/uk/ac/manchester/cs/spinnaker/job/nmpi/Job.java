@@ -1,5 +1,6 @@
 package uk.ac.manchester.cs.spinnaker.job.nmpi;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -7,7 +8,6 @@ import org.joda.time.DateTime;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -28,13 +28,11 @@ public class Job implements QueueNextResponse {
     private String userId;
     private long resourceUsage;
     @JsonSerialize(using = DateTimeSerialiser.class)
-    @JsonDeserialize(using = DateTimeDeserialiser.class)
     private DateTime timestampCompletion;
     @JsonSerialize(using = DateTimeSerialiser.class)
-    @JsonDeserialize(using = DateTimeDeserialiser.class)
     private DateTime timestampSubmission;
     private ObjectNode provenance;
-    private Map<String, Object> others;
+    private Map<String, Object> others = new HashMap<String, Object>();
 
     public String getCode() {
         return code;
