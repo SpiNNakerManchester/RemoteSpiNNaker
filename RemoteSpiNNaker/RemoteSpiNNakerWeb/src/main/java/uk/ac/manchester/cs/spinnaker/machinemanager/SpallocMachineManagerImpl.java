@@ -195,14 +195,14 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
             throw new IllegalStateException("Unknown Response " + response);
         }
 
-        private synchronized void waitForConnection() {
-            while (!connected) {
-                logger.debug("Waiting for connection");
-                if (waitfor(this)) {
-                    break;
-                }
-            }
-        }
+		private synchronized void waitForConnection() {
+			while (!connected) {
+				logger.debug("Waiting for connection");
+				if (waitfor(this)) {
+					break;
+				}
+			}
+		}
 
         private void writeRequest(final Command<?> request) throws IOException {
             String message = mapper.writeValueAsString(request);
