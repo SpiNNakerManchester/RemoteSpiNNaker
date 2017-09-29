@@ -9,6 +9,16 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Map;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import org.jboss.resteasy.util.ParameterParser;
 
@@ -41,6 +51,8 @@ public class FileDownloader {
      *            url or headers, or <tt>null</tt> to use a generated name
      * @return The file downloaded
      * @throws IOException
+     * @throws NoSuchAlgorithmException
+     * @throws KeyManagementException
      */
     public static File downloadFile(final URL url, final File workingDirectory,
             final String defaultFilename) throws IOException {
@@ -51,6 +63,10 @@ public class FileDownloader {
                 requireNonNull(url).openConnection();
         urlConnection.setDoInput(true);
 
+        if (urlConnection instanceof HttpsURLConnection) {
+            initVeryTrustingSSLContext((HttpsURLConnection) urlConnection);
+        }
+
         // Work out the output filename
         final File output = getTargetFile(url, workingDirectory,
                 defaultFilename, urlConnection);
@@ -59,6 +75,49 @@ public class FileDownloader {
         copy(urlConnection.getInputStream(), output.toPath());
 
         return output;
+    }
+
+    /**
+     * Sets the given connection to trust any host for the purposes of HTTPS.
+     * This is wildly unsafe.
+     *
+     * @param connection
+     *            The connection to configure.
+     * @throws IOException
+     *             If anything goes wrong.
+     */
+    private static void initVeryTrustingSSLContext(
+            HttpsURLConnection connection) throws IOException {
+        // Set up to trust everyone
+        try {
+            SSLContext sc = SSLContext.getInstance("SSL");
+            sc.init(null, new TrustManager[]{new X509TrustManager() {
+                @Override
+                public X509Certificate[] getAcceptedIssuers() {
+                    return null;
+                }
+
+                @Override
+                public void checkClientTrusted(X509Certificate[] certs,
+                        String authType) {
+                }
+
+                @Override
+                public void checkServerTrusted(X509Certificate[] certs,
+                        String authType) {
+                }
+            }}, new SecureRandom());
+
+            connection.setSSLSocketFactory(sc.getSocketFactory());
+            connection.setHostnameVerifier(new HostnameVerifier() {
+                @Override
+                public boolean verify(String hostname, SSLSession session) {
+                    return true;
+                }
+            });
+        } catch (Exception e) {
+            throw new IOException("Error processing HTTPS request", e);
+        }
     }
 
     private static File getTargetFile(final URL url,
