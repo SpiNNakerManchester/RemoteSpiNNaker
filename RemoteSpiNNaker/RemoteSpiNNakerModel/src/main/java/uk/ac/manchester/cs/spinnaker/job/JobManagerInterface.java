@@ -63,7 +63,8 @@ public interface JobManagerInterface {
 
     @POST
     @Path("{id}/provenance")
-    void addProvenance(@PathParam("id") int id, @QueryParam("name") String name,
+    void addProvenance(@PathParam("id") int id,
+            @QueryParam("name") List<String> path,
             @QueryParam("value") String value);
 
     @POST

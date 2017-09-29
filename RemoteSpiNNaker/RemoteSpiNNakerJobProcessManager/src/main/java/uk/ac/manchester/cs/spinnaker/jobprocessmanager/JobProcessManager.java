@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import javax.swing.Timer;
 
@@ -40,6 +39,7 @@ import uk.ac.manchester.cs.spinnaker.job_parameters.JobParametersFactoryExceptio
 import uk.ac.manchester.cs.spinnaker.jobprocess.JobProcess;
 import uk.ac.manchester.cs.spinnaker.jobprocess.JobProcessFactory;
 import uk.ac.manchester.cs.spinnaker.jobprocess.LogWriter;
+import uk.ac.manchester.cs.spinnaker.jobprocess.ProvenanceItem;
 import uk.ac.manchester.cs.spinnaker.jobprocess.PyNNJobProcess;
 import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
 
@@ -311,11 +311,9 @@ public class JobProcessManager {
             }
         }
 
-        for (final Entry<String, List<String>> item : process.getProvenance()
-                .entrySet()) {
-            for (final String value : item.getValue()) {
-                jobManager.addProvenance(job.getId(), item.getKey(), value);
-            }
+        for (final ProvenanceItem item : process.getProvenance()) {
+            jobManager.addProvenance(
+                job.getId(), item.getPath(), item.getValue());
         }
 
         switch (status) {

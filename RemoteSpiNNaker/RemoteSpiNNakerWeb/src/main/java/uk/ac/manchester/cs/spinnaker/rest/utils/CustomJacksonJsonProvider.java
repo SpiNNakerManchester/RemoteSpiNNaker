@@ -1,7 +1,7 @@
 package uk.ac.manchester.cs.spinnaker.rest.utils;
 
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
-import static com.fasterxml.jackson.databind.PropertyNamingStrategy.CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES;
+import static com.fasterxml.jackson.databind.PropertyNamingStrategy.SNAKE_CASE;
 import static javax.ws.rs.core.MediaType.WILDCARD;
 
 import java.io.IOException;
@@ -42,8 +42,7 @@ public class CustomJacksonJsonProvider extends JacksonJsonProvider {
         final ObjectMapper mapper = locateMapper(type, mediaType);
         if (!registeredMappers.contains(mapper)) {
             mapper.registerModule(module);
-            mapper.setPropertyNamingStrategy(
-                    CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES);
+            mapper.setPropertyNamingStrategy(SNAKE_CASE);
             mapper.configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
             mapper.registerModule(jodaModule);
             registeredMappers.add(mapper);
