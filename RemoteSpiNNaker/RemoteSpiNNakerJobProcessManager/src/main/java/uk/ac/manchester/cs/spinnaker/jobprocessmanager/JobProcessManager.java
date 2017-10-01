@@ -18,11 +18,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import javax.swing.Timer;
 
@@ -38,6 +39,7 @@ import uk.ac.manchester.cs.spinnaker.job_parameters.JobParametersFactoryExceptio
 import uk.ac.manchester.cs.spinnaker.jobprocess.JobProcess;
 import uk.ac.manchester.cs.spinnaker.jobprocess.JobProcessFactory;
 import uk.ac.manchester.cs.spinnaker.jobprocess.LogWriter;
+import uk.ac.manchester.cs.spinnaker.jobprocess.ProvenanceItem;
 import uk.ac.manchester.cs.spinnaker.jobprocess.PyNNJobProcess;
 import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
 
@@ -309,11 +311,9 @@ public class JobProcessManager {
             }
         }
 
-        for (final Entry<String, List<String>> item : process.getProvenance()
-                .entrySet()) {
-            for (final String value : item.getValue()) {
-                jobManager.addProvenance(job.getId(), item.getKey(), value);
-            }
+        for (final ProvenanceItem item : process.getProvenance()) {
+            jobManager.addProvenance(
+                job.getId(), item.getPath(), item.getValue());
         }
 
         switch (status) {
@@ -393,16 +393,20 @@ class SimpleJobManagerLogWriter extends JobManagerLogWriter {
 class JobErrorsException extends IOException {
     private static final String MAIN_MSG = "The job type was recognised"
             + " by at least one factory, but could not be decoded.  The"
-            + " errors  are as follows:\n";
+            + " errors are as follows:";
 
     private static String
-            buildMessage(final Map<String, ? extends Exception> errors) {
-        final StringBuilder problemBuilder = new StringBuilder(MAIN_MSG);
-        for (final String key : errors.keySet()) {
-            problemBuilder.append(key).append(": ")
-                    .append(errors.get(key).getMessage()).append('\n');
+            buildMessage(Map<String, ? extends Exception> errors) {
+        StringWriter buffer = new StringWriter();
+        PrintWriter bufferWriter = new PrintWriter(buffer);
+        bufferWriter.println(MAIN_MSG);
+        for (String key : errors.keySet()) {
+            bufferWriter.print(key);
+            bufferWriter.println(":");
+            errors.get(key).printStackTrace(bufferWriter);
+            bufferWriter.println();
         }
-        return problemBuilder.toString();
+        return buffer.toString();
     }
 
     JobErrorsException(

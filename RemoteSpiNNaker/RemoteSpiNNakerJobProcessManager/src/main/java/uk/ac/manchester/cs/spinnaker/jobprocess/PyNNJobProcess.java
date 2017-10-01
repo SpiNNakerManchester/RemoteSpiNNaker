@@ -18,11 +18,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -72,7 +71,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
     private Status status = null;
     private Throwable error = null;
     private final List<File> outputs = new ArrayList<>();
-    private final Map<String, List<String>> provenance = new HashMap<>();
+    private final List<ProvenanceItem> provenance = new ArrayList<>();
     ThreadGroup threadGroup;
 
     private static Set<File> gatherFiles(final File directory) {
@@ -198,29 +197,31 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
     }
 
     private void putProvenanceInMap(final ProvenanceDataItems items,
-            final String path) {
+            final String path, final LinkedList<String> pathList) {
 
         // Create a path for this level in the tree
         final String myPath = path + items.getName();
+        pathList.addLast(items.getName());
 
         // Add all nested items
         for (final ProvenanceDataItems subItems : items
                 .getProvenanceDataItems()) {
-            putProvenanceInMap(subItems, myPath + "/");
+            putProvenanceInMap(subItems, myPath + "/", pathList);
         }
 
         // Add items from this level
         for (final ProvenanceDataItem subItem : items.getProvenanceDataItem()) {
             final String itemPath = myPath + "/" + subItem.getName();
+            pathList.addLast(subItem.getName());
             for (final String item : PROVENANCE_ITEMS_TO_ADD) {
                 if (itemPath.matches(item)) {
-                    if (!provenance.containsKey(itemPath)) {
-                        provenance.put(itemPath, new ArrayList<String>());
-                    }
-                    provenance.get(itemPath).add(subItem.getValue());
+                    provenance.add(new ProvenanceItem(
+                        new ArrayList<>(pathList), subItem.getValue()));
                 }
             }
+            pathList.removeLast();
         }
+        pathList.removeLast();
     }
 
     private void addProvenance(final File provenanceDirectory)
@@ -239,7 +240,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
                 final ProvenanceDataItems items =
                         (ProvenanceDataItems) jaxbUnmarshaller
                                 .unmarshal(source);
-                putProvenanceInMap(items, "");
+                putProvenanceInMap(items, "", new LinkedList<String>());
             }
         }
     }
@@ -308,7 +309,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
     }
 
     @Override
-    public Map<String, List<String>> getProvenance() {
+    public List<ProvenanceItem> getProvenance() {
         return provenance;
     }
 

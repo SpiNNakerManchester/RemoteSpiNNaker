@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +30,10 @@ import javax.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import uk.ac.manchester.cs.spinnaker.job.JobMachineAllocated;
 import uk.ac.manchester.cs.spinnaker.job.JobManagerInterface;
@@ -50,7 +55,6 @@ import uk.ac.manchester.cs.spinnaker.rest.OutputManager;
 public class JobManager implements NMPIQueueListener, JobManagerInterface {
     private static final double CHIPS_PER_BOARD = 48.0;
     private static final double CORES_PER_CHIP = 15.0;
-    private static final String PROVENANCE_SEPARATOR = "; ";
     public static final String JOB_PROCESS_MANAGER_JAR =
             "RemoteSpiNNakerJobProcessManager.jar";
 
@@ -75,7 +79,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     private final Map<Integer, File> jobOutputTempFiles = new HashMap<>();
     private final Map<Integer, Long> jobNCores = new HashMap<>();
     private final Map<Integer, Long> jobResourceUsage = new HashMap<>();
-    private final Map<Integer, Map<String, String>> jobProvenance =
+    private final Map<Integer, ObjectNode> jobProvenance =
             new HashMap<>();
     private ThreadGroup threadGroup;
 
@@ -95,6 +99,14 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     public void addJob(final Job job) throws IOException {
         requireNonNull(job);
         logger.info("New job " + job.getId());
+
+        // Add any existing provenance to be updated
+        synchronized (jobProvenance) {
+            ObjectNode prov = job.getProvenance();
+            if (prov != null) {
+                jobProvenance.put(job.getId(), prov);
+            }
+        }
 
         // Add the job to the set of jobs to be run
         synchronized (jobExecuters) {
@@ -196,7 +208,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
             jobResourceUsage.put(id, resourceUsage);
             jobNCores.put(id, quotaNCores);
         }
-        addProvenance(id, "spinnaker_machine", machine.getMachineName());
+        addProvenance(id, Arrays.asList(new String[]{"spinnaker_machine"}),
+                machine.getMachineName());
 
         return machine;
     }
@@ -337,31 +350,53 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     }
 
     @Override
-    public void addProvenance(final int id, final String item,
+    public void addProvenance(final int id, final List<String> path,
             final String value) {
+
         synchronized (jobProvenance) {
             if (!jobProvenance.containsKey(id)) {
-                jobProvenance.put(id, new HashMap<String, String>());
+                jobProvenance.put(id, new ObjectNode(JsonNodeFactory.instance));
             }
-            final Map<String, String> provenance = jobProvenance.get(id);
-            if (provenance.containsKey(requireNonNull(item))) {
-                provenance.put(item, provenance.get(item) + PROVENANCE_SEPARATOR
-                        + requireNonNull(value));
-            } else {
-                provenance.put(item, requireNonNull(value));
+            final ObjectNode provenance = jobProvenance.get(id);
+
+            // Traverse the object node to find the path to add to
+            ObjectNode current = provenance;
+            boolean add = true;
+            for (int i = 0; i < path.size() - 1; i++) {
+                String item = path.get(i);
+                JsonNode subNode = current.get(item);
+
+                // If the path is not present, add it
+                if (subNode == null) {
+                    subNode = current.putObject(item);
+                }
+
+                // If the item is an ObjectNode, go to the next item
+                if (subNode instanceof ObjectNode) {
+                    current = (ObjectNode) subNode;
+
+                // If the item exists and is not an ObjectNode, this is an
+                // error as a non-object can't contain values
+                } else {
+                    add = false;
+                    logger.warn(
+                        "Could not add provenance item " + path + " to job " +
+                        id + ": Node " + item + " is not an object");
+                    break;
+                }
+            }
+
+            // If we can add the item, add it
+            if (add) {
+                current.put(path.get(path.size() - 1), value);
             }
         }
     }
 
-    private Map<String, String> getProvenance(final int id) {
-        Map<String, String> prov;
+    private ObjectNode getProvenance(final int id) {
         synchronized (jobProvenance) {
-            prov = jobProvenance.remove(id);
+            return jobProvenance.remove(id);
         }
-        if ((prov != null) && prov.isEmpty()) {
-            prov = null;
-        }
-        return prov;
     }
 
     private long getResourceUsage(final int id) {
@@ -389,7 +424,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
 
         // Do these before anything that can throw
         final long resourceUsage = getResourceUsage(id);
-        final Map<String, String> prov = getProvenance(id);
+        final ObjectNode prov = getProvenance(id);
 
         try {
             queueManager.setJobFinished(id, logToAppend,
@@ -433,7 +468,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
                 reconstructRemoteException(error, stackTrace);
         // Do these before anything that can throw
         final long resourceUsage = getResourceUsage(id);
-        final Map<String, String> prov = getProvenance(id);
+        final ObjectNode prov = getProvenance(id);
 
         try {
             queueManager.setJobError(id, logToAppend,
@@ -473,7 +508,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
                 logger.debug("Job " + id + " has not exited cleanly");
                 try {
                     final long resourceUsage = getResourceUsage(id);
-                    final Map<String, String> prov = getProvenance(id);
+                    final ObjectNode prov = getProvenance(id);
                     final String projectId =
                             new File(job.getCollabId()).getName();
                     queueManager.setJobError(id, logToAppend,

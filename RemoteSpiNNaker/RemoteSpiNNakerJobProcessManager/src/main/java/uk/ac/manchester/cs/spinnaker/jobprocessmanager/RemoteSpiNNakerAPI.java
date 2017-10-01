@@ -12,6 +12,8 @@ import javax.ws.rs.client.ClientRequestFilter;
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.joda.JodaModule;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
 import uk.ac.manchester.cs.spinnaker.job.JobManagerInterface;
@@ -37,7 +39,11 @@ public abstract class RemoteSpiNNakerAPI {
         final ResteasyClientBuilder builder = new ResteasyClientBuilder();
         // TODO Add https trust store, etc.
         final ResteasyClient client = builder.build();
-        client.register(new JacksonJsonProvider());
+        JacksonJsonProvider provider = new JacksonJsonProvider();
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JodaModule());
+        provider.setMapper(mapper);
+        client.register(provider);
         if (authToken != null) {
             client.register(getBasicAuthFilter(authToken));
         }
