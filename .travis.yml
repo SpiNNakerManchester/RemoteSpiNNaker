@@ -2,8 +2,11 @@ language: java
 jdk: oraclejdk8
 before_install:
   - cd RemoteSpiNNaker
+before_install:
+  - mvn dependency:resolve
 install:
   - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
 script:
   - mvn test -B -Dmaven.javadoc.skip=true
-  - mvn checkstyle:check
+  - mvn checkstyle:check -Dmaven.javadoc.skip=true
+  - mvn javadoc:javadoc
