@@ -1,8 +1,10 @@
 language: java
 jdk: oraclejdk8
+cache:
+  directories:
+    - $HOME/.m2
 before_install:
   - cd RemoteSpiNNaker
-  - mvn dependency:resolve
 install:
   - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
 script:
