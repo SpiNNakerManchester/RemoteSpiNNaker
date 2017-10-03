@@ -43,7 +43,7 @@ import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
 import uk.ac.manchester.cs.spinnaker.utils.ThreadUtils;
 
 /**
- * A process for running PyNN jobs
+ * A process for running PyNN jobs.
  */
 public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
 	private static final String PROVENANCE_DIRECTORY = "provenance_data";
@@ -72,7 +72,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
 	private Throwable error = null;
 	private final List<File> outputs = new ArrayList<>();
 	private final List<ProvenanceItem> provenance = new ArrayList<>();
-	ThreadGroup threadGroup;
+	private volatile ThreadGroup threadGroup;
 
 	private static Set<File> gatherFiles(File directory) {
 		return new LinkedHashSet<>(
@@ -225,12 +225,12 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
 	 * because it is comparatively expensive and the resulting object is thread
 	 * safe.
 	 *
-	 * @see https://stackoverflow.com/questions/7400422/jaxb-creating-context-and-marshallers-cost
+	 * @see https://stackoverflow.com/a/7400735/301832
 	 */
-	static final JAXBContext jaxbContext;
+	static final JAXBContext JAXB_CONTEXT;
 	static {
 		try {
-			jaxbContext = JAXBContext.newInstance(ProvenanceDataItems.class);
+			JAXB_CONTEXT = JAXBContext.newInstance(ProvenanceDataItems.class);
 		} catch (JAXBException e) {
 			throw new RuntimeException("unexpected JAXB failure", e);
 		}
@@ -238,7 +238,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
 
 	private void addProvenance(File provenanceDirectory)
 			throws IOException, JAXBException {
-		Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+		Unmarshaller unmarshaller = JAXB_CONTEXT.createUnmarshaller();
 		// Get provenance data from files
 		for (File file : provenanceDirectory.listFiles()) {
 			// Only process XML files
@@ -251,10 +251,11 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
 		}
 	}
 
+	private static final int CHUNK_SIZE = 8196;
 	private void zipProvenance(ZipOutputStream reportsZip, File directory,
 			String path) throws IOException, JAXBException {
 		// Go through the report files and zip them up
-		byte[] buffer = new byte[8196];
+		byte[] buffer = new byte[CHUNK_SIZE];
 		for (File file : directory.listFiles()) {
 			if (file.isDirectory()) {
 				zipProvenance(reportsZip, file, path + "/" + file.getName());
@@ -318,6 +319,9 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
 		// Does Nothing
 	}
 
+	/**
+	 * Thread for copying a {@link Reader} to a {@link LogWriter}.
+	 */
 	class ReaderLogWriter extends Thread implements AutoCloseable {
 		private final BufferedReader reader;
 		private final LogWriter writer;
@@ -332,7 +336,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
 		 * @param writer
 		 *            The writer to write to
 		 */
-		public ReaderLogWriter(Reader reader, LogWriter writer) {
+		ReaderLogWriter(Reader reader, LogWriter writer) {
 			super(threadGroup, "Reader Log Writer");
 			requireNonNull(reader);
 			if (reader instanceof BufferedReader) {
@@ -353,7 +357,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
 		 * @param writer
 		 *            The writer to write to.
 		 */
-		public ReaderLogWriter(InputStream input, LogWriter writer) {
+		ReaderLogWriter(InputStream input, LogWriter writer) {
 			this(new InputStreamReader(input), writer);
 		}
 
@@ -388,7 +392,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
 		}
 
 		/**
-		 * Closes the reader/writer
+		 * Closes the reader/writer.
 		 */
 		@Override
 		public void close() {
