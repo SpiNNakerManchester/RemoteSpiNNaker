@@ -90,6 +90,16 @@ public class SpinnakerMachine
 	 *
 	 * @param machineName
 	 *            The name of the machine
+	 * @param version
+	 *            The version of the machine
+	 * @param width
+	 *            The width of the machine, in chips
+	 * @param height
+	 *            The height of the machine, in chips
+	 * @param nBoards
+	 *            The number of boards in the machine
+	 * @param bmpDetails
+	 *            The IP address of the machine's Board Management Processor
 	 */
 	public SpinnakerMachine(String machineName, String version, int width,
 			int height, int nBoards, String bmpDetails) {
@@ -102,7 +112,8 @@ public class SpinnakerMachine
 	}
 
 	/**
-	 * Gets the name of the machine.
+	 * Gets the name of the machine. This is (resolvable to) the IP address of
+	 * the machine.
 	 *
 	 * @return The name of the machine
 	 */
@@ -202,7 +213,8 @@ public class SpinnakerMachine
 	}
 
 	/**
-	 * Gets the BMP details of the machine.
+	 * Gets the BMP details of the machine. This is (resolvable to) the IP
+	 * address of the BMP (Board Management Processor).
 	 *
 	 * @return The BMP details of the machine
 	 */
