@@ -19,7 +19,7 @@ public class RemoteStackTraceElement {
 	/**
 	 * Create an element of a remoteable stack trace from a standard stack trace
 	 * element.
-	 * 
+	 *
 	 * @param element
 	 *            The stack trace element to convert.
 	 */
@@ -65,7 +65,7 @@ public class RemoteStackTraceElement {
 	/**
 	 * Convert this remote stack trace element to a standard Java stack trace
 	 * element.
-	 * 
+	 *
 	 * @return The created stack trace element.
 	 */
 	public StackTraceElement toSTE() {

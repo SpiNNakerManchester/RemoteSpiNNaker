@@ -18,7 +18,7 @@ public class RemoteStackTrace {
 
 	/**
 	 * Create a basic remote stack trace from an exception.
-	 * 
+	 *
 	 * @param throwable
 	 *            The exception to make the stack trace from.
 	 */
@@ -30,8 +30,8 @@ public class RemoteStackTrace {
 
 	/**
 	 * Create a basic remote stack trace from a list of elements.
-	 * 
-	 * @param lements
+	 *
+	 * @param elements
 	 *            The elements to make the stack trace from.
 	 */
 	public RemoteStackTrace(List<RemoteStackTraceElement> elements) {

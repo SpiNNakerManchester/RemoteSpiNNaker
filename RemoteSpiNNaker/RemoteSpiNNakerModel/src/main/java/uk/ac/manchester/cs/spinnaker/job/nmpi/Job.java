@@ -156,8 +156,11 @@ public class Job implements QueueNextResponse {
 
 	/**
 	 * Used for JSON serialisation.
-	 * @param name The parameter to set.
-	 * @param value The value to set it to.
+	 *
+	 * @param name
+	 *            The parameter to set.
+	 * @param value
+	 *            The value to set it to.
 	 */
 	@JsonAnySetter
 	public void set(String name, Object value) {

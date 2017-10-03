@@ -15,7 +15,7 @@ public class JobMachineAllocated {
 
 	/**
 	 * Create an instance.
-	 * 
+	 *
 	 * @param allocated
 	 *            Whether the job was allocated.
 	 */

@@ -50,6 +50,8 @@ public class SpinnakerMachine
 		// Does Nothing
 	}
 
+	private static final int NUM_NAME_PARTS = 6;
+
 	/**
 	 * Creates a new Spinnaker Machine by parsing the name of a machine.
 	 *
@@ -64,11 +66,10 @@ public class SpinnakerMachine
 		}
 
 		String[] parts = value.substring(1, value.length() - 1).split(":");
-		int NUM_PARTS = 6;
-		if (parts.length != NUM_PARTS) {
+		if (parts.length != NUM_NAME_PARTS) {
 			throw new IllegalArgumentException(
 					"Wrong number of :-separated arguments - " + parts.length
-							+ " found but " + NUM_PARTS + " required");
+							+ " found but " + NUM_NAME_PARTS + " required");
 		}
 
 		Iterator<String> tokens = Arrays.asList(parts).iterator();

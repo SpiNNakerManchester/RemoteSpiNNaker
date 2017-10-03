@@ -16,7 +16,7 @@ public class DataItem {
 	/**
 	 * Make an instance that wraps a URL. The meaning of the URL depends on the
 	 * usage of the data item.
-	 * 
+	 *
 	 * @param url
 	 *            The URL to wrap.
 	 */

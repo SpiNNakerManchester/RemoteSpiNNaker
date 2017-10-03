@@ -35,7 +35,7 @@ public interface JobManagerInterface {
 
 	/**
 	 * Get the job manager to find out what its next job will be.
-	 * 
+	 *
 	 * @param executerId
 	 *            The executor to talk about.
 	 * @return The job discovered.
@@ -47,7 +47,7 @@ public interface JobManagerInterface {
 
 	/**
 	 * Get the largest machine that could run a job.
-	 * 
+	 *
 	 * @param id
 	 *            The job ID.
 	 * @param runTime
@@ -63,7 +63,7 @@ public interface JobManagerInterface {
 	/**
 	 * Get a machine for running a job. Typically, only one of <tt>nCores</tt>,
 	 * <tt>nChips</tt> and <tt>nBoards</tt> will be specified.
-	 * 
+	 *
 	 * @param id
 	 *            The job ID.
 	 * @param nCores
@@ -87,7 +87,7 @@ public interface JobManagerInterface {
 
 	/**
 	 * Check if the job is still allocated to a machine.
-	 * 
+	 *
 	 * @param id
 	 *            The job ID
 	 * @param waitTime
@@ -102,7 +102,7 @@ public interface JobManagerInterface {
 
 	/**
 	 * Extend the lease of the job.
-	 * 
+	 *
 	 * @param id
 	 *            The job ID
 	 * @param runTime
@@ -115,7 +115,7 @@ public interface JobManagerInterface {
 
 	/**
 	 * Add to the log of a job.
-	 * 
+	 *
 	 * @param id
 	 *            The job ID
 	 * @param logToAppend
@@ -128,7 +128,7 @@ public interface JobManagerInterface {
 
 	/**
 	 * Add to the provenance of a job.
-	 * 
+	 *
 	 * @param id
 	 *            The job ID
 	 * @param path
@@ -144,7 +144,7 @@ public interface JobManagerInterface {
 
 	/**
 	 * Add to the output files of a job.
-	 * 
+	 *
 	 * @param projectId
 	 *            The ID of the project owning the job.
 	 * @param id
@@ -163,7 +163,7 @@ public interface JobManagerInterface {
 
 	/**
 	 * Mark the job as finished.
-	 * 
+	 *
 	 * @param projectId
 	 *            The ID of the project owning the job.
 	 * @param id
@@ -185,7 +185,7 @@ public interface JobManagerInterface {
 
 	/**
 	 * Mark the job as finished.
-	 * 
+	 *
 	 * @param projectId
 	 *            The project owning the job.
 	 * @param id
@@ -213,7 +213,7 @@ public interface JobManagerInterface {
 
 	/**
 	 * Get the implementation code of the Job Process Manager.
-	 * 
+	 *
 	 * @return a response containing the ZIP file.
 	 */
 	@GET
