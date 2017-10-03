@@ -17,50 +17,48 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * property using the "register" function.
  */
 public class PropertyBasedDeserialiser<T> extends StdDeserializer<T> {
-    private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
 
-    private final Map<String, Class<? extends T>> registry = new HashMap<>();
+	private final Map<String, Class<? extends T>> registry = new HashMap<>();
 
-    /**
-     * Creates a new deserialiser
-     */
-    public PropertyBasedDeserialiser(final Class<T> type) {
-        super(type);
-    }
+	/**
+	 * Creates a new deserialiser
+	 */
+	public PropertyBasedDeserialiser(Class<T> type) {
+		super(type);
+	}
 
-    /**
-     * Registers a type against a property in the deserialiser.
-     *
-     * @param propertyName
-     *            The name of the unique property that identifies the class.
-     *            This is the JSON name.
-     * @param type
-     *            The class to register against the property.
-     */
-    public void register(final String propertyName,
-            final Class<? extends T> type) {
-        if (propertyName == null) {
-            throw new IllegalArgumentException("propertyName must be non-null");
-        }
-        if (type == null) {
-            throw new IllegalArgumentException("type must be non-null");
-        }
+	/**
+	 * Registers a type against a property in the deserialiser.
+	 *
+	 * @param propertyName
+	 *            The name of the unique property that identifies the class.
+	 *            This is the JSON name.
+	 * @param type
+	 *            The class to register against the property.
+	 */
+	public void register(String propertyName, Class<? extends T> type) {
+		if (propertyName == null) {
+			throw new IllegalArgumentException("propertyName must be non-null");
+		}
+		if (type == null) {
+			throw new IllegalArgumentException("type must be non-null");
+		}
 
-        registry.put(propertyName, type);
-    }
+		registry.put(propertyName, type);
+	}
 
-    @Override
-    public T deserialize(final JsonParser parser,
-            final DeserializationContext context)
-            throws IOException, JsonProcessingException {
-        final ObjectNode root = parser.readValueAsTree();
-        final Iterator<String> elementsIterator = root.fieldNames();
-        while (elementsIterator.hasNext()) {
-            final String name = elementsIterator.next();
-            if (registry.containsKey(name)) {
-                return parser.getCodec().treeToValue(root, registry.get(name));
-            }
-        }
-        return null;
-    }
+	@Override
+	public T deserialize(JsonParser parser, DeserializationContext context)
+			throws IOException, JsonProcessingException {
+		ObjectNode root = parser.readValueAsTree();
+		Iterator<String> elementsIterator = root.fieldNames();
+		while (elementsIterator.hasNext()) {
+			String name = elementsIterator.next();
+			if (registry.containsKey(name)) {
+				return parser.getCodec().treeToValue(root, registry.get(name));
+			}
+		}
+		return null;
+	}
 }

@@ -15,28 +15,28 @@ import uk.ac.manchester.cs.spinnaker.model.NMPILog;
 
 @Path("/api/v2")
 public interface NMPIQueue {
-    @GET
-    @Path("token/auth")
-    @Produces("application/json")
-    APIKeyResponse getToken(@QueryParam("username") String username);
+	@GET
+	@Path("token/auth")
+	@Produces("application/json")
+	APIKeyResponse getToken(@QueryParam("username") String username);
 
-    @GET
-    @Path("queue/submitted/next/{hardware}/")
-    @Produces("application/json")
-    QueueNextResponse getNextJob(@PathParam("hardware") String hardware);
+	@GET
+	@Path("queue/submitted/next/{hardware}/")
+	@Produces("application/json")
+	QueueNextResponse getNextJob(@PathParam("hardware") String hardware);
 
-    @PUT
-    @Path("queue/{id}")
-    @Consumes("application/json")
-    void updateJob(@PathParam("id") int id, Job job);
+	@PUT
+	@Path("queue/{id}")
+	@Consumes("application/json")
+	void updateJob(@PathParam("id") int id, Job job);
 
-    @GET
-    @Path("queue/{id}")
-    @Produces("application/json")
-    Job getJob(@PathParam("id") int id);
+	@GET
+	@Path("queue/{id}")
+	@Produces("application/json")
+	Job getJob(@PathParam("id") int id);
 
-    @PUT
-    @Path("log/{id}")
-    @Consumes("application/json")
-    void updateLog(@PathParam("id") int id, NMPILog log);
+	@PUT
+	@Path("log/{id}")
+	@Consumes("application/json")
+	void updateLog(@PathParam("id") int id, NMPILog log);
 }

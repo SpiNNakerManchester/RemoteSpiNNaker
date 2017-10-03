@@ -50,265 +50,261 @@ import org.slf4j.Logger;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
 public class RestClientUtils {
-    private static Logger log = getLogger(RestClientUtils.class);
+	private static Logger log = getLogger(RestClientUtils.class);
 
-    protected static ResteasyClient createRestClient(final URL url,
-            final Credentials credentials, final AuthScheme authScheme) {
-        try {
-            final SchemeRegistry schemeRegistry = getSchemeRegistry();
-            final HttpContext localContext =
-                    getConnectionContext(url, credentials, authScheme);
+	protected static ResteasyClient createRestClient(URL url,
+			Credentials credentials, AuthScheme authScheme) {
+		try {
+			SchemeRegistry schemeRegistry = getSchemeRegistry();
+			HttpContext localContext = getConnectionContext(url, credentials,
+					authScheme);
 
-            // Set up the connection
-            final ClientConnectionManager cm =
-                    new BasicClientConnectionManager(schemeRegistry);
-            final DefaultHttpClient httpClient = new DefaultHttpClient(cm);
-            final ApacheHttpClient4Engine engine =
-                    new ApacheHttpClient4Engine(httpClient, localContext);
+			// Set up the connection
+			ClientConnectionManager cm = new BasicClientConnectionManager(
+					schemeRegistry);
+			DefaultHttpClient httpClient = new DefaultHttpClient(cm);
+			ApacheHttpClient4Engine engine = new ApacheHttpClient4Engine(
+					httpClient, localContext);
 
-            // Create and return a client
-            final ResteasyClient client =
-                    new ResteasyClientBuilder().httpEngine(engine).build();
-            client.register(new ErrorCaptureResponseFilter());
-            return client;
-        } catch (NoSuchAlgorithmException | KeyManagementException e) {
-            log.error("Cannot find basic SSL algorithms - "
-                    + "this suggests a broken Java installation...");
-            throw new RuntimeException("unexpectedly broken security", e);
-        }
-    }
+			// Create and return a client
+			ResteasyClient client = new ResteasyClientBuilder()
+					.httpEngine(engine).build();
+			client.register(new ErrorCaptureResponseFilter());
+			return client;
+		} catch (NoSuchAlgorithmException | KeyManagementException e) {
+			log.error("Cannot find basic SSL algorithms - "
+					+ "this suggests a broken Java installation...");
+			throw new RuntimeException("unexpectedly broken security", e);
+		}
+	}
 
-    /** Set up authentication */
-    private static HttpContext getConnectionContext(final URL url,
-            final Credentials credentials, final AuthScheme authScheme) {
-        int port = url.getPort();
-        if (port == -1) {
-            port = url.getDefaultPort();
-        }
-        final HttpHost targetHost =
-                new HttpHost(url.getHost(), port, url.getProtocol());
+	/** Set up authentication */
+	private static HttpContext getConnectionContext(URL url,
+			Credentials credentials, AuthScheme authScheme) {
+		int port = url.getPort();
+		if (port == -1) {
+			port = url.getDefaultPort();
+		}
+		HttpHost targetHost = new HttpHost(url.getHost(), port,
+				url.getProtocol());
 
-        final CredentialsProvider credsProvider =
-                new BasicCredentialsProvider();
-        credsProvider.setCredentials(
-                new AuthScope(targetHost.getHostName(), targetHost.getPort()),
-                credentials);
+		CredentialsProvider credsProvider = new BasicCredentialsProvider();
+		credsProvider.setCredentials(
+				new AuthScope(targetHost.getHostName(), targetHost.getPort()),
+				credentials);
 
-        final AuthCache authCache = new BasicAuthCache();
-        authCache.put(targetHost, authScheme);
+		AuthCache authCache = new BasicAuthCache();
+		authCache.put(targetHost, authScheme);
 
-        final HttpContext localContext = new BasicHttpContext();
-        localContext.setAttribute(AUTH_CACHE, authCache);
-        localContext.setAttribute(CREDS_PROVIDER, credsProvider);
-        return localContext;
-    }
+		HttpContext localContext = new BasicHttpContext();
+		localContext.setAttribute(AUTH_CACHE, authCache);
+		localContext.setAttribute(CREDS_PROVIDER, credsProvider);
+		return localContext;
+	}
 
-    private static boolean checkTrusted(final X509Certificate[] certs) {
-        return true;
-    }
-    private static X509Certificate getTrustedCert() {
-        return null;
-    }
-    public static final String SECURE_PROTOCOL = "TLS";
+	private static boolean checkTrusted(X509Certificate[] certs) {
+		return true;
+	}
 
-    /**
-     * Set up HTTPS to ignore certificate errors
-     *
-     * @deprecated This method is doing bad things.
-     */
-    @Deprecated
-    private static SchemeRegistry getSchemeRegistry()
-            throws NoSuchAlgorithmException, KeyManagementException {
-        final SSLContext sslContext = SSLContext.getInstance(SECURE_PROTOCOL);
-        sslContext.init(null, new TrustManager[]{new X509TrustManager() {
-            @Override
-            public void checkClientTrusted(final X509Certificate[] certs,
-                    final String authType) throws CertificateException {
-                // Does Nothing; we aren't deploying client-side certs
-            }
+	private static X509Certificate getTrustedCert() {
+		return null;
+	}
 
-            @Override
-            public void checkServerTrusted(final X509Certificate[] certs,
-                    final String authType) throws CertificateException {
-                if (!checkTrusted(certs)) {
-                    throw new CertificateException("untrusted server");
-                }
-            }
+	public static final String SECURE_PROTOCOL = "TLS";
 
-            @Override
-            public X509Certificate[] getAcceptedIssuers() {
-                final X509Certificate cert = getTrustedCert();
-                if (cert == null) {
-                    return null;
-                }
-                return new X509Certificate[]{cert};
-            }
-        }}, new SecureRandom());
-        final SchemeRegistry schemeRegistry = new SchemeRegistry();
-        schemeRegistry.register(new Scheme("https", 443,
-                new SSLSocketFactory(sslContext, ALLOW_ALL_HOSTNAME_VERIFIER)));
-        return schemeRegistry;
-    }
+	/**
+	 * Set up HTTPS to ignore certificate errors
+	 *
+	 * @deprecated This method is doing bad things.
+	 */
+	@Deprecated
+	private static SchemeRegistry getSchemeRegistry()
+			throws NoSuchAlgorithmException, KeyManagementException {
+		SSLContext sslContext = SSLContext.getInstance(SECURE_PROTOCOL);
+		sslContext.init(null, new TrustManager[] { new X509TrustManager() {
+			@Override
+			public void checkClientTrusted(final X509Certificate[] certs,
+					final String authType) throws CertificateException {
+				// Does Nothing; we aren't deploying client-side certs
+			}
 
-    /**
-     * Create a REST client proxy for a class to the given URL
-     *
-     * @param url
-     *            The URL of the REST service
-     * @param credentials
-     *            The credentials used to access the service
-     * @param authScheme
-     *            The authentication scheme in use
-     * @param clazz
-     *            The interface to proxy
-     * @return The proxy instance
-     */
-    public static <T> T createClient(final URL url,
-            final Credentials credentials, final AuthScheme authScheme,
-            final Class<T> clazz, final Object... providers) {
-        final ResteasyClient client =
-                createRestClient(url, credentials, authScheme);
-        for (final Object provider : providers) {
-            client.register(provider);
-        }
-        if (providers.length == 0) {
-            client.register(new JacksonJsonProvider());
-        }
-        return client.target(url.toString()).proxy(clazz);
-    }
+			@Override
+			public void checkServerTrusted(final X509Certificate[] certs,
+					final String authType) throws CertificateException {
+				if (!checkTrusted(certs)) {
+					throw new CertificateException("untrusted server");
+				}
+			}
 
-    /**
-     * Create a new REST client with BASIC authentication.
-     *
-     * @param url
-     *            The URL of the REST service
-     * @param username
-     *            The user name of the user accessing the service
-     * @param password
-     *            The password for authentication
-     * @param clazz
-     *            The interface to proxy
-     * @return The proxy instance
-     */
-    public static <T> T createBasicClient(final URL url, final String username,
-            final String password, final Class<T> clazz,
-            final Object... providers) {
-        return createClient(url,
-                new UsernamePasswordCredentials(username, password),
-                new BasicScheme(), clazz, providers);
-    }
+			@Override
+			public X509Certificate[] getAcceptedIssuers() {
+				final X509Certificate cert = getTrustedCert();
+				if (cert == null) {
+					return null;
+				}
+				return new X509Certificate[] { cert };
+			}
+		} }, new SecureRandom());
+		SchemeRegistry schemeRegistry = new SchemeRegistry();
+		schemeRegistry.register(new Scheme("https", 443,
+				new SSLSocketFactory(sslContext, ALLOW_ALL_HOSTNAME_VERIFIER)));
+		return schemeRegistry;
+	}
 
-    /**
-     * Create a new REST client with APIKey authentication.
-     *
-     * @param url
-     *            The URL of the REST service
-     * @param username
-     *            The user name of the user accessing the service
-     * @param apiKey
-     *            The key to use to authenticate
-     * @param clazz
-     *            The interface to proxy
-     * @param providers
-     *            The objects to register with the underlying client;
-     * @return The proxy instance
-     */
-    public static <T> T createApiKeyClient(final URL url, final String username,
-            final String apiKey, final Class<T> clazz,
-            final Object... providers) {
-        return createClient(url,
-                new UsernamePasswordCredentials(username, apiKey),
-                new ConnectionIndependentScheme("ApiKey") {
-                    @Override
-                    protected Header
-                            authenticate(final Credentials credentials) {
-                        return new BasicHeader(getAuthHeaderName(),
-                                "ApiKey " + username + ":" + apiKey);
-                    }
-                }, clazz, providers);
-    }
+	/**
+	 * Create a REST client proxy for a class to the given URL
+	 *
+	 * @param url
+	 *            The URL of the REST service
+	 * @param credentials
+	 *            The credentials used to access the service
+	 * @param authScheme
+	 *            The authentication scheme in use
+	 * @param clazz
+	 *            The interface to proxy
+	 * @return The proxy instance
+	 */
+	public static <T> T createClient(URL url, Credentials credentials,
+			AuthScheme authScheme, Class<T> clazz, Object... providers) {
+		ResteasyClient client = createRestClient(url, credentials, authScheme);
+		for (Object provider : providers) {
+			client.register(provider);
+		}
+		if (providers.length == 0) {
+			client.register(new JacksonJsonProvider());
+		}
+		return client.target(url.toString()).proxy(clazz);
+	}
 
-    /**
-     * Create a new REST client with Bearer authentication.
-     *
-     * @param url
-     *            The URL of the REST service
-     * @param token
-     *            The Bearer token for authentication
-     * @param clazz
-     *            The interface to proxy
-     * @return The proxy instance
-     */
-    public static <T> T createBearerClient(final URL url, final String token,
-            final Class<T> clazz, final Object... providers) {
-        return createClient(url, new UsernamePasswordCredentials("", token),
-                new ConnectionIndependentScheme("Bearer") {
-                    @Override
-                    protected Header
-                            authenticate(final Credentials credentials) {
-                        return new BasicHeader(getAuthHeaderName(),
-                                "Bearer " + token);
-                    }
-                }, clazz, providers);
-    }
+	/**
+	 * Create a new REST client with BASIC authentication.
+	 *
+	 * @param url
+	 *            The URL of the REST service
+	 * @param username
+	 *            The user name of the user accessing the service
+	 * @param password
+	 *            The password for authentication
+	 * @param clazz
+	 *            The interface to proxy
+	 * @return The proxy instance
+	 */
+	public static <T> T createBasicClient(URL url, String username,
+			String password, Class<T> clazz, Object... providers) {
+		return createClient(url,
+				new UsernamePasswordCredentials(username, password),
+				new BasicScheme(), clazz, providers);
+	}
 
-    private static abstract class ConnectionIndependentScheme
-            extends
-                RFC2617Scheme {
-        private final boolean complete = false;
-        private final String name;
+	/**
+	 * Create a new REST client with APIKey authentication.
+	 *
+	 * @param url
+	 *            The URL of the REST service
+	 * @param username
+	 *            The user name of the user accessing the service
+	 * @param apiKey
+	 *            The key to use to authenticate
+	 * @param clazz
+	 *            The interface to proxy
+	 * @param providers
+	 *            The objects to register with the underlying client;
+	 * @return The proxy instance
+	 */
+	public static <T> T createApiKeyClient(URL url, final String username,
+			final String apiKey, Class<T> clazz, Object... providers) {
+		return createClient(url,
+				new UsernamePasswordCredentials(username, apiKey),
+				new ConnectionIndependentScheme("ApiKey") {
+					@Override
+					protected Header authenticate(
+							final Credentials credentials) {
+						return new BasicHeader(getAuthHeaderName(),
+								"ApiKey " + username + ":" + apiKey);
+					}
+				}, clazz, providers);
+	}
 
-        ConnectionIndependentScheme(final String name) {
-            this.name = name;
-        }
+	/**
+	 * Create a new REST client with Bearer authentication.
+	 *
+	 * @param url
+	 *            The URL of the REST service
+	 * @param token
+	 *            The Bearer token for authentication
+	 * @param clazz
+	 *            The interface to proxy
+	 * @return The proxy instance
+	 */
+	public static <T> T createBearerClient(URL url, final String token,
+			Class<T> clazz, Object... providers) {
+		return createClient(url, new UsernamePasswordCredentials("", token),
+				new ConnectionIndependentScheme("Bearer") {
+					@Override
+					protected Header authenticate(
+							final Credentials credentials) {
+						return new BasicHeader(getAuthHeaderName(),
+								"Bearer " + token);
+					}
+				}, clazz, providers);
+	}
 
-        @Override
-        public String getSchemeName() {
-            return name;
-        }
+	private static abstract class ConnectionIndependentScheme
+			extends RFC2617Scheme {
+		private final boolean complete = false;
+		private final String name;
 
-        @Override
-        public boolean isConnectionBased() {
-            return false;
-        }
+		ConnectionIndependentScheme(final String name) {
+			this.name = name;
+		}
 
-        @Override
-        public boolean isComplete() {
-            return complete;
-        }
+		@Override
+		public String getSchemeName() {
+			return name;
+		}
 
-        /**
-         * Produce an authorization header for the given set of
-         * {@link Credentials}. The credentials and the connection will have
-         * been sanity-checked prior to this call.
-         */
-        protected abstract Header authenticate(Credentials credentials);
+		@Override
+		public boolean isConnectionBased() {
+			return false;
+		}
 
-        /**
-         * Give the header that we're supposed to generate, depending on whether
-         * we're going by a proxy or not.
-         */
-        protected String getAuthHeaderName() {
-            return isProxy() ? PROXY_AUTH_RESP : WWW_AUTH_RESP;
-        }
+		@Override
+		public boolean isComplete() {
+			return complete;
+		}
 
-        @Override
-        public Header authenticate(final Credentials credentials,
-                final HttpRequest request) throws AuthenticationException {
-            if (credentials == null) {
-                throw new IllegalArgumentException(
-                        "Credentials may not be null");
-            }
-            if (request == null) {
-                throw new IllegalArgumentException(
-                        "HTTP request may not be null");
-            }
-            final String charset = getCredentialCharset(request.getParams());
-            if (charset == null) {
-                throw new IllegalArgumentException("charset may not be null");
-            }
+		/**
+		 * Produce an authorization header for the given set of
+		 * {@link Credentials}. The credentials and the connection will have
+		 * been sanity-checked prior to this call.
+		 */
+		protected abstract Header authenticate(Credentials credentials);
 
-            return authenticate(credentials);
-        }
-    }
+		/**
+		 * Give the header that we're supposed to generate, depending on whether
+		 * we're going by a proxy or not.
+		 */
+		protected String getAuthHeaderName() {
+			return isProxy() ? PROXY_AUTH_RESP : WWW_AUTH_RESP;
+		}
+
+		@Override
+		public Header authenticate(Credentials credentials, HttpRequest request)
+				throws AuthenticationException {
+			if (credentials == null) {
+				throw new IllegalArgumentException(
+						"Credentials may not be null");
+			}
+			if (request == null) {
+				throw new IllegalArgumentException(
+						"HTTP request may not be null");
+			}
+			String charset = getCredentialCharset(request.getParams());
+			if (charset == null) {
+				throw new IllegalArgumentException("charset may not be null");
+			}
+
+			return authenticate(credentials);
+		}
+	}
 }
