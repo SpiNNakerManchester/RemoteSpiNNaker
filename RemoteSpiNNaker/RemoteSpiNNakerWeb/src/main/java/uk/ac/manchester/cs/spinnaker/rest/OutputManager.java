@@ -35,6 +35,7 @@ public interface OutputManager {
 	 *            The files to add
 	 * @return A list of DataItem instances for adding to the job
 	 * @throws IOException
+	 *             If anything goes wrong.
 	 */
 	List<DataItem> addOutputs(String projectId, int id, File rootFile,
 			Collection<File> outputs) throws IOException;

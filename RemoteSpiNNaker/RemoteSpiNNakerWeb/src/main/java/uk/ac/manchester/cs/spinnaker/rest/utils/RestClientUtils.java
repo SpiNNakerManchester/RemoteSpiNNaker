@@ -164,6 +164,8 @@ public class RestClientUtils {
 	 *            The authentication scheme in use
 	 * @param clazz
 	 *            The interface to proxy
+	 * @param providers
+	 *            The objects to register with the underlying client.
 	 * @return The proxy instance
 	 */
 	public static <T> T createClient(URL url, Credentials credentials,
@@ -191,6 +193,8 @@ public class RestClientUtils {
 	 *            The password for authentication
 	 * @param clazz
 	 *            The interface to proxy
+	 * @param providers
+	 *            The objects to register with the underlying client.
 	 * @return The proxy instance
 	 */
 	public static <T> T createBasicClient(URL url, String username,
@@ -214,7 +218,7 @@ public class RestClientUtils {
 	 * @param clazz
 	 *            The interface to proxy
 	 * @param providers
-	 *            The objects to register with the underlying client;
+	 *            The objects to register with the underlying client.
 	 * @return The proxy instance
 	 */
 	public static <T> T createApiKeyClient(URL url, final String username,
@@ -242,7 +246,7 @@ public class RestClientUtils {
 	 * @param clazz
 	 *            The interface to proxy
 	 * @param providers
-	 *            The objects to register with the underlying client;
+	 *            The objects to register with the underlying client.
 	 * @return The proxy instance
 	 */
 	public static <T> T createBearerClient(URL url, final String token,

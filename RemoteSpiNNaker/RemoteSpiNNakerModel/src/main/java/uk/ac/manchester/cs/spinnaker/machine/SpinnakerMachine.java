@@ -53,6 +53,7 @@ public class SpinnakerMachine
 	 *
 	 * @param value
 	 *            The name of the machine to parse.
+	 * @return The machine corresponding to the string.
 	 */
 	public static SpinnakerMachine parse(String value) {
 		if (!value.startsWith("(") || !value.endsWith(")")) {

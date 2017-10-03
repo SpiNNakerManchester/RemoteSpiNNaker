@@ -55,6 +55,8 @@ public class JobProcessFactory {
 	/**
 	 * Creates a {@link JobProcess} given a {@link JobParameters} instance.
 	 *
+	 * @param <P>
+	 *            The type of parameters being passed in.
 	 * @param parameters
 	 *            The parameters of the job
 	 * @return A JobProcess matching the parameters
@@ -70,10 +72,10 @@ public class JobProcessFactory {
 		 * method will only allow the correct type mapping in
 		 */
 		@SuppressWarnings("unchecked")
-		final Class<JobProcess<P>> processType = (Class<JobProcess<P>>) typeMap
+		Class<JobProcess<P>> processType = (Class<JobProcess<P>>) typeMap
 				.get(parameters.getClass());
 
-		final JobProcess<P> process = processType.newInstance();
+		JobProcess<P> process = processType.newInstance();
 
 		// Magically set the thread group if there is one
 		setField(process, "threadGroup", threadGroup);
