@@ -69,6 +69,7 @@
     </module>
 
     <module name="TreeWalker">
+    	<property name="tabWidth" value="4"/>
 
 	    <!-- Checks for whitespace                            -->
         <module name="RegexpSinglelineJava">
@@ -79,7 +80,11 @@
 
         <!-- Checks for Javadoc comments.                     -->
         <!-- See http://checkstyle.sf.net/config_javadoc.html -->
-        <module name="JavadocMethod"/>
+        <module name="JavadocMethod">
+	        <property name="allowMissingPropertyJavadoc" value="true"/>
+	        <property name="validateThrows" value="true"/>
+	        <property name="allowMissingThrowsTags" value="true"/>
+        </module>
         <module name="JavadocType"/>
         <module name="JavadocVariable"/>
         <module name="JavadocStyle"/>
@@ -139,7 +144,6 @@
 
         <!-- Checks for common coding problems               -->
         <!-- See http://checkstyle.sf.net/config_coding.html -->
-        <module name="AvoidInlineConditionals"/>
         <module name="EmptyStatement"/>
         <module name="EqualsHashCode"/>
         <module name="IllegalInstantiation"/>
@@ -159,7 +163,6 @@
         <!-- Miscellaneous other checks.                   -->
         <!-- See http://checkstyle.sf.net/config_misc.html -->
         <module name="ArrayTypeStyle"/>
-        <module name="FinalParameters"/>
         <module name="TodoComment"/>
         <module name="UpperEll"/>
 
