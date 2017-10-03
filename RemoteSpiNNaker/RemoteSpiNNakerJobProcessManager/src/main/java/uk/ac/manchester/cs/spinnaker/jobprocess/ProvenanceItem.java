@@ -3,21 +3,19 @@ package uk.ac.manchester.cs.spinnaker.jobprocess;
 import java.util.List;
 
 public class ProvenanceItem {
+	private List<String> path;
+	private String value;
 
-    private List<String> path;
+	public ProvenanceItem(List<String> path, String value) {
+		this.path = path;
+		this.value = value;
+	}
 
-    private String value;
+	public List<String> getPath() {
+		return path;
+	}
 
-    public ProvenanceItem(List<String> path, String value) {
-        this.path = path;
-        this.value = value;
-    }
-
-    public List<String> getPath() {
-        return path;
-    }
-
-    public String getValue() {
-        return value;
-    }
+	public String getValue() {
+		return value;
+	}
 }

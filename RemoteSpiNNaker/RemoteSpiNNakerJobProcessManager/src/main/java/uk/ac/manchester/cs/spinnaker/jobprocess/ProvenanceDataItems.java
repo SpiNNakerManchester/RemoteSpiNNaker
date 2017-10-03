@@ -12,27 +12,26 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "provenance_data_items")
 public class ProvenanceDataItems {
+	@XmlAttribute
+	private String name;
 
-    @XmlAttribute
-    private String name;
+	@XmlElement(name = "provenance_data_items")
+	private final List<ProvenanceDataItems> provenanceDataItems
+			= new ArrayList<>();
 
-    @XmlElement(name = "provenance_data_items")
-    private final List<ProvenanceDataItems> provenanceDataItems =
-            new ArrayList<>();
+	@XmlElement(name = "provenance_data_item")
+	private final List<ProvenanceDataItem> provenanceDataItem
+			= new ArrayList<>();
 
-    @XmlElement(name = "provenance_data_item")
-    private final List<ProvenanceDataItem> provenanceDataItem =
-            new ArrayList<>();
+	public String getName() {
+		return name;
+	}
 
-    public String getName() {
-        return name;
-    }
+	public List<ProvenanceDataItems> getProvenanceDataItems() {
+		return provenanceDataItems;
+	}
 
-    public List<ProvenanceDataItems> getProvenanceDataItems() {
-        return provenanceDataItems;
-    }
-
-    public List<ProvenanceDataItem> getProvenanceDataItem() {
-        return provenanceDataItem;
-    }
+	public List<ProvenanceDataItem> getProvenanceDataItem() {
+		return provenanceDataItem;
+	}
 }

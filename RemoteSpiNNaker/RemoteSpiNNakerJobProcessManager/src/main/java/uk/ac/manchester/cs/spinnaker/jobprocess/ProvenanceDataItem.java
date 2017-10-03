@@ -8,17 +8,17 @@ import javax.xml.bind.annotation.XmlValue;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class ProvenanceDataItem {
 
-    @XmlAttribute
-    private String name;
+	@XmlAttribute
+	private String name;
 
-    @XmlValue
-    private String value;
+	@XmlValue
+	private String value;
 
-    public String getName() {
-        return name;
-    }
+	public String getName() {
+		return name;
+	}
 
-    public String getValue() {
-        return value;
-    }
+	public String getValue() {
+		return value;
+	}
 }
