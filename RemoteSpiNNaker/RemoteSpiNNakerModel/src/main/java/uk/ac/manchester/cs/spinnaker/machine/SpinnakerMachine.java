@@ -3,6 +3,8 @@ package uk.ac.manchester.cs.spinnaker.machine;
 import static java.lang.Integer.parseInt;
 
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Iterator;
 
 /**
  * Represents a SpiNNaker machine on which jobs can be executed.
@@ -48,11 +50,14 @@ public class SpinnakerMachine
 		// Does Nothing
 	}
 
+	private static final int NUM_NAME_PARTS = 6;
+
 	/**
 	 * Creates a new Spinnaker Machine by parsing the name of a machine.
 	 *
 	 * @param value
 	 *            The name of the machine to parse.
+	 * @return The machine corresponding to the string.
 	 */
 	public static SpinnakerMachine parse(String value) {
 		if (!value.startsWith("(") || !value.endsWith(")")) {
@@ -61,15 +66,16 @@ public class SpinnakerMachine
 		}
 
 		String[] parts = value.substring(1, value.length() - 1).split(":");
-		if (parts.length != 6) {
+		if (parts.length != NUM_NAME_PARTS) {
 			throw new IllegalArgumentException(
 					"Wrong number of :-separated arguments - " + parts.length
-							+ " found but 6 required");
+							+ " found but " + NUM_NAME_PARTS + " required");
 		}
 
-		return new SpinnakerMachine(parts[0].trim(), parts[1].trim(),
-				parseInt(parts[2].trim()), parseInt(parts[3].trim()),
-				parseInt(parts[4].trim()), parts[5].trim());
+		Iterator<String> tokens = Arrays.asList(parts).iterator();
+		return new SpinnakerMachine(tokens.next().trim(), tokens.next().trim(),
+				parseInt(tokens.next().trim()), parseInt(tokens.next().trim()),
+				parseInt(tokens.next().trim()), tokens.next().trim());
 	}
 
 	private static String trim(String s) {
