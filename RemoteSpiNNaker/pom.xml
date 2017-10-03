@@ -182,6 +182,14 @@
                     </configuration>
                 </plugin>
                 <plugin>
+                	<groupId>org.apache.maven.plugins</groupId>
+                	<artifactId>maven-javadoc-plugin</artifactId>
+                	<version>3.0.0-M1</version>
+                	<configuration>
+                		<quiet>true</quiet>
+                	</configuration>
+                </plugin>
+                <plugin>
                     <groupId>org.mortbay.jetty</groupId>
                     <artifactId>jetty-maven-plugin</artifactId>
                     <version>8.1.15.v20140411</version>

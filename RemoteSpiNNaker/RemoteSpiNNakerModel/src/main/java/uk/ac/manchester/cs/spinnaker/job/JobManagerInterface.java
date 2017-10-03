@@ -145,6 +145,8 @@ public interface JobManagerInterface {
 	/**
 	 * Add to the output files of a job.
 	 * 
+	 * @param projectId
+	 *            The ID of the project owning the job.
 	 * @param id
 	 *            The job ID
 	 * @param output
@@ -163,7 +165,7 @@ public interface JobManagerInterface {
 	 * Mark the job as finished.
 	 * 
 	 * @param projectId
-	 *            The project owning the job.
+	 *            The ID of the project owning the job.
 	 * @param id
 	 *            The id of the job.
 	 * @param logToAppend

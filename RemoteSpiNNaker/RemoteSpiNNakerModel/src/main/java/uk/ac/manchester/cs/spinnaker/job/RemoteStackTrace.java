@@ -31,8 +31,8 @@ public class RemoteStackTrace {
 	/**
 	 * Create a basic remote stack trace from a list of elements.
 	 * 
-	 * @param throwable
-	 *            The exception to make the stack trace from.
+	 * @param lements
+	 *            The elements to make the stack trace from.
 	 */
 	public RemoteStackTrace(List<RemoteStackTraceElement> elements) {
 		this.elements = elements;
