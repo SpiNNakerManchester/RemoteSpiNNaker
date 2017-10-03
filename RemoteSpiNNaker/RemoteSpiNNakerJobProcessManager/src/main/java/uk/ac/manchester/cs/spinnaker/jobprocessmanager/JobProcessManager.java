@@ -51,10 +51,10 @@ public class JobProcessManager {
 	private static final int UPDATE_INTERVAL = 500;
 
 	/** The factory for converting parameters into processes. */
-	private static final JobProcessFactory jobProcessFactory =
+	private static final JobProcessFactory JOB_PROCESS_FACTORY =
 			new JobProcessFactory("JobProcess");
 	static {
-		jobProcessFactory.addMapping(PyNNJobParameters.class,
+		JOB_PROCESS_FACTORY.addMapping(PyNNJobParameters.class,
 				PyNNJobProcess.class);
 	}
 
@@ -74,11 +74,11 @@ public class JobProcessManager {
 			String toWrite = null;
 			synchronized (this) {
 				if (isPopulated()) {
-					toWrite = cached.toString();
-					cached.setLength(0);
+					toWrite = getCachedString();
+					clear();
 				}
 			}
-			if (toWrite != null) {
+			if (toWrite != null && !toWrite.isEmpty()) {
 				log("Sending cached data to job manager");
 				jobManager.appendLog(job.getId(), toWrite);
 			}
@@ -88,7 +88,7 @@ public class JobProcessManager {
 		public void append(String logMsg) {
 			log("Process Output: " + logMsg);
 			synchronized (this) {
-				cached.append(logMsg);
+				appendToCache(logMsg);
 				sendTimer.restart();
 			}
 		}
@@ -141,7 +141,7 @@ public class JobProcessManager {
 
 			// Create a process to process the request
 			log("Creating process from parameters");
-			JobProcess<JobParameters> process = jobProcessFactory
+			JobProcess<JobParameters> process = JOB_PROCESS_FACTORY
 					.createProcess(parameters);
 			logWriter = getLogWriter();
 
@@ -362,14 +362,26 @@ class Machine {
 }
 
 abstract class JobManagerLogWriter implements LogWriter {
-	protected final StringBuilder cached = new StringBuilder();
+	private final StringBuilder cached = new StringBuilder();
 
 	protected boolean isPopulated() {
 		return cached.length() > 0;
 	}
 
-	public synchronized String getLog() {
+	protected void clear() {
+		cached.setLength(0);
+	}
+
+	protected void appendToCache(String value) {
+		cached.append(value);
+	}
+
+	protected String getCachedString() {
 		return cached.toString();
+	}
+
+	public synchronized String getLog() {
+		return getCachedString();
 	}
 
 	void stop() {
@@ -381,7 +393,7 @@ class SimpleJobManagerLogWriter extends JobManagerLogWriter {
 	public void append(String logMsg) {
 		log("Process Output: " + logMsg);
 		synchronized (this) {
-			cached.append(logMsg);
+			appendToCache(logMsg);
 		}
 	}
 }

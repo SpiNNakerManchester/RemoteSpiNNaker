@@ -164,12 +164,15 @@
         <module name="FinalClass"/>
         <module name="HideUtilityClassConstructor"/>
         <module name="InterfaceIsType"/>
-        <module name="VisibilityModifier"/>
+        <module name="VisibilityModifier">
+        	<!-- POJOs full of silly accessor methods are ugly, especially
+        	     when the field scope is controlled. -->
+        	<property name="packageAllowed" value="true"/>
+        </module>
 
         <!-- Miscellaneous other checks.                   -->
         <!-- See http://checkstyle.sf.net/config_misc.html -->
         <module name="ArrayTypeStyle"/>
-        <module name="TodoComment"/>
         <module name="UpperEll"/>
     </module>
 </module>
