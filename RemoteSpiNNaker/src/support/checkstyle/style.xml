@@ -86,7 +86,10 @@
 	        <property name="allowMissingThrowsTags" value="true"/>
         </module>
         <module name="JavadocType"/>
-        <module name="JavadocVariable"/>
+        <module name="JavadocVariable">
+        	<property name="scope" value="package"/>
+        	<property name="ignoreNamePattern" value="log|logger"/>
+        </module>
         <module name="JavadocStyle"/>
 
         <!-- Checks for Naming Conventions.                  -->
@@ -165,7 +168,5 @@
         <module name="ArrayTypeStyle"/>
         <module name="TodoComment"/>
         <module name="UpperEll"/>
-
     </module>
-
 </module>
