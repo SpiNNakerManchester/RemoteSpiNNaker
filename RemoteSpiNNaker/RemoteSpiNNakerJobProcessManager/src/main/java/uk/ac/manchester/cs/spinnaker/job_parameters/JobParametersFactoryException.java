@@ -5,14 +5,13 @@ package uk.ac.manchester.cs.spinnaker.job_parameters;
  * converting the job to parameters.
  */
 public class JobParametersFactoryException extends Exception {
-    private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
 
-    public JobParametersFactoryException(final String message) {
-        super(message);
-    }
+	public JobParametersFactoryException(String message) {
+		super(message);
+	}
 
-    public JobParametersFactoryException(final String message,
-            final Throwable cause) {
-        super(message, cause);
-    }
+	public JobParametersFactoryException(String message, Throwable cause) {
+		super(message, cause);
+	}
 }

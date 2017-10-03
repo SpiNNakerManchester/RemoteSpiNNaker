@@ -5,6 +5,6 @@ package uk.ac.manchester.cs.spinnaker.job_parameters;
  */
 public class UnsupportedJobException extends Exception {
 
-    private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
 
 }

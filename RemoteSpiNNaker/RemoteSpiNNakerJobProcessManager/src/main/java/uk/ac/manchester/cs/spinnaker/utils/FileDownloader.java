@@ -147,7 +147,7 @@ public class FileDownloader {
 	 *            url or headers, or <tt>null</tt> to use a generated name
 	 * @return The file downloaded
 	 * @throws IOException
-     *             If anything goes wrong.
+	 *             If anything goes wrong.
 	 */
 	public static File downloadFile(String url, File workingDirectory,
 			String defaultFilename) throws IOException {

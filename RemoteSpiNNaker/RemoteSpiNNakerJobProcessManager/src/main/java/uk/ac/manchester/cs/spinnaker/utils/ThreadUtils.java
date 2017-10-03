@@ -16,7 +16,7 @@ public abstract class ThreadUtils {
 	public static void sleep(long delay) {
 		try {
 			Thread.sleep(delay);
-		} catch (final InterruptedException e) {
+		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 		}
 	}
