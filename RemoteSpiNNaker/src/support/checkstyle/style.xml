@@ -81,11 +81,14 @@
         <!-- Checks for Javadoc comments.                     -->
         <!-- See http://checkstyle.sf.net/config_javadoc.html -->
         <module name="JavadocMethod">
+        	<property name="scope" value="package"/>
 	        <property name="allowMissingPropertyJavadoc" value="true"/>
 	        <property name="validateThrows" value="true"/>
 	        <property name="allowMissingThrowsTags" value="true"/>
         </module>
-        <module name="JavadocType"/>
+        <module name="JavadocType">
+        	<property name="scope" value="package"/>
+        </module>
         <module name="JavadocVariable">
         	<property name="scope" value="package"/>
         	<property name="ignoreNamePattern" value="log|logger"/>
