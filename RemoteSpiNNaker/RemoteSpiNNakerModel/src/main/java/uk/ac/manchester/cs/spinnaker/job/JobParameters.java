@@ -5,5 +5,5 @@ package uk.ac.manchester.cs.spinnaker.job;
  * with {@link JobParametersTypeName} if it is to be serialized or deserialized.
  */
 public interface JobParameters {
-    // No methods defined
+	// No methods defined
 }

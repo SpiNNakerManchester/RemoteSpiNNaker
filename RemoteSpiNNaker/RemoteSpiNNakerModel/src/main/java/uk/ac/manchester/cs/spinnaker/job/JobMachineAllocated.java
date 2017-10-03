@@ -1,21 +1,21 @@
 package uk.ac.manchester.cs.spinnaker.job;
 
 public class JobMachineAllocated {
-    private boolean allocated = false;
+	private boolean allocated = false;
 
-    public JobMachineAllocated() {
-        // Does Nothing
-    }
+	public JobMachineAllocated() {
+		// Does Nothing
+	}
 
-    public JobMachineAllocated(final boolean allocated) {
-        this.allocated = allocated;
-    }
+	public JobMachineAllocated(boolean allocated) {
+		this.allocated = allocated;
+	}
 
-    public boolean isAllocated() {
-        return this.allocated;
-    }
+	public boolean isAllocated() {
+		return this.allocated;
+	}
 
-    public void setAllocated(final boolean allocated) {
-        this.allocated = allocated;
-    }
+	public void setAllocated(boolean allocated) {
+		this.allocated = allocated;
+	}
 }

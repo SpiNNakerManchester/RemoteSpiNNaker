@@ -13,10 +13,10 @@ import java.lang.annotation.Target;
 @Retention(RUNTIME)
 @Target(TYPE)
 public @interface JobParametersTypeName {
-    /**
-     * The type name
-     *
-     * @return The type name
-     */
-    String value();
+	/**
+	 * The type name
+	 *
+	 * @return The type name
+	 */
+	String value();
 }
