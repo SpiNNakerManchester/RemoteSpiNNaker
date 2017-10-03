@@ -22,7 +22,10 @@ public class PropertyBasedDeserialiser<T> extends StdDeserializer<T> {
 	private final Map<String, Class<? extends T>> registry = new HashMap<>();
 
 	/**
-	 * Creates a new deserialiser
+	 * Creates a new deserialiser.
+	 * 
+	 * @param type
+	 *            The basic type that will be deserialized.
 	 */
 	public PropertyBasedDeserialiser(Class<T> type) {
 		super(type);

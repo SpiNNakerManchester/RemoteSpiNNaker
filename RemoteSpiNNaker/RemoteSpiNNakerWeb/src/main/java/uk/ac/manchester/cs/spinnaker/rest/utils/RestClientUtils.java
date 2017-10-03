@@ -152,8 +152,10 @@ public class RestClientUtils {
 	}
 
 	/**
-	 * Create a REST client proxy for a class to the given URL
+	 * Create a REST client proxy for a class to the given URL.
 	 *
+	 * @param <T>
+	 *            The type of client that will be created.
 	 * @param url
 	 *            The URL of the REST service
 	 * @param credentials
@@ -179,6 +181,8 @@ public class RestClientUtils {
 	/**
 	 * Create a new REST client with BASIC authentication.
 	 *
+	 * @param <T>
+	 *            The type of client that will be created.
 	 * @param url
 	 *            The URL of the REST service
 	 * @param username
@@ -199,6 +203,8 @@ public class RestClientUtils {
 	/**
 	 * Create a new REST client with APIKey authentication.
 	 *
+	 * @param <T>
+	 *            The type of client that will be created.
 	 * @param url
 	 *            The URL of the REST service
 	 * @param username
@@ -217,8 +223,7 @@ public class RestClientUtils {
 				new UsernamePasswordCredentials(username, apiKey),
 				new ConnectionIndependentScheme("ApiKey") {
 					@Override
-					protected Header authenticate(
-							final Credentials credentials) {
+					protected Header authenticate(Credentials credentials) {
 						return new BasicHeader(getAuthHeaderName(),
 								"ApiKey " + username + ":" + apiKey);
 					}
@@ -228,12 +233,16 @@ public class RestClientUtils {
 	/**
 	 * Create a new REST client with Bearer authentication.
 	 *
+	 * @param <T>
+	 *            The type of client that will be created.
 	 * @param url
 	 *            The URL of the REST service
 	 * @param token
 	 *            The Bearer token for authentication
 	 * @param clazz
 	 *            The interface to proxy
+	 * @param providers
+	 *            The objects to register with the underlying client;
 	 * @return The proxy instance
 	 */
 	public static <T> T createBearerClient(URL url, final String token,
@@ -241,8 +250,7 @@ public class RestClientUtils {
 		return createClient(url, new UsernamePasswordCredentials("", token),
 				new ConnectionIndependentScheme("Bearer") {
 					@Override
-					protected Header authenticate(
-							final Credentials credentials) {
+					protected Header authenticate(Credentials credentials) {
 						return new BasicHeader(getAuthHeaderName(),
 								"Bearer " + token);
 					}
@@ -254,7 +262,7 @@ public class RestClientUtils {
 		private final boolean complete = false;
 		private final String name;
 
-		ConnectionIndependentScheme(final String name) {
+		ConnectionIndependentScheme(String name) {
 			this.name = name;
 		}
 
@@ -277,6 +285,9 @@ public class RestClientUtils {
 		 * Produce an authorization header for the given set of
 		 * {@link Credentials}. The credentials and the connection will have
 		 * been sanity-checked prior to this call.
+		 * 
+		 * @param credentials
+		 *            The credentials to be authenticated.
 		 */
 		protected abstract Header authenticate(Credentials credentials);
 

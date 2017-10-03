@@ -31,7 +31,7 @@ public interface OutputManager {
 	 *            The id of the job
 	 * @param rootFile
 	 *            The root directory containing all the files
-	 * @param files
+	 * @param outputs
 	 *            The files to add
 	 * @return A list of DataItem instances for adding to the job
 	 * @throws IOException
@@ -42,10 +42,14 @@ public interface OutputManager {
 	/**
 	 * Gets a results file.
 	 *
+	 * @param projectId
+	 *            The id of the project which owned the job.
 	 * @param id
 	 *            The id of the job which produced the file.
 	 * @param filename
 	 *            The name of the file.
+	 * @param download
+	 *            Whether to obtain the file as a "download".
 	 * @return A response containing the file, or a "NOT FOUND" response if the
 	 *         file does not exist.
 	 */
