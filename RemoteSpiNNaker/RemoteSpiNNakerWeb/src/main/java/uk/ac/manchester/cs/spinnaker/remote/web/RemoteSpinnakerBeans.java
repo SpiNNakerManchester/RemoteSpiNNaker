@@ -44,7 +44,7 @@ import uk.ac.manchester.cs.spinnaker.rest.OutputManager;
 import uk.ac.manchester.cs.spinnaker.rest.utils.NullExceptionMapper;
 
 /**
- * Builds the Spring beans in the application. 
+ * Builds the Spring beans in the application.
  */
 @Configuration
 // @EnableGlobalMethodSecurity(prePostEnabled=true, proxyTargetClass=true)
@@ -104,29 +104,55 @@ public class RemoteSpinnakerBeans {
 	 */
 	// TODO unused
 	class HbpServices {
+		/**
+		 * Set up configuration of authentication.
+		 *
+		 * @param auth
+		 *            The handle to the authentication system.
+		 */
 		// @Autowired
 		public void configureGlobal(AuthenticationManagerBuilder auth)
 				throws Exception {
 			auth.authenticationProvider(clientProvider());
 		}
 
+		/**
+		 * The collabratory security service.
+		 *
+		 * @return bean
+		 */
 		// @Bean
 		public CollabSecurityService collabSecurityService()
 				throws MalformedURLException {
 			return new CollabSecurityService();
 		}
 
+		/**
+		 * The HBP basic authentication client.
+		 *
+		 * @return bean
+		 */
 		// @Bean
 		public Client<?, ?> hbpAuthenticationClient() {
 			return new BasicOidcClient();
 		}
 
+		/**
+		 * The HBP bearer authentication client.
+		 *
+		 * @return bean
+		 */
 		// @Bean
 		public Client<?, ?> hbpBearerClient()
 				throws ParseException, MalformedURLException, IOException {
 			return new BearerOidcClient();
 		}
 
+		/**
+		 * The list of various authentication clients to try to use.
+		 *
+		 * @return bean
+		 */
 		// @Bean
 		public Clients clients()
 				throws ParseException, MalformedURLException, IOException {
@@ -134,6 +160,11 @@ public class RemoteSpinnakerBeans {
 					hbpBearerClient());
 		}
 
+		/**
+		 * The authentication provider.
+		 *
+		 * @return bean
+		 */
 		// @Bean
 		public ClientAuthenticationProvider clientProvider()
 				throws ParseException, MalformedURLException, IOException {

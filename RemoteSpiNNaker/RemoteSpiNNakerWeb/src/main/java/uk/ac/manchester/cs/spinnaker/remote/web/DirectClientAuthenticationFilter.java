@@ -30,9 +30,13 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+/**
+ * Authentication filter that supports HBP auth mechanisms.
+ */
 public class DirectClientAuthenticationFilter extends OncePerRequestFilter {
 	private static final String MUST_AUTH_HEADER = "WWW-Authenticate";
 	private static final String MUST_AUTH_PAYLOAD = "Bearer realm=\"%s\"";
+	/** The default authentication realm. "<tt>SpiNNaker</tt>" */
 	public static final String DEFAULT_REALM = "SpiNNaker";
 	private final Logger logger = getLogger(getClass());
 
@@ -42,6 +46,12 @@ public class DirectClientAuthenticationFilter extends OncePerRequestFilter {
 	private final WebAuthenticationDetailsSource detailsSource;
 	private final AuthenticationManager authenticationManager;
 
+	/**
+	 * Make an instance of the filter.
+	 *
+	 * @param authenticationManager
+	 *            The authentication manager that takes the decisions.
+	 */
 	public DirectClientAuthenticationFilter(
 			AuthenticationManager authenticationManager) {
 		this.authenticationManager = requireNonNull(authenticationManager);

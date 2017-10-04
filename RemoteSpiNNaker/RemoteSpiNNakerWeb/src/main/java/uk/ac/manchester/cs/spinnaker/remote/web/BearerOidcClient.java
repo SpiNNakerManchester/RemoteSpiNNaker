@@ -35,6 +35,9 @@ import com.nimbusds.openid.connect.sdk.UserInfoSuccessResponse;
 import com.nimbusds.openid.connect.sdk.claims.UserInfo;
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata;
 
+/**
+ * HBP token bearer authentication client.
+ */
 public class BearerOidcClient
 		extends DirectClient<BearerOidcClient.BearerCredentials, OidcProfile> {
 	private static final String BEARER_PREFIX = "Bearer ";
@@ -60,6 +63,9 @@ public class BearerOidcClient
 		return oidcProvider;
 	}
 
+	/**
+	 * Default constructor.
+	 */
 	public BearerOidcClient() {
 	}
 
@@ -73,6 +79,12 @@ public class BearerOidcClient
 		getOIDCProvider();
 	}
 
+	/**
+	 * How to finish the initialisation.
+	 *
+	 * @param webContext
+	 *            The web context to initialise within.
+	 */
 	@Override
 	protected void internalInit(WebContext webContext) {
 		// Does Nothing
@@ -134,12 +146,24 @@ public class BearerOidcClient
 		return new BearerCredentials(accessToken, profile);
 	}
 
+	/**
+	 * Get the user profile from the credentials.
+	 *
+	 * @param credentials
+	 *            The credentials
+	 * @param context
+	 *            The web context
+	 * @return the profile, or <tt>null</tt> if there isn't one.
+	 */
 	@Override
 	protected OidcProfile retrieveUserProfile(BearerCredentials credentials,
 			WebContext context) {
 		return credentials.getProfile();
 	}
 
+	/**
+	 * Construct a new client.
+	 */
 	@Override
 	protected BaseClient<BearerCredentials, OidcProfile> newClient() {
 		try {
