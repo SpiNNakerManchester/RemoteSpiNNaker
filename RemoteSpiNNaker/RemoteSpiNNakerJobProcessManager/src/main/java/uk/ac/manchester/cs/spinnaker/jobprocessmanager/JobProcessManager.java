@@ -425,10 +425,19 @@ abstract class JobManagerLogWriter implements LogWriter {
 		return cached.length() > 0;
 	}
 
+	/**
+	 * Clears the cached log.
+	 */
 	protected void clear() {
 		cached.setLength(0);
 	}
 
+	/**
+	 * Add a message to the cached log.
+	 *
+	 * @param value
+	 *            The string to add.
+	 */
 	protected void appendToCache(String value) {
 		cached.append(value);
 	}
@@ -446,6 +455,9 @@ abstract class JobManagerLogWriter implements LogWriter {
 		return getCachedString();
 	}
 
+	/**
+	 * Stop any background activity associated with the log.
+	 */
 	void stop() {
 	}
 }

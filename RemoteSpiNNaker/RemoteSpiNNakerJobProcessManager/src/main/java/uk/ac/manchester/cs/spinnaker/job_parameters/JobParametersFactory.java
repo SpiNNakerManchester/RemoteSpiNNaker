@@ -39,7 +39,8 @@ public abstract class JobParametersFactory {
 
 	/** The factories for converting jobs into parameters. */
 	private static final JobParametersFactory[] JOB_PARAMETER_FACTORIES =
-			new JobParametersFactory[] { new GitPyNNJobParametersFactory(),
+			new JobParametersFactory[] {
+					new GitPyNNJobParametersFactory(),
 					new ZipPyNNJobParametersFactory(),
 					new DirectPyNNJobParametersFactory() };
 
