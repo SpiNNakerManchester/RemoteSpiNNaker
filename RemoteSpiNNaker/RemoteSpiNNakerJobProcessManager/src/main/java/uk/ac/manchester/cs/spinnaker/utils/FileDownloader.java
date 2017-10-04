@@ -21,7 +21,14 @@ import javax.net.ssl.X509TrustManager;
 
 import org.jboss.resteasy.util.ParameterParser;
 
-public class FileDownloader {
+/**
+ * Utilities for downloading a file.
+ */
+public abstract class FileDownloader {
+	// Mark as no instances
+	private FileDownloader() {
+	}
+
 	private static String getFileName(String contentDisposition) {
 		if (contentDisposition != null) {
 			String cdl = contentDisposition.toLowerCase();
@@ -87,8 +94,8 @@ public class FileDownloader {
 			HttpsURLConnection connection) throws IOException {
 		// Set up to trust everyone
 		try {
-			SSLContext sc = SSLContext.getInstance("SSL");
-			sc.init(null, new TrustManager[] { new X509TrustManager() {
+			TrustManager[] allTrusting = new TrustManager[1];
+			allTrusting[0] = new X509TrustManager() {
 				@Override
 				public X509Certificate[] getAcceptedIssuers() {
 					return null;
@@ -103,7 +110,10 @@ public class FileDownloader {
 				public void checkServerTrusted(X509Certificate[] certs,
 						String authType) {
 				}
-			} }, new SecureRandom());
+			};
+
+			SSLContext sc = SSLContext.getInstance("SSL");
+			sc.init(null, allTrusting, new SecureRandom());
 
 			connection.setSSLSocketFactory(sc.getSocketFactory());
 			connection.setHostnameVerifier(new HostnameVerifier() {
