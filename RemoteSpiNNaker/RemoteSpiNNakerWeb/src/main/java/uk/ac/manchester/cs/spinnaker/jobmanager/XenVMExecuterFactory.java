@@ -28,6 +28,9 @@ import com.xensource.xenapi.VBD;
 import com.xensource.xenapi.VDI;
 import com.xensource.xenapi.VM;
 
+/**
+ * Executer factory that uses Xen VMs.
+ */
 public class XenVMExecuterFactory implements JobExecuterFactory {
 	/** Bytes in a gigabyte. Well, a gibibyte, but that's a nasty word. */
 	private static final long GB = 1024L * 1024L * 1024L;
@@ -61,6 +64,9 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
 
 	private int nVirtualMachines = 0;
 
+	/**
+	 * Default constructor.
+	 */
 	public XenVMExecuterFactory() {
 		this.threadGroup = new ThreadGroup("XenVM");
 	}
@@ -97,6 +103,9 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
 		}
 	}
 
+	/**
+	 * Callback when the executor is finished.
+	 */
 	protected void executorFinished() {
 		synchronized (lock) {
 			nVirtualMachines--;
@@ -106,17 +115,38 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
 		}
 	}
 
-	/** Taming the Xen API a bit. */
+	/**
+	 * Taming the Xen API a bit.
+	 */
 	class XenConnection implements AutoCloseable {
 		private Connection conn;
 		private final String id;
 
+		/**
+		 * Make an instance.
+		 *
+		 * @param id
+		 *            The ID of the connection.
+		 * @throws XenAPIException
+		 *             something went wrong
+		 * @throws XmlRpcException
+		 *             something went wrong
+		 */
 		XenConnection(String id) throws XenAPIException, XmlRpcException {
 			this.id = id;
 			conn = new Connection(xenServerUrl);
 			loginWithPassword(conn, username, password);
 		}
 
+		/**
+		 * Get a virtual machine.
+		 *
+		 * @return a VM handle
+		 * @throws XmlRpcException
+		 *             something went wrong
+		 * @throws IOException
+		 *             something went wrong
+		 */
 		VM getVirtualMachine() throws XmlRpcException, IOException {
 			Set<VM> vmsWithLabel = VM.getByNameLabel(conn, templateLabel);
 			if (vmsWithLabel.isEmpty()) {
@@ -127,6 +157,17 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
 			return template.createClone(conn, templateLabel + "_" + id);
 		}
 
+		/**
+		 * Get the first block device attached to a VM.
+		 *
+		 * @param vm
+		 *            the VM that the block device is attached to.
+		 * @return the block device
+		 * @throws XmlRpcException
+		 *             something went wrong
+		 * @throws IOException
+		 *             something went wrong
+		 */
 		VBD getVirtualBlockDevice(VM vm) throws XmlRpcException, IOException {
 			Set<VBD> disks = vm.getVBDs(conn);
 			if (disks.isEmpty()) {
@@ -135,17 +176,52 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
 			return disks.iterator().next();
 		}
 
+		/**
+		 * Get the label for a disk image.
+		 *
+		 * @param vdi
+		 *            The disk image
+		 * @param suffix
+		 *            The operational suffix
+		 * @return The label
+		 * @throws XmlRpcException
+		 *             something went wrong
+		 * @throws XenAPIException
+		 *             something went wrong
+		 */
 		String getLabel(VDI vdi, String suffix)
 				throws XmlRpcException, XenAPIException {
 			return vdi.getNameLabel(conn) + "_" + id + "_" + suffix;
 		}
 
+		/**
+		 * Get a base disk image.
+		 *
+		 * @param disk
+		 *            The block device hosting the image.
+		 * @return the disk image.
+		 * @throws XmlRpcException
+		 *             something went wrong
+		 * @throws XenAPIException
+		 *             something went wrong
+		 */
 		VDI getBaseVDI(VBD disk) throws XmlRpcException, XenAPIException {
 			VDI vdi = disk.getVDI(conn);
 			vdi.setNameLabel(conn, getLabel(vdi, "base"));
 			return vdi;
 		}
 
+		/**
+		 * Create a derived disk image.
+		 *
+		 * @param baseVDI
+		 *            The base disk image.
+		 * @return the disk image.
+		 * @throws XenAPIException
+		 *             something went wrong
+		 * @throws XmlRpcException
+		 *             something went wrong
+		 */
 		VDI createVDI(VDI baseVDI) throws XenAPIException, XmlRpcException {
 			VDI.Record descriptor = new VDI.Record();
 			descriptor.nameLabel = getLabel(baseVDI, "storage");
@@ -156,6 +232,19 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
 			return VDI.create(conn, descriptor);
 		}
 
+		/**
+		 * Create a block device.
+		 *
+		 * @param vm
+		 *            The VM to attach the device to.
+		 * @param vdi
+		 *            The disk image to initialise the device with.
+		 * @return the block device
+		 * @throws XenAPIException
+		 *             something went wrong
+		 * @throws XmlRpcException
+		 *             something went wrong
+		 */
 		VBD createVBD(VM vm, VDI vdi) throws XenAPIException, XmlRpcException {
 			VBD.Record descriptor = new VBD.Record();
 			descriptor.VM = vm;
@@ -167,27 +256,92 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
 			return VBD.create(conn, descriptor);
 		}
 
+		/**
+		 * Adds boot data to a VM.
+		 *
+		 * @param vm
+		 *            The VM to add the data to.
+		 * @param key
+		 *            The key for the data.
+		 * @param value
+		 *            The value for the data. Will be converted to string.
+		 * @throws XenAPIException
+		 *             something went wrong
+		 * @throws XmlRpcException
+		 *             something went wrong
+		 */
 		void addData(VM vm, String key, Object value)
 				throws XenAPIException, XmlRpcException {
 			vm.addToXenstoreData(conn, key, value.toString());
 		}
 
+		/**
+		 * Boot up a VM.
+		 *
+		 * @param vm
+		 *            The VM to boot.
+		 * @throws XenAPIException
+		 *             something went wrong
+		 * @throws XmlRpcException
+		 *             something went wrong
+		 */
 		void start(VM vm) throws XenAPIException, XmlRpcException {
 			vm.start(conn, false, true);
 		}
 
+		/**
+		 * Destroy a VM. Shuts the VM down as well if required.
+		 *
+		 * @param vm
+		 *            The VM to destroy.
+		 * @throws XenAPIException
+		 *             something went wrong
+		 * @throws XmlRpcException
+		 *             something went wrong
+		 */
 		void destroy(VM vm) throws XenAPIException, XmlRpcException {
 			vm.destroy(conn);
 		}
 
-		void destroy(VBD vm) throws XenAPIException, XmlRpcException {
-			vm.destroy(conn);
+		/**
+		 * Destroy a block device.
+		 *
+		 * @param vbd
+		 *            The block device to destroy.
+		 * @throws XenAPIException
+		 *             something went wrong
+		 * @throws XmlRpcException
+		 *             something went wrong
+		 */
+		void destroy(VBD vbd) throws XenAPIException, XmlRpcException {
+			vbd.destroy(conn);
 		}
 
-		void destroy(VDI vm) throws XenAPIException, XmlRpcException {
-			vm.destroy(conn);
+		/**
+		 * Destroy a disk image.
+		 *
+		 * @param vdi
+		 *            The disk image to destroy.
+		 * @throws XenAPIException
+		 *             something went wrong
+		 * @throws XmlRpcException
+		 *             something went wrong
+		 */
+		void destroy(VDI vdi) throws XenAPIException, XmlRpcException {
+			vdi.destroy(conn);
 		}
 
+		/**
+		 * Get the state of a VM.
+		 *
+		 * @param vm
+		 *            The VM to get the state of.
+		 * @return The state.
+		 * @throws XenAPIException
+		 *             something went wrong
+		 * @throws XmlRpcException
+		 *             something went wrong
+		 */
 		VmPowerState getState(VM vm) throws XenAPIException, XmlRpcException {
 			return vm.getPowerState(conn);
 		}
@@ -205,6 +359,9 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
 		}
 	}
 
+	/**
+	 * The executer core connector.
+	 */
 	class Executer implements JobExecuter, Runnable {
 		// Parameters from constructor
 		private final JobManager jobManager;
@@ -219,6 +376,18 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
 		private VDI extraVdi;
 		private VBD extraDisk;
 
+		/**
+		 * Instantiate a connector.
+		 *
+		 * @param jobManager
+		 *            The job manager.
+		 * @param baseUrl
+		 *            the service root URL.
+		 * @throws XmlRpcException
+		 *             something went wrong
+		 * @throws IOException
+		 *             something went wrong
+		 */
 		Executer(JobManager jobManager, URL baseUrl)
 				throws XmlRpcException, IOException {
 			this.jobManager = jobManager;
@@ -254,6 +423,15 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
 			new Thread(threadGroup, this, "Executer (" + uuid + ")").start();
 		}
 
+		/**
+		 * Connect to Xen, make a VM and launch it.
+		 *
+		 * @return the launched VM
+		 * @throws XmlRpcException
+		 *             something went wrong
+		 * @throws IOException
+		 *             something went wrong
+		 */
 		synchronized XenConnection createVm()
 				throws XmlRpcException, IOException {
 			XenConnection conn = new XenConnection(uuid);

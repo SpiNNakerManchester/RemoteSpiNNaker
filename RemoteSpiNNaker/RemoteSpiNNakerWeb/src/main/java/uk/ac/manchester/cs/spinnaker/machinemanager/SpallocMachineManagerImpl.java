@@ -290,6 +290,8 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
 		/**
 		 * Send a request that expects a response.
 		 *
+		 * @param <T>
+		 *            The type of the expected response.
 		 * @param request
 		 *            The request to send.
 		 * @param responseType
@@ -368,11 +370,25 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
 			this.id = jobId;
 		}
 
+		/**
+		 * Get info about the machine allocated to the job.
+		 *
+		 * @return The machine info.
+		 * @throws IOException
+		 *             If anything goes wrong.
+		 */
 		JobMachineInfo getMachineInfo() throws IOException {
 			return comms.sendRequest(new GetJobMachineInfoCommand(id),
 					JobMachineInfo.class);
 		}
 
+		/**
+		 * Get the state of the job.
+		 *
+		 * @return The state.
+		 * @throws IOException
+		 *             If anything goes wrong.
+		 */
 		JobState getState() throws IOException {
 			return comms.sendRequest(new GetJobStateCommand(id),
 					JobState.class);
@@ -635,9 +651,12 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
 			System.out.println(String.format(msg, args));
 		}
 
+		private static final int PORT = 22244;
+		private static final int TIMEOUT = 10000;
+
 		/**
 		 * Demo entry point.
-		 * 
+		 *
 		 * @param args
 		 *            Command line args
 		 * @throws Exception
@@ -647,7 +666,7 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
 			final SpallocMachineManagerImpl manager =
 					new SpallocMachineManagerImpl();
 			manager.ipAddress = "10.0.0.3";
-			manager.port = 22244;
+			manager.port = PORT;
 			manager.owner = "test";
 			manager.startThreads();
 
@@ -662,7 +681,7 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
 					boolean available = manager.isMachineAvailable(machine);
 					while (available) {
 						msg("Waiting for Machine to go");
-						manager.waitForMachineStateChange(machine, 10000);
+						manager.waitForMachineStateChange(machine, TIMEOUT);
 						available = manager.isMachineAvailable(machine);
 					}
 					msg("Machine gone");
@@ -671,7 +690,7 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
 			t.start();
 
 			msg("Machine %s allocated", machine.getMachineName());
-			ThreadUtils.sleep(20000);
+			ThreadUtils.sleep(TIMEOUT + TIMEOUT);
 			msg("Machine %s is available: %s", machine.getMachineName(),
 					manager.isMachineAvailable(machine));
 			manager.releaseMachine(machine);
