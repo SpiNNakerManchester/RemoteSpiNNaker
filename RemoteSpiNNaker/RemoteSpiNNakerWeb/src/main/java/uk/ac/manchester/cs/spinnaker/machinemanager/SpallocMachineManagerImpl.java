@@ -97,8 +97,11 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
 	private volatile boolean done = false;
 	private final MachineNotificationReceiver callback = null;
 
+	/**
+	 * Deserialiser for spalloc responses.
+	 */
 	@SuppressWarnings("serial")
-	static private class ResponseBasedDeserializer
+	static class ResponseBasedDeserializer
 			extends PropertyBasedDeserialiser<Response> {
 		ResponseBasedDeserializer() {
 			super(Response.class);
@@ -120,6 +123,9 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
 		mapper.configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
 	}
 
+	/**
+	 * Thread pool.
+	 */
 	ScheduledExecutorService scheduler;
 
 	/**
@@ -230,6 +236,8 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
 			}
 		}
 
+		private static final int DISCONNECT_DELAY = 1000; // in ms
+
 		/**
 		 * The main loop of the communications thread.
 		 */
@@ -254,7 +262,7 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
 				}
 				if (!done) {
 					logger.warn("Disconnected from machine server...");
-					sleep(1000);
+					sleep(DISCONNECT_DELAY);
 				}
 			}
 		}
@@ -298,6 +306,7 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
 		 *            The type of response to expect.
 		 * @throws IOException
 		 *             if anything goes wrong with the comms.
+		 * @return the response to the request.
 		 */
 		public <T> T sendRequest(Command<?> request, Class<T> responseType)
 				throws IOException {

@@ -7,14 +7,14 @@ public class CreateJobCommand extends Command<Integer> {
 	/**
 	 * Create a request.
 	 *
-	 * @param n_boards
+	 * @param numBoards
 	 *            The number of boards to request.
 	 * @param owner
 	 *            The owner of the job to create.
 	 */
-	public CreateJobCommand(int n_boards, String owner) {
+	public CreateJobCommand(int numBoards, String owner) {
 		super("create_job");
-		addArg(n_boards);
+		addArg(numBoards);
 		addKwArg("owner", owner);
 	}
 }

@@ -51,8 +51,8 @@ import uk.ac.manchester.cs.spinnaker.rest.OutputManager;
  * The manager of jobs; synchronises and manages all the ongoing and future
  * processes and machines.
  */
-// TODO needs security; Role = JobEngine
 public class JobManager implements NMPIQueueListener, JobManagerInterface {
+	// TODO needs security; Role = JobEngine
 	private static final double CHIPS_PER_BOARD = 48.0;
 	private static final double CORES_PER_CHIP = 15.0;
 	public static final String JOB_PROCESS_MANAGER_JAR =
