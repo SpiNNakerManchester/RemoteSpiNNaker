@@ -24,6 +24,9 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
+/**
+ * Extended JSON serialisation handler.
+ */
 @Provider
 @Consumes(WILDCARD)
 @Produces(WILDCARD)
@@ -32,6 +35,11 @@ public class CustomJacksonJsonProvider extends JacksonJsonProvider {
 	private final SimpleModule module = new SimpleModule();
 	private final JodaModule jodaModule = new JodaModule();
 
+	/**
+	 * Add a deserialiser for a specific type.
+	 * @param type The type.
+	 * @param deserialiser The deserialiser.
+	 */
 	public <T> void addDeserialiser(Class<T> type,
 			StdDeserializer<T> deserialiser) {
 		module.addDeserializer(type, deserialiser);

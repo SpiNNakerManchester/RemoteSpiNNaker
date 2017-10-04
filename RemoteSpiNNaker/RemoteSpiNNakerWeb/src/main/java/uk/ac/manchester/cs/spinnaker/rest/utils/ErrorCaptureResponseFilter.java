@@ -21,12 +21,13 @@ import org.slf4j.Logger;
 // Only public because of the annotation
 @Provider
 public class ErrorCaptureResponseFilter implements ClientResponseFilter {
-	private final CustomJacksonJsonProvider provider = new CustomJacksonJsonProvider();
+	private final CustomJacksonJsonProvider provider =
+			new CustomJacksonJsonProvider();
 	private static final Logger log = getLogger(
 			ErrorCaptureResponseFilter.class);
-	public volatile boolean writeToLog = true;
+	private volatile boolean writeToLog = true;
 
-	private static final String INDENT = "    ";// 4 spaces
+	private static final String INDENT = "    "; // 4 spaces
 	private static final String IND2 = INDENT + INDENT;
 
 	@Override
