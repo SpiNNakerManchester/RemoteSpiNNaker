@@ -43,19 +43,34 @@ import uk.ac.manchester.cs.spinnaker.output.OutputManagerImpl;
 import uk.ac.manchester.cs.spinnaker.rest.OutputManager;
 import uk.ac.manchester.cs.spinnaker.rest.utils.NullExceptionMapper;
 
+/**
+ * Builds the Spring beans in the application. 
+ */
 @Configuration
 // @EnableGlobalMethodSecurity(prePostEnabled=true, proxyTargetClass=true)
 // @EnableWebSecurity
 @Import(JaxRsConfig.class)
 public class RemoteSpinnakerBeans {
+	/**
+	 * Configures using properties.
+	 *
+	 * @return bean
+	 */
 	@Bean
-	public static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
+	public static PropertySourcesPlaceholderConfigurer
+			propertySourcesPlaceholderConfigurer() {
 		return new PropertySourcesPlaceholderConfigurer();
 	}
 
+	/**
+	 * Parsing of Spinnaker machine descriptions.
+	 *
+	 * @return bean
+	 */
 	@Bean
 	public static ConversionServiceFactoryBean conversionService() {
-		ConversionServiceFactoryBean factory = new ConversionServiceFactoryBean();
+		ConversionServiceFactoryBean factory =
+				new ConversionServiceFactoryBean();
 		factory.setConverters(
 				singleton(new Converter<String, SpinnakerMachine>() {
 					@Override
@@ -84,6 +99,9 @@ public class RemoteSpinnakerBeans {
 	@Value("${baseserver.url}${callback.path}")
 	private String oidcRedirectUri;
 
+	/**
+	 * Configuration that connects to external HBP services.
+	 */
 	// TODO unused
 	class HbpServices {
 		// @Autowired
@@ -119,7 +137,8 @@ public class RemoteSpinnakerBeans {
 		// @Bean
 		public ClientAuthenticationProvider clientProvider()
 				throws ParseException, MalformedURLException, IOException {
-			ClientAuthenticationProvider provider = new ClientAuthenticationProvider();
+			ClientAuthenticationProvider provider =
+					new ClientAuthenticationProvider();
 			provider.setClients(clients());
 			return provider;
 		}
@@ -193,6 +212,11 @@ public class RemoteSpinnakerBeans {
 	// }
 	// }
 
+	/**
+	 * The machine manager; direct or via spalloc.
+	 *
+	 * @return bean
+	 */
 	@Bean
 	public MachineManager machineManager() {
 		if (useSpalloc) {
@@ -201,12 +225,22 @@ public class RemoteSpinnakerBeans {
 		return new FixedMachineManagerImpl();
 	}
 
+	/**
+	 * The queue manager.
+	 *
+	 * @return bean
+	 */
 	@Bean
 	public NMPIQueueManager queueManager()
 			throws NoSuchAlgorithmException, KeyManagementException {
 		return new NMPIQueueManager();
 	}
 
+	/**
+	 * The executer factory; local or inside Xen VMs.
+	 *
+	 * @return bean
+	 */
 	@Bean
 	public JobExecuterFactory jobExecuterFactory() throws IOException {
 		if (!useXenVms) {
@@ -215,18 +249,33 @@ public class RemoteSpinnakerBeans {
 		return new XenVMExecuterFactory();
 	}
 
+	/**
+	 * The output manager.
+	 *
+	 * @return bean
+	 */
 	@Bean
 	public OutputManager outputManager() {
 		// Pass this, as it is non-trivial constructed value
 		return new OutputManagerImpl(baseServerUrl);
 	}
 
+	/**
+	 * The job manager.
+	 *
+	 * @return bean
+	 */
 	@Bean
 	public JobManager jobManager() {
 		// Pass this, as it is non-trivial constructed value
 		return new JobManager(baseServerUrl);
 	}
 
+	/**
+	 * The JAX-RS interface.
+	 *
+	 * @return bean
+	 */
 	@Bean
 	public Server jaxRsServer() throws KeyManagementException,
 			NoSuchAlgorithmException, IOException {
