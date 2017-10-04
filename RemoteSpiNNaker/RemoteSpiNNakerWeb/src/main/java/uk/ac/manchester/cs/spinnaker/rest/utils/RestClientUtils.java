@@ -161,7 +161,9 @@ public abstract class RestClientUtils {
 				if (cert == null) {
 					return null;
 				}
-				return new X509Certificate[] { cert };
+				return new X509Certificate[] {
+					cert
+				};
 			}
 		};
 
@@ -291,6 +293,12 @@ abstract class ConnectionIndependentScheme extends RFC2617Scheme {
 	private final boolean complete = false;
 	private final String name;
 
+	/**
+	 * Define a scheme.
+	 *
+	 * @param name
+	 *            The name of the scheme.
+	 */
 	ConnectionIndependentScheme(String name) {
 		this.name = name;
 	}
@@ -311,18 +319,21 @@ abstract class ConnectionIndependentScheme extends RFC2617Scheme {
 	}
 
 	/**
-	 * Produce an authorization header for the given set of
-	 * {@link Credentials}. The credentials and the connection will have
-	 * been sanity-checked prior to this call.
-	 * 
+	 * Produce an authorization header for the given set of {@link Credentials}.
+	 * The credentials and the connection will have been sanity-checked prior to
+	 * this call.
+	 *
 	 * @param credentials
 	 *            The credentials to be authenticated.
+	 * @return the header
 	 */
 	protected abstract Header authenticate(Credentials credentials);
 
 	/**
 	 * Give the header that we're supposed to generate, depending on whether
 	 * we're going by a proxy or not.
+	 *
+	 * @return the header name
 	 */
 	protected String getAuthHeaderName() {
 		return isProxy() ? PROXY_AUTH_RESP : WWW_AUTH_RESP;
