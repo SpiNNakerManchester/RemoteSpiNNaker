@@ -8,7 +8,7 @@ import uk.ac.manchester.cs.spinnaker.job.Status;
 import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
 
 /**
- * An interface to an executable job process type
+ * An interface to an executable job process type.
  *
  * @param <P>
  *            The type of the parameters
@@ -63,7 +63,7 @@ public interface JobProcess<P extends JobParameters> {
 	List<ProvenanceItem> getProvenance();
 
 	/**
-	 * Cleans up the job, removing any associated files
+	 * Cleans up the job, removing any associated files.
 	 */
 	void cleanup();
 }

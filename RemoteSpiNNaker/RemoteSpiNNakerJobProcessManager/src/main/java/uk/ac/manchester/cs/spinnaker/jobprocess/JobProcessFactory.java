@@ -9,15 +9,29 @@ import uk.ac.manchester.cs.spinnaker.job.JobParameters;
 
 /**
  * A factory for creating {@link JobProcess} instances given a
- * {@link JobParameters} instance
+ * {@link JobParameters} instance.
  */
 public class JobProcessFactory {
 	private final ThreadGroup threadGroup;
 
+	/**
+	 * Create a factory.
+	 *
+	 * @param threadGroup
+	 *            The thread group for the factory. All threads created by the
+	 *            factory will be within this group.
+	 */
 	public JobProcessFactory(ThreadGroup threadGroup) {
 		this.threadGroup = threadGroup;
 	}
 
+	/**
+	 * Create a factory.
+	 *
+	 * @param threadGroupName
+	 *            The name of the thread group for the factory. All threads
+	 *            created by the factory will be within this group.
+	 */
 	public JobProcessFactory(String threadGroupName) {
 		this(new ThreadGroup(threadGroupName));
 	}
@@ -78,13 +92,13 @@ public class JobProcessFactory {
 		JobProcess<P> process = processType.newInstance();
 
 		// Magically set the thread group if there is one
-		setField(process, "threadGroup", threadGroup);
+		setInstanceField(process, "threadGroup", threadGroup);
 
 		return process;
 	}
 
 	@SuppressWarnings("unused")
-	private static void setField(Class<?> clazz, String fieldName,
+	private static void setClassField(Class<?> clazz, String fieldName,
 			Object value) {
 		try {
 			Field threadGroupField = clazz.getDeclaredField(fieldName);
@@ -96,7 +110,7 @@ public class JobProcessFactory {
 		}
 	}
 
-	private static void setField(Object instance, String fieldName,
+	private static void setInstanceField(Object instance, String fieldName,
 			Object value) {
 		try {
 			Field threadGroupField = instance.getClass()

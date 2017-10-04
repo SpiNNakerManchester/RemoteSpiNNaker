@@ -66,6 +66,24 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
 			"router_provenance/total_dropped_packets",
 			"router_provenance/total_missed_dropped_packets",
 			"router_provenance/total_lost_dropped_packets" };
+	private static final int SIGNAL_EXIT_OFFSET = 128;
+	/**
+	 * Used for deserialising provenance data. We build this exactly once
+	 * because it is comparatively expensive and the resulting object is thread
+	 * safe.
+	 *
+	 * @see https://stackoverflow.com/a/7400735/301832
+	 */
+	static final JAXBContext JAXB_CONTEXT;
+
+	static {
+		// Set up the JAXB (deserialisation) context.
+		try {
+			JAXB_CONTEXT = JAXBContext.newInstance(ProvenanceDataItems.class);
+		} catch (JAXBException e) {
+			throw new RuntimeException("unexpected JAXB failure", e);
+		}
+	}
 
 	private File workingDirectory = null;
 	private Status status = null;
@@ -149,10 +167,10 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
 			}
 
 			// If the exit is an error, mark an error
-			if (exitValue > 127) {
+			if (exitValue >= SIGNAL_EXIT_OFFSET) {
 				// Useful to distinguish this case
 				throw new Exception("Python exited with signal ("
-						+ (exitValue - 128) + ")");
+						+ (exitValue - SIGNAL_EXIT_OFFSET) + ")");
 			}
 			if (exitValue != 0) {
 				throw new Exception("Python exited with a non-zero code ("
@@ -166,7 +184,14 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
 		}
 	}
 
-	/** How to actually run a subprocess. */
+	/**
+	 * How to actually run a subprocess.
+	 *
+	 * @param parameters
+	 *            The parameters to the subprocess.
+	 * @param logWriter
+	 *            Where to send log messages.
+	 */
 	private int runSubprocess(PyNNJobParameters parameters, LogWriter logWriter)
 			throws IOException, InterruptedException {
 		List<String> command = new ArrayList<>();
@@ -194,6 +219,29 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
 		}
 	}
 
+	/**
+	 * Enter some provenance into the provenance map relative to the root of the
+	 * map.
+	 *
+	 * @param items
+	 *            The items to insert.
+	 */
+	private void putProvenanceInMap(ProvenanceDataItems items) {
+		putProvenanceInMap(items, "", new LinkedList<String>());
+	}
+
+	/**
+	 * Enter some provenance into the provenance map.
+	 *
+	 * @param items
+	 *            The items to insert.
+	 * @param path
+	 *            Where to insert these items relative to the current node, as a
+	 *            string.
+	 * @param pathList
+	 *            Where to insert these items relative to the current node, as a
+	 *            list.
+	 */
 	private void putProvenanceInMap(ProvenanceDataItems items, String path,
 			LinkedList<String> pathList) {
 		// Create a path for this level in the tree
@@ -221,23 +269,14 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
 	}
 
 	/**
-	 * Used for deserialising provenance data. We build this exactly once
-	 * because it is comparatively expensive and the resulting object is thread
-	 * safe.
+	 * Add the provenance contained in the files in the given directory.
 	 *
-	 * @see https://stackoverflow.com/a/7400735/301832
+	 * @param provenanceDirectory
+	 *            Where to look for XML files.
+	 * @throws JAXBException
+	 *             If things go wrong in deserialisation.
 	 */
-	static final JAXBContext JAXB_CONTEXT;
-	static {
-		try {
-			JAXB_CONTEXT = JAXBContext.newInstance(ProvenanceDataItems.class);
-		} catch (JAXBException e) {
-			throw new RuntimeException("unexpected JAXB failure", e);
-		}
-	}
-
-	private void addProvenance(File provenanceDirectory)
-			throws IOException, JAXBException {
+	private void addProvenance(File provenanceDirectory) throws JAXBException {
 		Unmarshaller unmarshaller = JAXB_CONTEXT.createUnmarshaller();
 		// Get provenance data from files
 		for (File file : provenanceDirectory.listFiles()) {
@@ -245,13 +284,27 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
 			if (file.getName().endsWith(".xml")) {
 				putProvenanceInMap(
 						unmarshaller.unmarshal(new StreamSource(file),
-								ProvenanceDataItems.class).getValue(),
-						"", new LinkedList<String>());
+								ProvenanceDataItems.class).getValue());
 			}
 		}
 	}
 
 	private static final int CHUNK_SIZE = 8196;
+
+	/**
+	 * Used for creating a ZIP of the provenance.
+	 *
+	 * @param reportsZip
+	 *            Open handle to the ZIP being created.
+	 * @param directory
+	 *            Where to get provenance data from.
+	 * @param path
+	 *            The path within the ZIP.
+	 * @throws IOException
+	 *             If anything goes wrong with I/O.
+	 * @throws JAXBException
+	 *             If anything goes wrong with deserialisation of the XML.
+	 */
 	private void zipProvenance(ZipOutputStream reportsZip, File directory,
 			String path) throws IOException, JAXBException {
 		// Go through the report files and zip them up
@@ -278,6 +331,16 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
 		}
 	}
 
+	/**
+	 * Gather the provenance information from the job's reports directory.
+	 *
+	 * @param workingDirectory
+	 *            The job's working directory.
+	 * @throws IOException
+	 *             If anything goes wrong with I/O.
+	 * @throws JAXBException
+	 *             If anything goes wrong with deserialisation of XML.
+	 */
 	private void gatherProvenance(File workingDirectory)
 			throws IOException, JAXBException {
 		// Find the reports folder

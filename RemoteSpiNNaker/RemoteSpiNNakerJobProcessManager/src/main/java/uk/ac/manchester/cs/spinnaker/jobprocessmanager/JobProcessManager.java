@@ -5,7 +5,8 @@ import static java.lang.System.exit;
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.io.FileUtils.deleteQuietly;
 import static org.eclipse.jgit.util.FileUtils.createTempDir;
-import static uk.ac.manchester.cs.spinnaker.jobprocessmanager.RemoteSpiNNakerAPI.createJobManager;
+import static uk.ac.manchester.cs.spinnaker.jobprocessmanager.
+	RemoteSpiNNakerAPI.createJobManager;
 import static uk.ac.manchester.cs.spinnaker.utils.FileDownloader.downloadFile;
 import static uk.ac.manchester.cs.spinnaker.utils.Log.log;
 
@@ -35,7 +36,8 @@ import uk.ac.manchester.cs.spinnaker.job.nmpi.DataItem;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
 import uk.ac.manchester.cs.spinnaker.job.pynn.PyNNJobParameters;
 import uk.ac.manchester.cs.spinnaker.job_parameters.JobParametersFactory;
-import uk.ac.manchester.cs.spinnaker.job_parameters.JobParametersFactoryException;
+import uk.ac.manchester.cs.spinnaker.job_parameters.
+	JobParametersFactoryException;
 import uk.ac.manchester.cs.spinnaker.jobprocess.JobProcess;
 import uk.ac.manchester.cs.spinnaker.jobprocess.JobProcessFactory;
 import uk.ac.manchester.cs.spinnaker.jobprocess.LogWriter;
@@ -61,7 +63,7 @@ public class JobProcessManager {
 	class UploadingJobManagerLogWriter extends JobManagerLogWriter {
 		private final Timer sendTimer;
 
-		public UploadingJobManagerLogWriter() {
+		UploadingJobManagerLogWriter() {
 			sendTimer = new Timer(UPDATE_INTERVAL, new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {

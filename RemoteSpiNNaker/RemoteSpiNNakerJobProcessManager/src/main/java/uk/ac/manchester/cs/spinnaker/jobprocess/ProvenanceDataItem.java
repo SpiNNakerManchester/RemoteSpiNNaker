@@ -5,12 +5,13 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlValue;
 
+/**
+ * The POJO representation of a provenance data item.
+ */
 @XmlAccessorType(XmlAccessType.FIELD)
 public class ProvenanceDataItem {
-
 	@XmlAttribute
 	private String name;
-
 	@XmlValue
 	private String value;
 
