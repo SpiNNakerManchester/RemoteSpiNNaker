@@ -65,6 +65,9 @@ public class JobProcessManager {
 	class UploadingJobManagerLogWriter extends JobManagerLogWriter {
 		private final Timer sendTimer;
 
+		/**
+		 * Default constructor.
+		 */
 		UploadingJobManagerLogWriter() {
 			sendTimer = new Timer(UPDATE_INTERVAL, new ActionListener() {
 				@Override
@@ -376,7 +379,9 @@ public class JobProcessManager {
  * A description of a machine.
  */
 class Machine {
+	/** The machine. Knows its service URL. */
 	SpinnakerMachine machine;
+	/** The service URL. */
 	String url;
 
 	/**
@@ -432,6 +437,11 @@ abstract class JobManagerLogWriter implements LogWriter {
 		return cached.toString();
 	}
 
+	/**
+	 * Get the current log contents. Does <i>not</i> reset the internal buffer.
+	 *
+	 * @return The log contents.
+	 */
 	public synchronized String getLog() {
 		return getCachedString();
 	}

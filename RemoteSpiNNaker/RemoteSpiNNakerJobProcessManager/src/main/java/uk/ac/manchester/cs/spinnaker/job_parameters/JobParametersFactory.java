@@ -7,7 +7,7 @@ import uk.ac.manchester.cs.spinnaker.job.JobParameters;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
 
 /**
- * A factory that produces job parameters
+ * A factory that produces job parameters.
  */
 public abstract class JobParametersFactory {
 	/**
@@ -39,9 +39,9 @@ public abstract class JobParametersFactory {
 
 	/** The factories for converting jobs into parameters. */
 	private static final JobParametersFactory[] JOB_PARAMETER_FACTORIES =
-    		new JobParametersFactory[]{new GitPyNNJobParametersFactory(),
-    				new ZipPyNNJobParametersFactory(),
-    				new DirectPyNNJobParametersFactory()};
+			new JobParametersFactory[] { new GitPyNNJobParametersFactory(),
+					new ZipPyNNJobParametersFactory(),
+					new DirectPyNNJobParametersFactory() };
 
 	/**
 	 * Get the parameters from a job.
