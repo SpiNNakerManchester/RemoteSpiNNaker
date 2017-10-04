@@ -13,47 +13,47 @@ import uk.ac.manchester.cs.spinnaker.model.CollabPermissions;
 import uk.ac.manchester.cs.spinnaker.rest.CollabRestService;
 
 public class CollabSecurityService {
-    private final Logger logger = LoggerFactory.getLogger(getClass());
-    @Value("${collab.service.uri}")
-    private URL collabServiceUrl;
+	private final Logger logger = LoggerFactory.getLogger(getClass());
+	@Value("${collab.service.uri}")
+	private URL collabServiceUrl;
 
-    private CollabRestService getServiceInstance() {
-        // Do not factor out; depends on thread context
-        return createOIDCClient(collabServiceUrl, CollabRestService.class);
-    }
+	private CollabRestService getServiceInstance() {
+		// Do not factor out; depends on thread context
+		return createOIDCClient(collabServiceUrl, CollabRestService.class);
+	}
 
-    private CollabPermissions getPermissions(final int id) {
-        return requireNonNull(getServiceInstance().getCollabPermissions(id));
-    }
+	private CollabPermissions getPermissions(int id) {
+		return requireNonNull(getServiceInstance().getCollabPermissions(id));
+	}
 
-    public boolean canRead(final int id) {
-        try {
-            getPermissions(id);
-            return true;
-        } catch (final Exception e) {
-            logger.debug("Error getting collab permissions, "
-                    + "assumed access denied", e);
-            return false;
-        }
-    }
+	public boolean canRead(int id) {
+		try {
+			getPermissions(id);
+			return true;
+		} catch (Exception e) {
+			logger.debug("Error getting collab permissions, "
+					+ "assumed access denied", e);
+			return false;
+		}
+	}
 
-    public boolean canUpdate(final int id) {
-        try {
-            return getPermissions(id).isUpdate();
-        } catch (final Exception e) {
-            logger.debug("Error getting collab permissions, "
-                    + "assumed access denied", e);
-            return false;
-        }
-    }
+	public boolean canUpdate(int id) {
+		try {
+			return getPermissions(id).isUpdate();
+		} catch (Exception e) {
+			logger.debug("Error getting collab permissions, "
+					+ "assumed access denied", e);
+			return false;
+		}
+	}
 
-    public boolean canDelete(final int id) {
-        try {
-            return getPermissions(id).isDelete();
-        } catch (final Exception e) {
-            logger.debug("Error getting collab permissions, "
-                    + "assumed access denied", e);
-            return false;
-        }
-    }
+	public boolean canDelete(int id) {
+		try {
+			return getPermissions(id).isDelete();
+		} catch (Exception e) {
+			logger.debug("Error getting collab permissions, "
+					+ "assumed access denied", e);
+			return false;
+		}
+	}
 }

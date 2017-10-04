@@ -8,5 +8,5 @@ import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
  * An interface for things that listen for new jobs.
  */
 public interface NMPIQueueListener {
-    void addJob(Job job) throws IOException;
+	void addJob(Job job) throws IOException;
 }
