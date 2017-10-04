@@ -37,6 +37,7 @@ public class CustomJacksonJsonProvider extends JacksonJsonProvider {
 		module.addDeserializer(type, deserialiser);
 	}
 
+	@SuppressWarnings("deprecation")
 	private void registerMapper(Class<?> type, MediaType mediaType) {
 		ObjectMapper mapper = locateMapper(type, mediaType);
 		if (!registeredMappers.contains(mapper)) {

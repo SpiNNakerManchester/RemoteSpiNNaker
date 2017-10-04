@@ -49,7 +49,10 @@ import org.slf4j.Logger;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
-public class RestClientUtils {
+public abstract class RestClientUtils {
+	private RestClientUtils() {
+	}
+
 	private static Logger log = getLogger(RestClientUtils.class);
 
 	protected static ResteasyClient createRestClient(URL url,
@@ -120,17 +123,17 @@ public class RestClientUtils {
 	@Deprecated
 	private static SchemeRegistry getSchemeRegistry()
 			throws NoSuchAlgorithmException, KeyManagementException {
-		SSLContext sslContext = SSLContext.getInstance(SECURE_PROTOCOL);
-		sslContext.init(null, new TrustManager[] { new X509TrustManager() {
+		TrustManager[] allTrusting = new TrustManager[1];
+		allTrusting[0] = new X509TrustManager() {
 			@Override
-			public void checkClientTrusted(final X509Certificate[] certs,
-					final String authType) throws CertificateException {
+			public void checkClientTrusted(X509Certificate[] certs,
+					String authType) throws CertificateException {
 				// Does Nothing; we aren't deploying client-side certs
 			}
 
 			@Override
-			public void checkServerTrusted(final X509Certificate[] certs,
-					final String authType) throws CertificateException {
+			public void checkServerTrusted(X509Certificate[] certs,
+					String authType) throws CertificateException {
 				if (!checkTrusted(certs)) {
 					throw new CertificateException("untrusted server");
 				}
@@ -138,13 +141,16 @@ public class RestClientUtils {
 
 			@Override
 			public X509Certificate[] getAcceptedIssuers() {
-				final X509Certificate cert = getTrustedCert();
+				X509Certificate cert = getTrustedCert();
 				if (cert == null) {
 					return null;
 				}
 				return new X509Certificate[] { cert };
 			}
-		} }, new SecureRandom());
+		};
+
+		SSLContext sslContext = SSLContext.getInstance(SECURE_PROTOCOL);
+		sslContext.init(null, allTrusting, new SecureRandom());
 		SchemeRegistry schemeRegistry = new SchemeRegistry();
 		schemeRegistry.register(new Scheme("https", 443,
 				new SSLSocketFactory(sslContext, ALLOW_ALL_HOSTNAME_VERIFIER)));

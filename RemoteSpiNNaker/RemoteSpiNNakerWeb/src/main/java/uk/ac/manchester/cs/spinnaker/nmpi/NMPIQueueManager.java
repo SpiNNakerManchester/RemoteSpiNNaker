@@ -168,7 +168,7 @@ public class NMPIQueueManager implements Runnable {
 			job.setStatus("queued");
 			logger.debug("Updating job status on server");
 			queue.updateJob(job.getId(), job);
-		} catch (final IOException e) {
+		} catch (IOException e) {
 			logger.error("Error in executing job", e);
 			setJobError(job.getId(), null, null, e, 0, null);
 		}

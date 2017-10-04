@@ -48,197 +48,194 @@ import uk.ac.manchester.cs.spinnaker.rest.utils.NullExceptionMapper;
 // @EnableWebSecurity
 @Import(JaxRsConfig.class)
 public class RemoteSpinnakerBeans {
-    @Bean
-    public static PropertySourcesPlaceholderConfigurer
-            propertySourcesPlaceholderConfigurer() {
-        return new PropertySourcesPlaceholderConfigurer();
-    }
+	@Bean
+	public static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
+		return new PropertySourcesPlaceholderConfigurer();
+	}
 
-    @Bean
-    public static ConversionServiceFactoryBean conversionService() {
-        final ConversionServiceFactoryBean factory =
-                new ConversionServiceFactoryBean();
-        factory.setConverters(
-                singleton(new Converter<String, SpinnakerMachine>() {
-                    @Override
-                    public SpinnakerMachine convert(final String value) {
-                        return SpinnakerMachine.parse(value);
-                    }
-                }));
-        return factory;
-    }
+	@Bean
+	public static ConversionServiceFactoryBean conversionService() {
+		ConversionServiceFactoryBean factory = new ConversionServiceFactoryBean();
+		factory.setConverters(
+				singleton(new Converter<String, SpinnakerMachine>() {
+					@Override
+					public SpinnakerMachine convert(String value) {
+						return SpinnakerMachine.parse(value);
+					}
+				}));
+		return factory;
+	}
 
-    @Autowired
-    private ApplicationContext ctx;
+	@Autowired
+	private ApplicationContext ctx;
 
-    @Value("${spalloc.enabled}")
-    private boolean useSpalloc;
+	@Value("${spalloc.enabled}")
+	private boolean useSpalloc;
 
-    @Value("${xen.server.enabled}")
-    private boolean useXenVms;
+	@Value("${xen.server.enabled}")
+	private boolean useXenVms;
 
-    @Value("${baseserver.url}${cxf.path}${cxf.rest.path}/")
-    private URL baseServerUrl;
+	@Value("${baseserver.url}${cxf.path}${cxf.rest.path}/")
+	private URL baseServerUrl;
 
-    @Value("${cxf.rest.path}")
-    private String restPath;
+	@Value("${cxf.rest.path}")
+	private String restPath;
 
-    @Value("${baseserver.url}${callback.path}")
-    private String oidcRedirectUri;
+	@Value("${baseserver.url}${callback.path}")
+	private String oidcRedirectUri;
 
-    // TODO unused
-    class HbpServices {
-        // @Autowired
-        public void configureGlobal(final AuthenticationManagerBuilder auth)
-                throws Exception {
-            auth.authenticationProvider(clientProvider());
-        }
+	// TODO unused
+	class HbpServices {
+		// @Autowired
+		public void configureGlobal(AuthenticationManagerBuilder auth)
+				throws Exception {
+			auth.authenticationProvider(clientProvider());
+		}
 
-        // @Bean
-        public CollabSecurityService collabSecurityService()
-                throws MalformedURLException {
-            return new CollabSecurityService();
-        }
+		// @Bean
+		public CollabSecurityService collabSecurityService()
+				throws MalformedURLException {
+			return new CollabSecurityService();
+		}
 
-        // @Bean
-        public Client<?, ?> hbpAuthenticationClient() {
-            return new BasicOidcClient();
-        }
+		// @Bean
+		public Client<?, ?> hbpAuthenticationClient() {
+			return new BasicOidcClient();
+		}
 
-        // @Bean
-        public Client<?, ?> hbpBearerClient()
-                throws ParseException, MalformedURLException, IOException {
-            return new BearerOidcClient();
-        }
+		// @Bean
+		public Client<?, ?> hbpBearerClient()
+				throws ParseException, MalformedURLException, IOException {
+			return new BearerOidcClient();
+		}
 
-        // @Bean
-        public Clients clients()
-                throws ParseException, MalformedURLException, IOException {
-            return new Clients(oidcRedirectUri, hbpAuthenticationClient(),
-                    hbpBearerClient());
-        }
+		// @Bean
+		public Clients clients()
+				throws ParseException, MalformedURLException, IOException {
+			return new Clients(oidcRedirectUri, hbpAuthenticationClient(),
+					hbpBearerClient());
+		}
 
-        // @Bean
-        public ClientAuthenticationProvider clientProvider()
-                throws ParseException, MalformedURLException, IOException {
-            final ClientAuthenticationProvider provider =
-                    new ClientAuthenticationProvider();
-            provider.setClients(clients());
-            return provider;
-        }
-    }
+		// @Bean
+		public ClientAuthenticationProvider clientProvider()
+				throws ParseException, MalformedURLException, IOException {
+			ClientAuthenticationProvider provider = new ClientAuthenticationProvider();
+			provider.setClients(clients());
+			return provider;
+		}
+	}
 
-    // TODO unused
-    // @Configuration
-    // @Order(100)
-    // public static class HbpAuthentication extends
-    // WebSecurityConfigurerAdapter {
-    // @Value("${cxf.path}${cxf.rest.path}")
-    // String restServicePath;
-    // @Value("${callback.path}")
-    // private String callbackPath;
-    //
-    // @Autowired
-    // OidcClient hbpAuthenticationClient;
-    // @Autowired
-    // BearerOidcClient hbpBearerClient;
-    // @Autowired
-    // Clients clients;
-    //
-    // @Override
-    // public void configure(WebSecurity web) throws Exception {
-    // Path path = AnnotationUtils.findAnnotation(
-    // JobManager.class, Path.class);
-    // web.ignoring().antMatchers(restServicePath + path.value() + "/**");
-    // }
-    //
-    // @Override
-    // protected void configure(HttpSecurity http) throws Exception {
-    // Path path = AnnotationUtils.findAnnotation(
-    // OutputManager.class, Path.class);
-    // http.addFilterBefore(
-    // directAuthFilter(),
-    // UsernamePasswordAuthenticationFilter.class)
-    // .addFilterBefore(
-    // callbackFilter(),
-    // UsernamePasswordAuthenticationFilter.class)
-    // .exceptionHandling().authenticationEntryPoint(
-    // hbpAuthenticationEntryPoint()).and()
-    // .authorizeRequests().antMatchers(
-    // restServicePath + path.value() + "/**").authenticated()
-    // .anyRequest().permitAll();
-    // }
-    //
-    // @Bean
-    // public ClientAuthenticationFilter callbackFilter() throws Exception {
-    // ClientAuthenticationFilter filter =
-    // new ClientAuthenticationFilter(callbackPath);
-    // filter.setClients(clients);
-    // filter.setAuthenticationManager(authenticationManagerBean());
-    // return filter;
-    // }
-    //
-    // @Bean
-    // public OncePerRequestFilter directAuthFilter() throws Exception {
-    // DirectClientAuthenticationFilter filter =
-    // new DirectClientAuthenticationFilter(
-    // authenticationManagerBean());
-    // filter.setClient(hbpBearerClient);
-    // return filter;
-    // }
-    //
-    // @Bean
-    // public ClientAuthenticationEntryPoint hbpAuthenticationEntryPoint() {
-    // ClientAuthenticationEntryPoint entryPoint =
-    // new ClientAuthenticationEntryPoint();
-    // entryPoint.setClient(hbpAuthenticationClient);
-    // return entryPoint;
-    // }
-    // }
+	// TODO unused
+	// @Configuration
+	// @Order(100)
+	// public static class HbpAuthentication extends
+	// WebSecurityConfigurerAdapter {
+	// @Value("${cxf.path}${cxf.rest.path}")
+	// String restServicePath;
+	// @Value("${callback.path}")
+	// private String callbackPath;
+	//
+	// @Autowired
+	// OidcClient hbpAuthenticationClient;
+	// @Autowired
+	// BearerOidcClient hbpBearerClient;
+	// @Autowired
+	// Clients clients;
+	//
+	// @Override
+	// public void configure(WebSecurity web) throws Exception {
+	// Path path = AnnotationUtils.findAnnotation(
+	// JobManager.class, Path.class);
+	// web.ignoring().antMatchers(restServicePath + path.value() + "/**");
+	// }
+	//
+	// @Override
+	// protected void configure(HttpSecurity http) throws Exception {
+	// Path path = AnnotationUtils.findAnnotation(
+	// OutputManager.class, Path.class);
+	// http.addFilterBefore(
+	// directAuthFilter(),
+	// UsernamePasswordAuthenticationFilter.class)
+	// .addFilterBefore(
+	// callbackFilter(),
+	// UsernamePasswordAuthenticationFilter.class)
+	// .exceptionHandling().authenticationEntryPoint(
+	// hbpAuthenticationEntryPoint()).and()
+	// .authorizeRequests().antMatchers(
+	// restServicePath + path.value() + "/**").authenticated()
+	// .anyRequest().permitAll();
+	// }
+	//
+	// @Bean
+	// public ClientAuthenticationFilter callbackFilter() throws Exception {
+	// ClientAuthenticationFilter filter =
+	// new ClientAuthenticationFilter(callbackPath);
+	// filter.setClients(clients);
+	// filter.setAuthenticationManager(authenticationManagerBean());
+	// return filter;
+	// }
+	//
+	// @Bean
+	// public OncePerRequestFilter directAuthFilter() throws Exception {
+	// DirectClientAuthenticationFilter filter =
+	// new DirectClientAuthenticationFilter(
+	// authenticationManagerBean());
+	// filter.setClient(hbpBearerClient);
+	// return filter;
+	// }
+	//
+	// @Bean
+	// public ClientAuthenticationEntryPoint hbpAuthenticationEntryPoint() {
+	// ClientAuthenticationEntryPoint entryPoint =
+	// new ClientAuthenticationEntryPoint();
+	// entryPoint.setClient(hbpAuthenticationClient);
+	// return entryPoint;
+	// }
+	// }
 
-    @Bean
-    public MachineManager machineManager() {
-        if (useSpalloc) {
-            return new SpallocMachineManagerImpl();
-        }
-        return new FixedMachineManagerImpl();
-    }
+	@Bean
+	public MachineManager machineManager() {
+		if (useSpalloc) {
+			return new SpallocMachineManagerImpl();
+		}
+		return new FixedMachineManagerImpl();
+	}
 
-    @Bean
-    public NMPIQueueManager queueManager()
-            throws NoSuchAlgorithmException, KeyManagementException {
-        return new NMPIQueueManager();
-    }
+	@Bean
+	public NMPIQueueManager queueManager()
+			throws NoSuchAlgorithmException, KeyManagementException {
+		return new NMPIQueueManager();
+	}
 
-    @Bean
-    public JobExecuterFactory jobExecuterFactory() throws IOException {
-        if (!useXenVms) {
-            return new LocalJobExecuterFactory();
-        }
-        return new XenVMExecuterFactory();
-    }
+	@Bean
+	public JobExecuterFactory jobExecuterFactory() throws IOException {
+		if (!useXenVms) {
+			return new LocalJobExecuterFactory();
+		}
+		return new XenVMExecuterFactory();
+	}
 
-    @Bean
-    public OutputManager outputManager() {
-        // Pass this, as it is non-trivial constructed value
-        return new OutputManagerImpl(baseServerUrl);
-    }
+	@Bean
+	public OutputManager outputManager() {
+		// Pass this, as it is non-trivial constructed value
+		return new OutputManagerImpl(baseServerUrl);
+	}
 
-    @Bean
-    public JobManager jobManager() {
-        // Pass this, as it is non-trivial constructed value
-        return new JobManager(baseServerUrl);
-    }
+	@Bean
+	public JobManager jobManager() {
+		// Pass this, as it is non-trivial constructed value
+		return new JobManager(baseServerUrl);
+	}
 
-    @Bean
-    public Server jaxRsServer() throws KeyManagementException,
-            NoSuchAlgorithmException, IOException {
-        final JAXRSServerFactoryBean factory = new JAXRSServerFactoryBean();
-        factory.setAddress(restPath);
-        factory.setBus(ctx.getBean(SpringBus.class));
-        factory.setServiceBeans(asList(outputManager(), jobManager()));
-        factory.setProviders(
-                asList(new JacksonJsonProvider(), new NullExceptionMapper()));
-        return factory.create();
-    }
+	@Bean
+	public Server jaxRsServer() throws KeyManagementException,
+			NoSuchAlgorithmException, IOException {
+		JAXRSServerFactoryBean factory = new JAXRSServerFactoryBean();
+		factory.setAddress(restPath);
+		factory.setBus(ctx.getBean(SpringBus.class));
+		factory.setServiceBeans(asList(outputManager(), jobManager()));
+		factory.setProviders(
+				asList(new JacksonJsonProvider(), new NullExceptionMapper()));
+		return factory.create();
+	}
 }

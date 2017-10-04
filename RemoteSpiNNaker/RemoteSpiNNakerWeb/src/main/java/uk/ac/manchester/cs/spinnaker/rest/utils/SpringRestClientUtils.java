@@ -8,7 +8,10 @@ import java.net.URL;
 import org.pac4j.oidc.profile.OidcProfile;
 import org.pac4j.springframework.security.authentication.ClientAuthenticationToken;
 
-public class SpringRestClientUtils {
+public abstract class SpringRestClientUtils {
+	private SpringRestClientUtils() {
+	}
+
 	public static <T> T createOIDCClient(URL url, Class<T> clazz) {
 		try {
 			OidcProfile oidcProfile = (OidcProfile) getAuth().getUserProfile();
