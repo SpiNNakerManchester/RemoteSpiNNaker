@@ -5,8 +5,7 @@ import static java.lang.System.exit;
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.io.FileUtils.deleteQuietly;
 import static org.eclipse.jgit.util.FileUtils.createTempDir;
-import static uk.ac.manchester.cs.spinnaker.jobprocessmanager.
-	RemoteSpiNNakerAPI.createJobManager;
+import static uk.ac.manchester.cs.spinnaker.jobprocessmanager.RemoteSpiNNakerAPI.createJobManager;
 import static uk.ac.manchester.cs.spinnaker.utils.FileDownloader.downloadFile;
 import static uk.ac.manchester.cs.spinnaker.utils.Log.log;
 
@@ -36,8 +35,7 @@ import uk.ac.manchester.cs.spinnaker.job.nmpi.DataItem;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
 import uk.ac.manchester.cs.spinnaker.job.pynn.PyNNJobParameters;
 import uk.ac.manchester.cs.spinnaker.job_parameters.JobParametersFactory;
-import uk.ac.manchester.cs.spinnaker.job_parameters.
-	JobParametersFactoryException;
+import uk.ac.manchester.cs.spinnaker.job_parameters.JobParametersFactoryException;
 import uk.ac.manchester.cs.spinnaker.jobprocess.JobProcess;
 import uk.ac.manchester.cs.spinnaker.jobprocess.JobProcessFactory;
 import uk.ac.manchester.cs.spinnaker.jobprocess.LogWriter;
@@ -51,15 +49,19 @@ import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
  */
 public class JobProcessManager {
 	private static final int UPDATE_INTERVAL = 500;
-
+	private static final int DEFAULT = -1;
 	/** The factory for converting parameters into processes. */
 	private static final JobProcessFactory JOB_PROCESS_FACTORY =
 			new JobProcessFactory("JobProcess");
+
 	static {
 		JOB_PROCESS_FACTORY.addMapping(PyNNJobParameters.class,
 				PyNNJobProcess.class);
 	}
 
+	/**
+	 * A log writer that uploads to the server.
+	 */
 	class UploadingJobManagerLogWriter extends JobManagerLogWriter {
 		private final Timer sendTimer;
 
@@ -114,6 +116,24 @@ public class JobProcessManager {
 	private Job job;
 	private String projectId;
 
+	/**
+	 * Create an object that manages the running of a single job.
+	 *
+	 * @param serverUrl
+	 *            The URL to the server, used for writing back results.
+	 * @param deleteOnExit
+	 *            Whether to delete the job's resources on termination.
+	 * @param isLocal
+	 *            Whether the job is local.
+	 * @param executerId
+	 *            The ID of the executer.
+	 * @param liveUploadOutput
+	 *            Whether to do live upload of output data.
+	 * @param requestMachine
+	 *            Whether to request a machine.
+	 * @param authToken
+	 *            The authorisation token for the server.
+	 */
 	public JobProcessManager(String serverUrl, boolean deleteOnExit,
 			boolean isLocal, String executerId, boolean liveUploadOutput,
 			boolean requestMachine, String authToken) {
@@ -128,6 +148,9 @@ public class JobProcessManager {
 		this.authToken = authToken;
 	}
 
+	/**
+	 * Run a single job.
+	 */
 	public void runJob() {
 		try {
 			jobManager = createJobManager(serverUrl, authToken);
@@ -191,6 +214,15 @@ public class JobProcessManager {
 		}
 	}
 
+	/**
+	 * How to run a Job Process Manager. This is the execution entry point for
+	 * this Maven module.
+	 *
+	 * @param args
+	 *            The command line arguments.
+	 * @throws Exception
+	 *             No guarantees made about what can go wrong.
+	 */
 	public static void main(String[] args) throws Exception {
 		String serverUrl = null;
 		boolean deleteOnExit = false;
@@ -236,8 +268,6 @@ public class JobProcessManager {
 				liveUploadOutput, requestMachine, authToken).runJob();
 		exit(0);
 	}
-
-	private static final int DEFAULT = -1;
 
 	private Machine getMachine() {
 		// (get a 3 board machine just now)
@@ -342,14 +372,31 @@ public class JobProcessManager {
 	}
 }
 
+/**
+ * A description of a machine.
+ */
 class Machine {
 	SpinnakerMachine machine;
 	String url;
 
+	/**
+	 * Create a machine known by object.
+	 *
+	 * @param machine
+	 *            The machine object.
+	 */
 	Machine(SpinnakerMachine machine) {
 		this.machine = machine;
 	}
 
+	/**
+	 * Create a machine known by service job name.
+	 *
+	 * @param baseUrl
+	 *            The base URL for the machine.
+	 * @param id
+	 *            The ID for the job.
+	 */
 	Machine(String baseUrl, int id) {
 		this.url = format("%sjob/%d/machine", baseUrl, id);
 	}
@@ -363,6 +410,9 @@ class Machine {
 	}
 }
 
+/**
+ * How to write to the log.
+ */
 abstract class JobManagerLogWriter implements LogWriter {
 	private final StringBuilder cached = new StringBuilder();
 
@@ -390,6 +440,9 @@ abstract class JobManagerLogWriter implements LogWriter {
 	}
 }
 
+/**
+ * A simple log implementation.
+ */
 class SimpleJobManagerLogWriter extends JobManagerLogWriter {
 	@Override
 	public void append(String logMsg) {
@@ -400,6 +453,9 @@ class SimpleJobManagerLogWriter extends JobManagerLogWriter {
 	}
 }
 
+/**
+ * Exception indicating errors with the job factory.
+ */
 @SuppressWarnings("serial")
 class JobErrorsException extends IOException {
 	private static final String MAIN_MSG = "The job type was recognised"
@@ -420,6 +476,12 @@ class JobErrorsException extends IOException {
 		return buffer.toString();
 	}
 
+	/**
+	 * Build the exception.
+	 *
+	 * @param errors
+	 *            The errors causing the exception.
+	 */
 	JobErrorsException(Map<String, JobParametersFactoryException> errors) {
 		super(buildMessage(errors));
 	}
