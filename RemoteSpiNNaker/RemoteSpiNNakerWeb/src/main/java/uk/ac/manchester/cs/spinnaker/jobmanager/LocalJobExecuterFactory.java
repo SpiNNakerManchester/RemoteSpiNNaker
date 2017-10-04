@@ -30,8 +30,12 @@ import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 
+/**
+ * An executer that runs its subprocesses on the local machine.
+ */
 public class LocalJobExecuterFactory implements JobExecuterFactory {
-	private static final String JOB_PROCESS_MANAGER_MAIN_CLASS = "uk.ac.manchester.cs.spinnaker.jobprocessmanager.JobProcessManager";
+	private static final String JOB_PROCESS_MANAGER_MAIN_CLASS =
+			"uk.ac.manchester.cs.spinnaker.jobprocessmanager.JobProcessManager";
 
 	private static File getJavaExec() throws IOException {
 		final File binDir = new File(System.getProperty("java.home"), "bin");
@@ -54,10 +58,19 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
 	private File jobExecuterDirectory = null;
 	private static Logger log = getLogger(Executer.class);
 
+	/**
+	 * Default constructor.
+	 */
 	public LocalJobExecuterFactory() {
 		this.threadGroup = new ThreadGroup("LocalJob");
 	}
 
+	/**
+	 * Initialise the system state.
+	 *
+	 * @throws IOException
+	 *             if things go wrong.
+	 */
 	@PostConstruct
 	void installJobExecuter() throws IOException {
 		// Find the JobManager resource
@@ -96,8 +109,8 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
 	}
 
 	@Override
-	public JobExecuter createJobExecuter(JobManager manager,
-			URL baseUrl) throws IOException {
+	public JobExecuter createJobExecuter(JobManager manager, URL baseUrl)
+			throws IOException {
 		String uuid = UUID.randomUUID().toString();
 		List<String> arguments = new ArrayList<>();
 		arguments.add("--serverUrl");
@@ -118,6 +131,9 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
 		return new Executer(requireNonNull(manager), arguments, uuid);
 	}
 
+	/**
+	 * The executer thread.
+	 */
 	class Executer implements JobExecuter, Runnable {
 		private final JobManager jobManager;
 		private final List<String> arguments;
@@ -129,8 +145,10 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
 		private IOException startException;
 
 		/**
-		 * Create a JobExecuter
+		 * Create a JobExecuter.
 		 *
+		 * @param jobManager
+		 *            The job manager
 		 * @param arguments
 		 *            The arguments to use
 		 * @param id
@@ -157,7 +175,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
 		}
 
 		/**
-		 * Runs the external job
+		 * Runs the external job.
 		 *
 		 * @throws IOException
 		 *             If there is an error starting the job
@@ -262,7 +280,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
 		}
 
 		/**
-		 * Gets the location of the process log file
+		 * Gets the location of the process log file.
 		 *
 		 * @return The location of the log file
 		 */
@@ -271,11 +289,22 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
 		}
 	}
 
+	/**
+	 * The pipe copier.
+	 */
 	class JobOutputPipe extends Thread implements AutoCloseable {
 		private final BufferedReader reader;
 		private final PrintWriter writer;
 		private volatile boolean done;
 
+		/**
+		 * Connect the input to the output.
+		 *
+		 * @param input
+		 *            Where things are coming from.
+		 * @param output
+		 *            Where things are going to.
+		 */
 		JobOutputPipe(InputStream input, PrintWriter output) {
 			super(threadGroup, "JobOutputPipe");
 			reader = new BufferedReader(new InputStreamReader(input));

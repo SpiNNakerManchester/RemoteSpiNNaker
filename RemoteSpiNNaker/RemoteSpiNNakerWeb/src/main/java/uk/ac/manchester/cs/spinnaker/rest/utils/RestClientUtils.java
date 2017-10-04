@@ -282,66 +282,66 @@ public abstract class RestClientUtils {
 					}
 				}, clazz, providers);
 	}
+}
 
-	private static abstract class ConnectionIndependentScheme
-			extends RFC2617Scheme {
-		private final boolean complete = false;
-		private final String name;
+/**
+ * Base for authorization schemes.
+ */
+abstract class ConnectionIndependentScheme extends RFC2617Scheme {
+	private final boolean complete = false;
+	private final String name;
 
-		ConnectionIndependentScheme(String name) {
-			this.name = name;
+	ConnectionIndependentScheme(String name) {
+		this.name = name;
+	}
+
+	@Override
+	public String getSchemeName() {
+		return name;
+	}
+
+	@Override
+	public boolean isConnectionBased() {
+		return false;
+	}
+
+	@Override
+	public boolean isComplete() {
+		return complete;
+	}
+
+	/**
+	 * Produce an authorization header for the given set of
+	 * {@link Credentials}. The credentials and the connection will have
+	 * been sanity-checked prior to this call.
+	 * 
+	 * @param credentials
+	 *            The credentials to be authenticated.
+	 */
+	protected abstract Header authenticate(Credentials credentials);
+
+	/**
+	 * Give the header that we're supposed to generate, depending on whether
+	 * we're going by a proxy or not.
+	 */
+	protected String getAuthHeaderName() {
+		return isProxy() ? PROXY_AUTH_RESP : WWW_AUTH_RESP;
+	}
+
+	@Override
+	public Header authenticate(Credentials credentials, HttpRequest request)
+			throws AuthenticationException {
+		if (credentials == null) {
+			throw new IllegalArgumentException("Credentials may not be null");
+		}
+		if (request == null) {
+			throw new IllegalArgumentException("HTTP request may not be null");
+		}
+		String charset = getCredentialCharset(request.getParams());
+		if (charset == null) {
+			throw new IllegalArgumentException("charset may not be null");
 		}
 
-		@Override
-		public String getSchemeName() {
-			return name;
-		}
-
-		@Override
-		public boolean isConnectionBased() {
-			return false;
-		}
-
-		@Override
-		public boolean isComplete() {
-			return complete;
-		}
-
-		/**
-		 * Produce an authorization header for the given set of
-		 * {@link Credentials}. The credentials and the connection will have
-		 * been sanity-checked prior to this call.
-		 * 
-		 * @param credentials
-		 *            The credentials to be authenticated.
-		 */
-		protected abstract Header authenticate(Credentials credentials);
-
-		/**
-		 * Give the header that we're supposed to generate, depending on whether
-		 * we're going by a proxy or not.
-		 */
-		protected String getAuthHeaderName() {
-			return isProxy() ? PROXY_AUTH_RESP : WWW_AUTH_RESP;
-		}
-
-		@Override
-		public Header authenticate(Credentials credentials, HttpRequest request)
-				throws AuthenticationException {
-			if (credentials == null) {
-				throw new IllegalArgumentException(
-						"Credentials may not be null");
-			}
-			if (request == null) {
-				throw new IllegalArgumentException(
-						"HTTP request may not be null");
-			}
-			String charset = getCredentialCharset(request.getParams());
-			if (charset == null) {
-				throw new IllegalArgumentException("charset may not be null");
-			}
-
-			return authenticate(credentials);
-		}
+		return authenticate(credentials);
 	}
 }
