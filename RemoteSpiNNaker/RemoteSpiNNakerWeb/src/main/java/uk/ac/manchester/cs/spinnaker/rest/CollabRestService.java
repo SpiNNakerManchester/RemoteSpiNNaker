@@ -10,6 +10,9 @@ import javax.ws.rs.Produces;
 import uk.ac.manchester.cs.spinnaker.model.CollabContext;
 import uk.ac.manchester.cs.spinnaker.model.CollabPermissions;
 
+/**
+ * The REST API for the collabratory.
+ */
 @Path("/collab/v0")
 public interface CollabRestService {
 	@GET

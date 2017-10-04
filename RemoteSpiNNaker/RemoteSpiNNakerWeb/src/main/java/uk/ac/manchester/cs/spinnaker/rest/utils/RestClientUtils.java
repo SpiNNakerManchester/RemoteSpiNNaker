@@ -49,12 +49,30 @@ import org.slf4j.Logger;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
+/**
+ * Utilities for building REST clients.
+ */
 public abstract class RestClientUtils {
+	private static final int HTTPS_PORT = 443;
+	/** The (low-level) secure protocol supported. */
+	public static final String SECURE_PROTOCOL = "TLS";
+
 	private RestClientUtils() {
 	}
 
 	private static Logger log = getLogger(RestClientUtils.class);
 
+	/**
+	 * Manufacture a client.
+	 *
+	 * @param url
+	 *            What this client talks to.
+	 * @param credentials
+	 *            What this client will authenticate with.
+	 * @param authScheme
+	 *            The authentication scheme.
+	 * @return the client
+	 */
 	protected static ResteasyClient createRestClient(URL url,
 			Credentials credentials, AuthScheme authScheme) {
 		try {
@@ -113,8 +131,6 @@ public abstract class RestClientUtils {
 		return null;
 	}
 
-	public static final String SECURE_PROTOCOL = "TLS";
-
 	/**
 	 * Set up HTTPS to ignore certificate errors
 	 *
@@ -152,7 +168,7 @@ public abstract class RestClientUtils {
 		SSLContext sslContext = SSLContext.getInstance(SECURE_PROTOCOL);
 		sslContext.init(null, allTrusting, new SecureRandom());
 		SchemeRegistry schemeRegistry = new SchemeRegistry();
-		schemeRegistry.register(new Scheme("https", 443,
+		schemeRegistry.register(new Scheme("https", HTTPS_PORT,
 				new SSLSocketFactory(sslContext, ALLOW_ALL_HOSTNAME_VERIFIER)));
 		return schemeRegistry;
 	}

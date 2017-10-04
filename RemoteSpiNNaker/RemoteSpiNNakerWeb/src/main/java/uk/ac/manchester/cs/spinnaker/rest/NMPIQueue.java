@@ -13,6 +13,9 @@ import uk.ac.manchester.cs.spinnaker.job.nmpi.QueueNextResponse;
 import uk.ac.manchester.cs.spinnaker.model.APIKeyResponse;
 import uk.ac.manchester.cs.spinnaker.model.NMPILog;
 
+/**
+ * The REST API for the NMPI queue.
+ */
 @Path("/api/v2")
 public interface NMPIQueue {
 	@GET
