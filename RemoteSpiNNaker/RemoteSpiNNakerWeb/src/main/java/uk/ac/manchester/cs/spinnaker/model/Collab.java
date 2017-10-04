@@ -1,5 +1,8 @@
 package uk.ac.manchester.cs.spinnaker.model;
 
+/**
+ * POJO describing an HBP Collabratory.
+ */
 public class Collab {
 	private String content;
 	private int id;

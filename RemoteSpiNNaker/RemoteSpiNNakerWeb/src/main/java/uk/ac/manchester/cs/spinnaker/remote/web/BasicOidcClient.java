@@ -5,6 +5,9 @@ import static com.nimbusds.jose.JWSAlgorithm.RS256;
 import org.pac4j.oidc.client.OidcClient;
 import org.springframework.beans.factory.annotation.Value;
 
+/**
+ * Simple client that uses basic auth.
+ */
 class BasicOidcClient extends OidcClient {
 	@Override
 	@Value("${oidc.clientId}")
@@ -24,6 +27,9 @@ class BasicOidcClient extends OidcClient {
 		super.setDiscoveryURI(oidcDiscoveryUri);
 	}
 
+	/**
+	 * Default constructor.
+	 */
 	BasicOidcClient() {
 		setScope("openid profile hbp.collab");
 		setPreferredJwsAlgorithm(RS256);

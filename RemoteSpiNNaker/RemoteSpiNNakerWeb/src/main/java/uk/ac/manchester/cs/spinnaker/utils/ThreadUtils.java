@@ -1,5 +1,8 @@
 package uk.ac.manchester.cs.spinnaker.utils;
 
+/**
+ * Utilities for working with threads.
+ */
 public abstract class ThreadUtils {
 	private ThreadUtils() {
 	}
@@ -9,14 +12,13 @@ public abstract class ThreadUtils {
 	 *
 	 * @param delay
 	 *            the length of time to sleep in milliseconds
-	 * @see <a href=
-	 *      "http://stackoverflow.com/questions/1087475/when-does-javas-thread-sleep-throw-interruptedexception"
-	 *      >stackoverflow.com/.../when-does-javas-thread-sleep-throw-interruptedexception</a>
+	 * @see <a href="https://stackoverflow.com/q/1087475/301832">Stack Overflow
+	 *      question</a>
 	 */
 	public static void sleep(long delay) {
 		try {
 			Thread.sleep(delay);
-		} catch (InterruptedException e) {
+		} catch (InterruptedException ignored) {
 			Thread.currentThread().interrupt();
 		}
 	}

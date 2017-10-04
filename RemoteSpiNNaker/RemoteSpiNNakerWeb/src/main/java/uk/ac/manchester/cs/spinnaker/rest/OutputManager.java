@@ -19,6 +19,9 @@ import javax.ws.rs.core.Response;
 
 import uk.ac.manchester.cs.spinnaker.job.nmpi.DataItem;
 
+/**
+ * The REST API for the output manager.
+ */
 @Path("/output")
 public interface OutputManager {
 	/**
@@ -63,6 +66,18 @@ public interface OutputManager {
 			@PathParam("id") int id, @PathParam("filename") String filename,
 			@QueryParam("download") @DefaultValue("true") boolean download);
 
+	/**
+	 * Retrieve a result file.
+	 *
+	 * @param id
+	 *            The job ID.
+	 * @param filename
+	 *            The filename relative to the job working directory.
+	 * @param download
+	 *            Whether to obtain the file as a "download".
+	 * @return A response containing the file, or a "NOT FOUND" response if the
+	 *         file does not exist.
+	 */
 	@GET
 	@Path("{id}/{filename:.*}")
 	@Produces(MEDIA_TYPE_WILDCARD)
@@ -70,6 +85,25 @@ public interface OutputManager {
 			@PathParam("filename") String filename,
 			@QueryParam("download") @DefaultValue("true") boolean download);
 
+	/**
+	 * Upload a file to the HPC store.
+	 *
+	 * @param projectId
+	 *            The project ID
+	 * @param id
+	 *            The job ID
+	 * @param serverUrl
+	 *            The HPC storage service
+	 * @param storageId
+	 *            The ID for the storage on the HPC service
+	 * @param filePath
+	 *            The path within the storage
+	 * @param userId
+	 *            The HPC user ID
+	 * @param token
+	 *            The auth token
+	 * @return Description of whether the upload was successful.
+	 */
 	@POST
 	@Produces(TEXT_PLAIN)
 	@Path("{projectId}/{id}/uploadToHPC")

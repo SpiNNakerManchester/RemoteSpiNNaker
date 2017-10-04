@@ -1,5 +1,8 @@
 package uk.ac.manchester.cs.spinnaker.model;
 
+/**
+ * POJO holding the description of a HBP Collabratory context.
+ */
 public class CollabContext {
 	private String appId;
 	private Collab collab;

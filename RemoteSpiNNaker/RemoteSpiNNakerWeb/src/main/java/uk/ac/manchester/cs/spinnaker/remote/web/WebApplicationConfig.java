@@ -20,13 +20,17 @@ import org.springframework.web.context.ContextLoaderListener;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 import org.springframework.web.filter.DelegatingFilterProxy;
 
-/* Instead of web.xml; application entry point */
+/**
+ * Main webapp entry point. Launches the rest of the application.
+ */
 public class WebApplicationConfig implements WebApplicationInitializer {
+	// This class is instead of a web.xml
 	/**
 	 * The name of the <i>system property</i> that describes where to load
 	 * configuration properties from.
 	 */
-	public static final String LOCATION_PROPERTY = "remotespinnaker.properties.location";
+	public static final String LOCATION_PROPERTY =
+			"remotespinnaker.properties.location";
 	private static final String FILTER_NAME = "springSecurityFilterChain";
 	private static final boolean ADD_FILTER = false;
 	private static final boolean ADD_SERVLET = true;
@@ -51,7 +55,8 @@ public class WebApplicationConfig implements WebApplicationInitializer {
 
 	private ContextLoaderListener getContextLoaderListener(
 			PropertySource<?> properties) {
-		AnnotationConfigWebApplicationContext annotationConfig = new AnnotationConfigWebApplicationContext();
+		AnnotationConfigWebApplicationContext annotationConfig =
+				new AnnotationConfigWebApplicationContext();
 		annotationConfig.getEnvironment().getPropertySources()
 				.addFirst(properties);
 		annotationConfig.register(RemoteSpinnakerBeans.class);

@@ -35,7 +35,7 @@ import uk.ac.manchester.cs.spinnaker.rest.utils.CustomJacksonJsonProvider;
 import uk.ac.manchester.cs.spinnaker.rest.utils.PropertyBasedDeserialiser;
 
 /**
- * Manages the NMPI queue, receiving jobs and submitting them to be run
+ * Manages the NMPI queue, receiving jobs and submitting them to be run.
  */
 public class NMPIQueueManager implements Runnable {
 	/**
@@ -43,33 +43,33 @@ public class NMPIQueueManager implements Runnable {
 	 */
 	private static final int EMPTY_QUEUE_SLEEP_MS = 10000;
 
-	/** The queue to get jobs from */
+	/** The queue to get jobs from. */
 	private NMPIQueue queue;
-	/** Marker to indicate if the manager is done or not */
+	/** Marker to indicate if the manager is done or not. */
 	private boolean done = false;
-	/** The set of listeners for this queue */
+	/** The set of listeners for this queue. */
 	private final Set<NMPIQueueListener> listeners = new HashSet<>();
-	/** A cache of jobs that have been received */
+	/** A cache of jobs that have been received. */
 	private final Map<Integer, Job> jobCache = new HashMap<>();
-	/** The log of the job so far */
+	/** The log of the job so far. */
 	private final Map<Integer, NMPILog> jobLog = new HashMap<>();
 	private final Logger logger = getLogger(getClass());
 
-	/** The hardware identifier for the queue */
+	/** The hardware identifier for the queue. */
 	@Value("${nmpi.hardware}")
 	private String hardware;
-	/** The URL from which to load the data */
+	/** The URL from which to load the data. */
 	@Value("${nmpi.url}")
 	private URL nmpiUrl;
-	/** The username to log in to the server with */
+	/** The username to log in to the server with. */
 	@Value("${nmpi.username}")
 	private String nmpiUsername;
-	/** The password or API key to log in to the server with */
+	/** The password or API key to log in to the server with. */
 	@Value("${nmpi.password}")
 	private String nmpiPassword;
 	/**
 	 * True if the password is an API key, False if the password should be used
-	 * to obtain the key
+	 * to obtain the key.
 	 */
 	@Value("${nmpi.passwordIsApiKey}")
 	private boolean nmpiPasswordIsApiKey;
@@ -77,7 +77,10 @@ public class NMPIQueueManager implements Runnable {
 	@SuppressWarnings("serial")
 	private static class QueueResponseDeserialiser
 			extends PropertyBasedDeserialiser<QueueNextResponse> {
-		public QueueResponseDeserialiser() {
+		/**
+		 * Default constructor.
+		 */
+		QueueResponseDeserialiser() {
 			super(QueueNextResponse.class);
 			register("id", Job.class);
 			register("warning", QueueEmpty.class);
@@ -101,7 +104,7 @@ public class NMPIQueueManager implements Runnable {
 
 	/**
 	 * Gets a job from the cache, or from the server if the job is not in the
-	 * cache
+	 * cache.
 	 *
 	 * @param id
 	 *            The id of the job
@@ -119,7 +122,7 @@ public class NMPIQueueManager implements Runnable {
 	}
 
 	/**
-	 * Register a listener against the manager for new jobs
+	 * Register a listener against the manager for new jobs.
 	 *
 	 * @param listener
 	 *            The listener to register
@@ -195,7 +198,7 @@ public class NMPIQueueManager implements Runnable {
 
 	/**
 	 * Mark a job as running.
-	 * 
+	 *
 	 * @param id
 	 *            The id of the job
 	 */
@@ -288,7 +291,7 @@ public class NMPIQueueManager implements Runnable {
 	}
 
 	/**
-	 * Close the manager
+	 * Close the manager.
 	 */
 	public void close() {
 		done = true;

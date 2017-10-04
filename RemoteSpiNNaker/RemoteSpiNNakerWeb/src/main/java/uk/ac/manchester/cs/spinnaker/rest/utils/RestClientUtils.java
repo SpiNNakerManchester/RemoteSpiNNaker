@@ -49,12 +49,30 @@ import org.slf4j.Logger;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
+/**
+ * Utilities for building REST clients.
+ */
 public abstract class RestClientUtils {
+	private static final int HTTPS_PORT = 443;
+	/** The (low-level) secure protocol supported. */
+	public static final String SECURE_PROTOCOL = "TLS";
+
 	private RestClientUtils() {
 	}
 
 	private static Logger log = getLogger(RestClientUtils.class);
 
+	/**
+	 * Manufacture a client.
+	 *
+	 * @param url
+	 *            What this client talks to.
+	 * @param credentials
+	 *            What this client will authenticate with.
+	 * @param authScheme
+	 *            The authentication scheme.
+	 * @return the client
+	 */
 	protected static ResteasyClient createRestClient(URL url,
 			Credentials credentials, AuthScheme authScheme) {
 		try {
@@ -81,7 +99,17 @@ public abstract class RestClientUtils {
 		}
 	}
 
-	/** Set up authentication */
+	/**
+	 * Set up a connection context.
+	 *
+	 * @param url
+	 *            Where will the connection be made to?
+	 * @param credentals
+	 *            What credentials will be used to connect?
+	 * @param authScheme
+	 *            The authentication scheme to use.
+	 * @return the configured context.
+	 */
 	private static HttpContext getConnectionContext(URL url,
 			Credentials credentials, AuthScheme authScheme) {
 		int port = url.getPort();
@@ -113,16 +141,19 @@ public abstract class RestClientUtils {
 		return null;
 	}
 
-	public static final String SECURE_PROTOCOL = "TLS";
+	private static SchemeRegistry allTrustingSchemeRegistry;
 
 	/**
-	 * Set up HTTPS to ignore certificate errors
-	 *
-	 * @deprecated This method is doing bad things.
+	 * Set up HTTPS to ignore certificate errors. <i>Be aware that this method
+	 * is doing very bad things; a trust-all trust manager is <b>entirely</b>
+	 * doing it wrong, but the reality of academic security is that it is the
+	 * only sane option.</i>
 	 */
-	@Deprecated
-	private static SchemeRegistry getSchemeRegistry()
+	private static synchronized SchemeRegistry getSchemeRegistry()
 			throws NoSuchAlgorithmException, KeyManagementException {
+		if (allTrustingSchemeRegistry != null) {
+			return allTrustingSchemeRegistry;
+		}
 		TrustManager[] allTrusting = new TrustManager[1];
 		allTrusting[0] = new X509TrustManager() {
 			@Override
@@ -145,16 +176,18 @@ public abstract class RestClientUtils {
 				if (cert == null) {
 					return null;
 				}
-				return new X509Certificate[] { cert };
+				return new X509Certificate[] {
+					cert
+				};
 			}
 		};
 
 		SSLContext sslContext = SSLContext.getInstance(SECURE_PROTOCOL);
 		sslContext.init(null, allTrusting, new SecureRandom());
-		SchemeRegistry schemeRegistry = new SchemeRegistry();
-		schemeRegistry.register(new Scheme("https", 443,
+		allTrustingSchemeRegistry = new SchemeRegistry();
+		allTrustingSchemeRegistry.register(new Scheme("https", HTTPS_PORT,
 				new SSLSocketFactory(sslContext, ALLOW_ALL_HOSTNAME_VERIFIER)));
-		return schemeRegistry;
+		return allTrustingSchemeRegistry;
 	}
 
 	/**
@@ -266,66 +299,75 @@ public abstract class RestClientUtils {
 					}
 				}, clazz, providers);
 	}
+}
 
-	private static abstract class ConnectionIndependentScheme
-			extends RFC2617Scheme {
-		private final boolean complete = false;
-		private final String name;
+/**
+ * Base for authorization schemes.
+ */
+abstract class ConnectionIndependentScheme extends RFC2617Scheme {
+	private final boolean complete = false;
+	private final String name;
 
-		ConnectionIndependentScheme(String name) {
-			this.name = name;
+	/**
+	 * Define a scheme.
+	 *
+	 * @param name
+	 *            The name of the scheme.
+	 */
+	ConnectionIndependentScheme(String name) {
+		this.name = name;
+	}
+
+	@Override
+	public String getSchemeName() {
+		return name;
+	}
+
+	@Override
+	public boolean isConnectionBased() {
+		return false;
+	}
+
+	@Override
+	public boolean isComplete() {
+		return complete;
+	}
+
+	/**
+	 * Produce an authorization header for the given set of {@link Credentials}.
+	 * The credentials and the connection will have been sanity-checked prior to
+	 * this call.
+	 *
+	 * @param credentials
+	 *            The credentials to be authenticated.
+	 * @return the header
+	 */
+	protected abstract Header authenticate(Credentials credentials);
+
+	/**
+	 * Give the header that we're supposed to generate, depending on whether
+	 * we're going by a proxy or not.
+	 *
+	 * @return the header name
+	 */
+	protected String getAuthHeaderName() {
+		return isProxy() ? PROXY_AUTH_RESP : WWW_AUTH_RESP;
+	}
+
+	@Override
+	public Header authenticate(Credentials credentials, HttpRequest request)
+			throws AuthenticationException {
+		if (credentials == null) {
+			throw new IllegalArgumentException("Credentials may not be null");
+		}
+		if (request == null) {
+			throw new IllegalArgumentException("HTTP request may not be null");
+		}
+		String charset = getCredentialCharset(request.getParams());
+		if (charset == null) {
+			throw new IllegalArgumentException("charset may not be null");
 		}
 
-		@Override
-		public String getSchemeName() {
-			return name;
-		}
-
-		@Override
-		public boolean isConnectionBased() {
-			return false;
-		}
-
-		@Override
-		public boolean isComplete() {
-			return complete;
-		}
-
-		/**
-		 * Produce an authorization header for the given set of
-		 * {@link Credentials}. The credentials and the connection will have
-		 * been sanity-checked prior to this call.
-		 * 
-		 * @param credentials
-		 *            The credentials to be authenticated.
-		 */
-		protected abstract Header authenticate(Credentials credentials);
-
-		/**
-		 * Give the header that we're supposed to generate, depending on whether
-		 * we're going by a proxy or not.
-		 */
-		protected String getAuthHeaderName() {
-			return isProxy() ? PROXY_AUTH_RESP : WWW_AUTH_RESP;
-		}
-
-		@Override
-		public Header authenticate(Credentials credentials, HttpRequest request)
-				throws AuthenticationException {
-			if (credentials == null) {
-				throw new IllegalArgumentException(
-						"Credentials may not be null");
-			}
-			if (request == null) {
-				throw new IllegalArgumentException(
-						"HTTP request may not be null");
-			}
-			String charset = getCredentialCharset(request.getParams());
-			if (charset == null) {
-				throw new IllegalArgumentException("charset may not be null");
-			}
-
-			return authenticate(credentials);
-		}
+		return authenticate(credentials);
 	}
 }
