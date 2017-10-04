@@ -59,7 +59,7 @@ public class DirectClientAuthenticationFilter extends OncePerRequestFilter {
 	}
 
 	@PostConstruct
-	void checkForSanity() {
+	private void checkForSanity() {
 		requireNonNull(client);
 		if (authenticationEntryPoint == null) {
 			authenticationEntryPoint = new AuthenticationEntryPoint() {

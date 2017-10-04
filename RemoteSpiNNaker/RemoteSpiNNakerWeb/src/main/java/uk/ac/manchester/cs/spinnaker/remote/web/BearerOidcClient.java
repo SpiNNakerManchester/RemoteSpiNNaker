@@ -178,13 +178,16 @@ public class BearerOidcClient
 		return HEADER_BASED;
 	}
 
+	/**
+	 * OIDC bearer credentials. Consists of an access token and a profile.
+	 */
 	static class BearerCredentials extends Credentials {
 		private static final long serialVersionUID = 5585200812175851776L;
 
 		private String accessToken;
 		private OidcProfile profile;
 
-		public BearerCredentials(String accessToken, OidcProfile profile) {
+		BearerCredentials(String accessToken, OidcProfile profile) {
 			this.accessToken = accessToken;
 			this.profile = profile;
 		}
