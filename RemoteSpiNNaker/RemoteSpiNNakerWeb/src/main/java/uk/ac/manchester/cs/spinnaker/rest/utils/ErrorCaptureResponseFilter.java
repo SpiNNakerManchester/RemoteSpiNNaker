@@ -18,9 +18,12 @@ import javax.ws.rs.ext.Provider;
 import org.apache.commons.io.output.WriterOutputStream;
 import org.slf4j.Logger;
 
-// Only public because of the annotation
+/**
+ * Better logging of errors.
+ */
 @Provider
 public class ErrorCaptureResponseFilter implements ClientResponseFilter {
+	// Only public because of the annotation
 	private final CustomJacksonJsonProvider provider =
 			new CustomJacksonJsonProvider();
 	private static final Logger log = getLogger(

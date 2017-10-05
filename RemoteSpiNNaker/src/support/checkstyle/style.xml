@@ -85,6 +85,7 @@
 	        <property name="allowMissingPropertyJavadoc" value="true"/>
 	        <property name="validateThrows" value="true"/>
 	        <property name="allowMissingThrowsTags" value="true"/>
+	        <property name="allowUndeclaredRTE" value="true"/>
         </module>
         <module name="JavadocType">
         	<property name="scope" value="package"/>

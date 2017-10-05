@@ -37,8 +37,13 @@ public class CustomJacksonJsonProvider extends JacksonJsonProvider {
 
 	/**
 	 * Add a deserialiser for a specific type.
-	 * @param type The type.
-	 * @param deserialiser The deserialiser.
+	 *
+	 * @param <T>
+	 *            The type that will be deserialised.
+	 * @param type
+	 *            The type.
+	 * @param deserialiser
+	 *            The deserialiser.
 	 */
 	public <T> void addDeserialiser(Class<T> type,
 			StdDeserializer<T> deserialiser) {
