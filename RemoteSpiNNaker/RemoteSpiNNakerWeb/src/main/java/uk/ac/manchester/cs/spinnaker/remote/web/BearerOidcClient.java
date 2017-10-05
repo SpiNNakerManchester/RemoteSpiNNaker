@@ -187,6 +187,14 @@ public class BearerOidcClient
 		private String accessToken;
 		private OidcProfile profile;
 
+		/**
+		 * Make the credentials.
+		 *
+		 * @param accessToken
+		 *            The token.
+		 * @param profile
+		 *            The profile.
+		 */
 		BearerCredentials(String accessToken, OidcProfile profile) {
 			this.accessToken = accessToken;
 			this.profile = profile;

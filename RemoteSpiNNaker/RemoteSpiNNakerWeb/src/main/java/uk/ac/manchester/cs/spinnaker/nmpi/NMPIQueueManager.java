@@ -77,7 +77,10 @@ public class NMPIQueueManager implements Runnable {
 	@SuppressWarnings("serial")
 	private static class QueueResponseDeserialiser
 			extends PropertyBasedDeserialiser<QueueNextResponse> {
-		public QueueResponseDeserialiser() {
+		/**
+		 * Default constructor.
+		 */
+		QueueResponseDeserialiser() {
 			super(QueueNextResponse.class);
 			register("id", Job.class);
 			register("warning", QueueEmpty.class);
@@ -195,7 +198,7 @@ public class NMPIQueueManager implements Runnable {
 
 	/**
 	 * Mark a job as running.
-	 * 
+	 *
 	 * @param id
 	 *            The id of the job
 	 */

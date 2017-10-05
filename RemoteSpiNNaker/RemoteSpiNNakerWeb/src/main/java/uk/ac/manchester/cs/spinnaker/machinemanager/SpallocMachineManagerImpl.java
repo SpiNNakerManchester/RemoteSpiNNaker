@@ -103,6 +103,9 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
 	@SuppressWarnings("serial")
 	static class ResponseBasedDeserializer
 			extends PropertyBasedDeserialiser<Response> {
+		/**
+		 * Default constructor.
+		 */
 		ResponseBasedDeserializer() {
 			super(Response.class);
 			register("jobs_changed", JobsChangedResponse.class);
