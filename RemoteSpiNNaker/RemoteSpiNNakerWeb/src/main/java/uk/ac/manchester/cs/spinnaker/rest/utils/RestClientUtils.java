@@ -176,7 +176,9 @@ public abstract class RestClientUtils {
 				if (cert == null) {
 					return null;
 				}
-				return new X509Certificate[] { cert };
+				return new X509Certificate[] {
+					cert
+				};
 			}
 		};
 
