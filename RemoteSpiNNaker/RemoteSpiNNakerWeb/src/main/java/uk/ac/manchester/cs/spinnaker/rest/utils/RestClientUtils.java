@@ -176,9 +176,7 @@ public abstract class RestClientUtils {
 				if (cert == null) {
 					return null;
 				}
-				return new X509Certificate[] {
-					cert
-				};
+				return new X509Certificate[] { cert };
 			}
 		};
 
@@ -355,8 +353,22 @@ abstract class ConnectionIndependentScheme extends RFC2617Scheme {
 	}
 
 	@Override
-	public Header authenticate(Credentials credentials, HttpRequest request)
+	public final Header authenticate(Credentials credentials,
+			HttpRequest request, HttpContext context)
 			throws AuthenticationException {
+		sanityCheck(credentials, request);
+		return authenticate(credentials);
+	}
+
+	@Deprecated
+	@Override
+	public final Header authenticate(Credentials credentials,
+			HttpRequest request) throws AuthenticationException {
+		sanityCheck(credentials, request);
+		return authenticate(credentials);
+	}
+
+	private void sanityCheck(Credentials credentials, HttpRequest request) {
 		if (credentials == null) {
 			throw new IllegalArgumentException("Credentials may not be null");
 		}
@@ -367,7 +379,5 @@ abstract class ConnectionIndependentScheme extends RFC2617Scheme {
 		if (charset == null) {
 			throw new IllegalArgumentException("charset may not be null");
 		}
-
-		return authenticate(credentials);
 	}
 }
