@@ -262,15 +262,26 @@ public abstract class RestClientUtils {
 	 */
 	public static <T> T createApiKeyClient(URL url, final String username,
 			final String apiKey, Class<T> clazz, Object... providers) {
+		/**
+		 * Authentication scheme using user API keys.
+		 */
+		class ApiKeyScheme extends ConnectionIndependentScheme {
+			/**
+			 * Default constructor.
+			 */
+			ApiKeyScheme() {
+				super("ApiKey");
+			}
+
+			@Override
+			protected Header authenticate(Credentials credentials) {
+				return new BasicHeader(getAuthHeaderName(),
+						"ApiKey " + username + ":" + apiKey);
+			}
+		}
 		return createClient(url,
 				new UsernamePasswordCredentials(username, apiKey),
-				new ConnectionIndependentScheme("ApiKey") {
-					@Override
-					protected Header authenticate(Credentials credentials) {
-						return new BasicHeader(getAuthHeaderName(),
-								"ApiKey " + username + ":" + apiKey);
-					}
-				}, clazz, providers);
+				new ApiKeyScheme(), clazz, providers);
 	}
 
 	/**
@@ -290,14 +301,24 @@ public abstract class RestClientUtils {
 	 */
 	public static <T> T createBearerClient(URL url, final String token,
 			Class<T> clazz, Object... providers) {
+		/**
+		 * Authentication scheme using bearer tokens.
+		 */
+		class BearerScheme extends ConnectionIndependentScheme {
+			/**
+			 * Default constructor.
+			 */
+			BearerScheme() {
+				super("Bearer");
+			}
+
+			@Override
+			protected Header authenticate(Credentials credentials) {
+				return new BasicHeader(getAuthHeaderName(), "Bearer " + token);
+			}
+		}
 		return createClient(url, new UsernamePasswordCredentials("", token),
-				new ConnectionIndependentScheme("Bearer") {
-					@Override
-					protected Header authenticate(Credentials credentials) {
-						return new BasicHeader(getAuthHeaderName(),
-								"Bearer " + token);
-					}
-				}, clazz, providers);
+				new BearerScheme(), clazz, providers);
 	}
 }
 
@@ -355,8 +376,22 @@ abstract class ConnectionIndependentScheme extends RFC2617Scheme {
 	}
 
 	@Override
-	public Header authenticate(Credentials credentials, HttpRequest request)
+	public final Header authenticate(Credentials credentials,
+			HttpRequest request, HttpContext context)
 			throws AuthenticationException {
+		sanityCheck(credentials, request);
+		return authenticate(credentials);
+	}
+
+	@Deprecated
+	@Override
+	public final Header authenticate(Credentials credentials,
+			HttpRequest request) throws AuthenticationException {
+		sanityCheck(credentials, request);
+		return authenticate(credentials);
+	}
+
+	private void sanityCheck(Credentials credentials, HttpRequest request) {
 		if (credentials == null) {
 			throw new IllegalArgumentException("Credentials may not be null");
 		}
@@ -367,7 +402,5 @@ abstract class ConnectionIndependentScheme extends RFC2617Scheme {
 		if (charset == null) {
 			throw new IllegalArgumentException("charset may not be null");
 		}
-
-		return authenticate(credentials);
 	}
 }
