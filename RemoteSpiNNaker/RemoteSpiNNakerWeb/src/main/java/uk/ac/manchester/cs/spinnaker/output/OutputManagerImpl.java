@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
@@ -37,8 +38,11 @@ import uk.ac.manchester.cs.spinnaker.job.nmpi.DataItem;
 import uk.ac.manchester.cs.spinnaker.rest.OutputManager;
 import uk.ac.manchester.cs.spinnaker.rest.UnicoreFileClient;
 
-//TODO needs security; Role = OutputHandler
+/**
+ * Service for managing Job output files.
+ */
 public class OutputManagerImpl implements OutputManager {
+	//TODO needs security; Role = OutputHandler
 	private static final String PURGED_FILE = ".purged_";
 
 	@Value("${results.directory}")
@@ -47,6 +51,7 @@ public class OutputManagerImpl implements OutputManager {
 	private long timeToKeepResults;
 	private final Map<File, JobLock.Token> synchronizers = new HashMap<>();
 	private final Logger logger = getLogger(getClass());
+	private ScheduledExecutorService scheduler = newScheduledThreadPool(1);
 
 	private class JobLock implements AutoCloseable {
 		private class Token {
@@ -106,6 +111,13 @@ public class OutputManagerImpl implements OutputManager {
 		}
 	}
 
+	/**
+	 * Instantiate the output manager.
+	 *
+	 * @param baseServerUrl
+	 *            The base URL of the overall service, used when generating
+	 *            internal URLs.
+	 */
 	public OutputManagerImpl(URL baseServerUrl) {
 		this.baseServerUrl = baseServerUrl;
 	}
@@ -115,15 +127,25 @@ public class OutputManagerImpl implements OutputManager {
 		timeToKeepResults = MILLISECONDS.convert(nDaysToKeepResults, DAYS);
 	}
 
+	/**
+	 * Set the thread pool operating.
+	 */
 	@PostConstruct
 	void initPurgeScheduler() {
-		ScheduledExecutorService scheduler = newScheduledThreadPool(1);
 		scheduler.scheduleAtFixedRate(new Runnable() {
 			@Override
 			public void run() {
 				removeOldFiles();
 			}
 		}, 0, 1, DAYS);
+	}
+
+	/**
+	 * Shut the thread pool down.
+	 */
+	@PreDestroy
+	void stopPurgeScheduler() {
+		scheduler.shutdown();
 	}
 
 	private File getProjectDirectory(String projectId) {

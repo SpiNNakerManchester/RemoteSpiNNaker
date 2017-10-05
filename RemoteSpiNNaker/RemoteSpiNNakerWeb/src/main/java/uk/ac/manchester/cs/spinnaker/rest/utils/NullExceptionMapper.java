@@ -1,6 +1,7 @@
 package uk.ac.manchester.cs.spinnaker.rest.utils;
 
 import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.ws.rs.core.Response;
@@ -17,7 +18,7 @@ import org.slf4j.Logger;
 @Provider
 public class NullExceptionMapper
 		implements ExceptionMapper<NullPointerException> {
-	private final Logger log = getLogger(getClass());
+	private static final Logger log = getLogger(NullExceptionMapper.class);
 
 	@Override
 	public Response toResponse(NullPointerException exception) {
@@ -26,6 +27,6 @@ public class NullExceptionMapper
 			msg = "bad parameter";
 		}
 		log.info("trapped exception in service method", exception);
-		return status(400).entity(msg).build();
+		return status(BAD_REQUEST).entity(msg).build();
 	}
 }

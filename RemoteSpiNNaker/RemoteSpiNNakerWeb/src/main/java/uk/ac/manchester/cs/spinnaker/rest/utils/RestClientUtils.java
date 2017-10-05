@@ -99,7 +99,17 @@ public abstract class RestClientUtils {
 		}
 	}
 
-	/** Set up authentication */
+	/**
+	 * Set up a connection context.
+	 *
+	 * @param url
+	 *            Where will the connection be made to?
+	 * @param credentals
+	 *            What credentials will be used to connect?
+	 * @param authScheme
+	 *            The authentication scheme to use.
+	 * @return the configured context.
+	 */
 	private static HttpContext getConnectionContext(URL url,
 			Credentials credentials, AuthScheme authScheme) {
 		int port = url.getPort();
@@ -131,14 +141,19 @@ public abstract class RestClientUtils {
 		return null;
 	}
 
+	private static SchemeRegistry allTrustingSchemeRegistry;
+
 	/**
-	 * Set up HTTPS to ignore certificate errors
-	 *
-	 * @deprecated This method is doing bad things.
+	 * Set up HTTPS to ignore certificate errors. <i>Be aware that this method
+	 * is doing very bad things; a trust-all trust manager is <b>entirely</b>
+	 * doing it wrong, but the reality of academic security is that it is the
+	 * only sane option.</i>
 	 */
-	@Deprecated
-	private static SchemeRegistry getSchemeRegistry()
+	private static synchronized SchemeRegistry getSchemeRegistry()
 			throws NoSuchAlgorithmException, KeyManagementException {
+		if (allTrustingSchemeRegistry != null) {
+			return allTrustingSchemeRegistry;
+		}
 		TrustManager[] allTrusting = new TrustManager[1];
 		allTrusting[0] = new X509TrustManager() {
 			@Override
@@ -169,10 +184,10 @@ public abstract class RestClientUtils {
 
 		SSLContext sslContext = SSLContext.getInstance(SECURE_PROTOCOL);
 		sslContext.init(null, allTrusting, new SecureRandom());
-		SchemeRegistry schemeRegistry = new SchemeRegistry();
-		schemeRegistry.register(new Scheme("https", HTTPS_PORT,
+		allTrustingSchemeRegistry = new SchemeRegistry();
+		allTrustingSchemeRegistry.register(new Scheme("https", HTTPS_PORT,
 				new SSLSocketFactory(sslContext, ALLOW_ALL_HOSTNAME_VERIFIER)));
-		return schemeRegistry;
+		return allTrustingSchemeRegistry;
 	}
 
 	/**
