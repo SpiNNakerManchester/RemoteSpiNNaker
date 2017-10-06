@@ -262,7 +262,13 @@ public abstract class RestClientUtils {
 	 */
 	public static <T> T createApiKeyClient(URL url, final String username,
 			final String apiKey, Class<T> clazz, Object... providers) {
+		/**
+		 * Authentication scheme using user API keys.
+		 */
 		class ApiKeyScheme extends ConnectionIndependentScheme {
+			/**
+			 * Default constructor.
+			 */
 			ApiKeyScheme() {
 				super("ApiKey");
 			}
@@ -295,7 +301,13 @@ public abstract class RestClientUtils {
 	 */
 	public static <T> T createBearerClient(URL url, final String token,
 			Class<T> clazz, Object... providers) {
+		/**
+		 * Authentication scheme using bearer tokens.
+		 */
 		class BearerScheme extends ConnectionIndependentScheme {
+			/**
+			 * Default constructor.
+			 */
 			BearerScheme() {
 				super("Bearer");
 			}
