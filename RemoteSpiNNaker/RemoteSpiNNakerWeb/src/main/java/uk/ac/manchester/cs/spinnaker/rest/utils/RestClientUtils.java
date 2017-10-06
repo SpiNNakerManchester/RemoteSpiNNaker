@@ -262,15 +262,20 @@ public abstract class RestClientUtils {
 	 */
 	public static <T> T createApiKeyClient(URL url, final String username,
 			final String apiKey, Class<T> clazz, Object... providers) {
+		class ApiKeyScheme extends ConnectionIndependentScheme {
+			ApiKeyScheme() {
+				super("ApiKey");
+			}
+
+			@Override
+			protected Header authenticate(Credentials credentials) {
+				return new BasicHeader(getAuthHeaderName(),
+						"ApiKey " + username + ":" + apiKey);
+			}
+		}
 		return createClient(url,
 				new UsernamePasswordCredentials(username, apiKey),
-				new ConnectionIndependentScheme("ApiKey") {
-					@Override
-					protected Header authenticate(Credentials credentials) {
-						return new BasicHeader(getAuthHeaderName(),
-								"ApiKey " + username + ":" + apiKey);
-					}
-				}, clazz, providers);
+				new ApiKeyScheme(), clazz, providers);
 	}
 
 	/**
@@ -290,14 +295,18 @@ public abstract class RestClientUtils {
 	 */
 	public static <T> T createBearerClient(URL url, final String token,
 			Class<T> clazz, Object... providers) {
+		class BearerScheme extends ConnectionIndependentScheme {
+			BearerScheme() {
+				super("Bearer");
+			}
+
+			@Override
+			protected Header authenticate(Credentials credentials) {
+				return new BasicHeader(getAuthHeaderName(), "Bearer " + token);
+			}
+		}
 		return createClient(url, new UsernamePasswordCredentials("", token),
-				new ConnectionIndependentScheme("Bearer") {
-					@Override
-					protected Header authenticate(Credentials credentials) {
-						return new BasicHeader(getAuthHeaderName(),
-								"Bearer " + token);
-					}
-				}, clazz, providers);
+				new BearerScheme(), clazz, providers);
 	}
 }
 
