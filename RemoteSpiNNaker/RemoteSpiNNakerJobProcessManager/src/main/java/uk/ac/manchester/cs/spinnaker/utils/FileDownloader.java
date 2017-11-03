@@ -9,8 +9,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Map;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import javax.net.ssl.HostnameVerifier;
@@ -51,8 +49,7 @@ public class FileDownloader {
      *            url or headers, or <tt>null</tt> to use a generated name
      * @return The file downloaded
      * @throws IOException
-     * @throws NoSuchAlgorithmException
-     * @throws KeyManagementException
+     *          If anything goes wrong.
      */
     public static File downloadFile(final URL url, final File workingDirectory,
             final String defaultFilename) throws IOException {
@@ -150,6 +147,7 @@ public class FileDownloader {
      *            url or headers, or <tt>null</tt> to use a generated name
      * @return The file downloaded
      * @throws IOException
+     *          If anything goes wrong.
      */
     public static File downloadFile(final String url,
             final File workingDirectory, final String defaultFilename)
