@@ -15,6 +15,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * A deserialiser which deserialises classes based on unique properties that
  * they have. The classes to be deserialised need to be registered with a unique
  * property using the "register" function.
+ *
+ * @param <T>
+ *      The type of values being deserialised.
  */
 public class PropertyBasedDeserialiser<T> extends StdDeserializer<T> {
     private static final long serialVersionUID = 1L;
@@ -22,7 +25,10 @@ public class PropertyBasedDeserialiser<T> extends StdDeserializer<T> {
     private final Map<String, Class<? extends T>> registry = new HashMap<>();
 
     /**
-     * Creates a new deserialiser
+     * Creates a new deserialiser.
+     *
+     * @param type
+     *          The (super)class of the values that will be produced.
      */
     public PropertyBasedDeserialiser(final Class<T> type) {
         super(type);

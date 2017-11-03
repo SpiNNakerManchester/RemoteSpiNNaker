@@ -214,11 +214,14 @@ public class NMPIQueueManager implements Runnable {
      *            (null if none)
      * @param outputs
      *            The outputs of the job (null if none)
-     * @throws MalformedURLException
+     * @param resourceUsage
+     *            The amount of resources used
+     * @param provenance
+     *            JSON provenance information
      */
     public void setJobFinished(final int id, final String logToAppend,
             final List<DataItem> outputs, final long resourceUsage,
-            final ObjectNode provenance) throws MalformedURLException {
+            final ObjectNode provenance) {
         logger.debug("Job " + id + " is finished");
 
         if (logToAppend != null) {
@@ -248,12 +251,14 @@ public class NMPIQueueManager implements Runnable {
      *            Any outputs generated, or null if none
      * @param error
      *            The error details
-     * @throws MalformedURLException
+     * @param resourceUsage
+     *            The amount of resources used
+     * @param provenance
+     *            JSON provenance information
      */
     public void setJobError(final int id, final String logToAppend,
             final List<DataItem> outputs, final Throwable error,
-            final long resourceUsage, final ObjectNode provenance)
-            throws MalformedURLException {
+            final long resourceUsage, final ObjectNode provenance) {
         logger.debug("Job " + id + " finished with an error");
         final StringWriter errors = new StringWriter();
         error.printStackTrace(new PrintWriter(errors));
