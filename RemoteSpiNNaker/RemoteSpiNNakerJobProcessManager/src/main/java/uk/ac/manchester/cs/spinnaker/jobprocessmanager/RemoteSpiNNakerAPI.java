@@ -33,6 +33,7 @@ public abstract class RemoteSpiNNakerAPI {
      *            How to authenticate to the main website, or <tt>null</tt> to
      *            not provide auth. If given, Should be the concatenation of the
      *            username, a colon (<tt>:</tt>), and the password.
+     * @return the proxy for the job manager service
      */
     public static JobManagerInterface createJobManager(final String url,
             final String authToken) {
