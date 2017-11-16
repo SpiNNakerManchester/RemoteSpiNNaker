@@ -57,6 +57,7 @@ public abstract class RestClientUtils {
 	/** The (low-level) secure protocol supported. */
 	public static final String SECURE_PROTOCOL = "TLS";
 
+    // No instances, please, we're British!
 	private RestClientUtils() {
 	}
 
