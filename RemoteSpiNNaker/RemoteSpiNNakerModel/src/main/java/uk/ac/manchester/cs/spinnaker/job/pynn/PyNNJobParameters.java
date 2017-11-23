@@ -1,7 +1,5 @@
 package uk.ac.manchester.cs.spinnaker.job.pynn;
 
-import java.util.Map;
-
 import uk.ac.manchester.cs.spinnaker.job.JobParameters;
 import uk.ac.manchester.cs.spinnaker.job.JobParametersTypeName;
 
@@ -12,14 +10,14 @@ import uk.ac.manchester.cs.spinnaker.job.JobParametersTypeName;
 public class PyNNJobParameters implements JobParameters {
     private String workingDirectory;
     private String script;
-    private Map<String, Object> hardwareConfiguration;
+    private PyNNHardwareConfiguration hardwareConfiguration;
 
     public PyNNJobParameters() {
         // Does Nothing
     }
 
     public PyNNJobParameters(final String workingDirectory, final String script,
-            final Map<String, Object> hardwareConfiguration) {
+            final PyNNHardwareConfiguration hardwareConfiguration) {
         this.workingDirectory = workingDirectory;
         this.script = script;
         this.hardwareConfiguration = hardwareConfiguration;
@@ -41,12 +39,12 @@ public class PyNNJobParameters implements JobParameters {
         this.script = script;
     }
 
-    public Map<String, Object> getHardwareConfiguration() {
+    public PyNNHardwareConfiguration getHardwareConfiguration() {
         return hardwareConfiguration;
     }
 
     public void setHardwareConfiguration(
-            final Map<String, Object> hardwareConfiguration) {
+            final PyNNHardwareConfiguration hardwareConfiguration) {
         this.hardwareConfiguration = hardwareConfiguration;
     }
 }

@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static org.apache.commons.io.FileUtils.listFiles;
 import static org.apache.commons.io.FilenameUtils.getExtension;
 import static org.apache.commons.io.IOUtils.closeQuietly;
+import static org.eclipse.jgit.api.Git.cloneRepository;
 import static uk.ac.manchester.cs.spinnaker.job.Status.Error;
 import static uk.ac.manchester.cs.spinnaker.job.Status.Finished;
 import static uk.ac.manchester.cs.spinnaker.job.Status.Running;
@@ -16,8 +17,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.io.Reader;
+import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -36,9 +40,14 @@ import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.io.filefilter.AbstractFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
+import org.eclipse.jgit.api.CloneCommand;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.InvalidRemoteException;
+import org.eclipse.jgit.api.errors.TransportException;
 import org.ini4j.ConfigParser;
 
 import uk.ac.manchester.cs.spinnaker.job.Status;
+import uk.ac.manchester.cs.spinnaker.job.pynn.PyNNHardwareConfiguration;
 import uk.ac.manchester.cs.spinnaker.job.pynn.PyNNJobParameters;
 import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
 import uk.ac.manchester.cs.spinnaker.utils.ThreadUtils;
@@ -66,6 +75,51 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         "router_provenance/total_dropped_packets",
         "router_provenance/total_missed_dropped_packets",
         "router_provenance/total_lost_dropped_packets"};
+
+    private static final String GITHUB =
+        "https://github.com/SpiNNakerManchester/";
+
+    private static final String[] REPOSITORIES = new String[]{
+        GITHUB + "SpiNNUtilities",
+        GITHUB + "SpiNNStorageHandlers",
+        GITHUB + "SpiNNMachine",
+        GITHUB + "DataSpecification",
+        GITHUB + "PACMAN",
+        GITHUB + "SpiNNMan",
+        GITHUB + "SpiNNFrontEndCommon",
+        GITHUB + "sPyNNaker",
+        GITHUB + "spinnaker_tools",
+        GITHUB + "spinn_common"
+    };
+
+    private static final String[] PYNN_7_REPOSITORIES = new String[]{
+        GITHUB + "sPyNNaker7"
+    };
+
+    private static final String[] PYNN_8_REPOSITORIES = new String[]{
+        GITHUB + "sPyNNaker8"
+    };
+
+    private static final String[] MAKE_DIRS = new String[]{
+        "spinnaker_tools",
+        "spinn_common",
+        "SpiNNMan/c_models",
+        "SpiNNFrontEndCommon/c_common",
+        "sPyNNaker/neural_modelling"
+    };
+
+    private static final String[] PYTHON_SETUP_DIRS = new String[]{
+        "SpiNNUtilities",
+        "SpiNNStorageHandlers",
+        "SpiNNMachine",
+        "DataSpecification",
+        "PACMAN",
+        "SpiNNMan",
+        "SpiNNFrontEndCommon",
+        "sPyNNaker",
+        "sPyNNaker7",
+        "sPyNNaker8"
+    };
 
     private File workingDirectory = null;
     private Status status = null;
@@ -98,12 +152,100 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         };
     }
 
+    private void doGitClone(PyNNHardwareConfiguration config)
+            throws InvalidRemoteException, TransportException, GitAPIException {
+        List<String> allRepositories =
+            new ArrayList<>(Arrays.asList(REPOSITORIES));
+        if (config.getPyNNVersion().equals(
+                PyNNHardwareConfiguration.PYNN_0_8)) {
+            allRepositories.addAll(Arrays.asList(PYNN_8_REPOSITORIES));
+        } else if (config.getPyNNVersion().equals(
+                PyNNHardwareConfiguration.PYNN_0_7)) {
+            allRepositories.addAll(Arrays.asList(PYNN_7_REPOSITORIES));
+        } else {
+            throw new RuntimeException(
+                "Unknown " + PyNNHardwareConfiguration.PYNN_VERSION_KEY +
+                ": " + config.getPyNNVersion());
+        }
+        for (String repo : allRepositories) {
+            final CloneCommand clone = cloneRepository();
+            clone.setURI(repo);
+            clone.setDirectory(workingDirectory);
+            clone.setCloneSubmodules(true);
+            clone.setBranch(config.getSoftwareVersion());
+            clone.call();
+        }
+    }
+
+    private void readOutputToLog(Process process, LogWriter logWriter)
+            throws IOException {
+        BufferedReader reader = new BufferedReader(
+            new InputStreamReader(process.getInputStream()));
+        String line = reader.readLine();
+        while (line != null) {
+            logWriter.append(line);
+            logWriter.append("\n");
+            line = reader.readLine();
+        }
+    }
+
+    private void run(File workingDir, LogWriter logWriter, String... command)
+            throws IOException {
+        ProcessBuilder processBuilder = new ProcessBuilder(
+            command);
+        processBuilder.directory(workingDir);
+        processBuilder.redirectErrorStream(true);
+        Process process = processBuilder.start();
+        try {
+            readOutputToLog(process, logWriter);
+        } finally {
+            process.destroy();
+        }
+    }
+
+    public void doMake(PyNNHardwareConfiguration config, LogWriter logWriter)
+            throws IOException {
+        List<String> makeDirs = new ArrayList<>(Arrays.asList(MAKE_DIRS));
+        makeDirs.addAll(Arrays.asList(config.getMakeDirs()));
+        for (String dir : makeDirs) {
+            File fileDir = new File(workingDirectory, dir);
+            run(workingDirectory, logWriter, "make", "-C",
+                    fileDir.getAbsolutePath());
+            run(workingDirectory, logWriter, "make", "-C",
+                    fileDir.getAbsolutePath(), "install");
+        }
+    }
+
+    public void doPythonSetup(
+            PyNNHardwareConfiguration config, LogWriter logWriter)
+            throws IOException {
+        List<String> setupDirs = new ArrayList<>(
+            Arrays.asList(PYTHON_SETUP_DIRS));
+        setupDirs.addAll(Arrays.asList(config.getPythonSetupDirs()));
+        for (String dir : setupDirs) {
+            File workingDir = new File(workingDirectory, dir);
+            run(workingDir, logWriter, "python", "setup.py", "install",
+                "--user");
+        }
+    }
+
     @Override
     public void execute(final String machineUrl, final SpinnakerMachine machine,
             final PyNNJobParameters parameters, final LogWriter logWriter) {
         try {
             status = Running;
             workingDirectory = new File(parameters.getWorkingDirectory());
+
+            // Do git clone
+            PyNNHardwareConfiguration config =
+                parameters.getHardwareConfiguration();
+            doGitClone(config);
+
+            // Do make
+            doMake(config, logWriter);
+
+            // Do python setup
+            doPythonSetup(config, logWriter);
 
             // TODO: Deal with hardware configuration
             final File cfgFile = new File(workingDirectory, "spynnaker.cfg");
@@ -160,6 +302,10 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             }
             status = Finished;
         } catch (final Throwable e) {
+            StringWriter stringWriter = new StringWriter();
+            PrintWriter printWriter = new PrintWriter(stringWriter);
+            e.printStackTrace(printWriter);
+            logWriter.append(stringWriter.toString());
             e.printStackTrace();
             error = e;
             status = Error;

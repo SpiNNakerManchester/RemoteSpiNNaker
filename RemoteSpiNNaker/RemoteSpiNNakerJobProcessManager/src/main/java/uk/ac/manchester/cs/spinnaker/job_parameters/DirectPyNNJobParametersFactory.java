@@ -8,6 +8,7 @@ import java.io.UnsupportedEncodingException;
 
 import uk.ac.manchester.cs.spinnaker.job.JobParameters;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
+import uk.ac.manchester.cs.spinnaker.job.pynn.PyNNHardwareConfiguration;
 import uk.ac.manchester.cs.spinnaker.job.pynn.PyNNJobParameters;
 
 /**
@@ -45,7 +46,8 @@ class DirectPyNNJobParametersFactory extends JobParametersFactory {
         writer.close();
 
         return new PyNNJobParameters(workingDirectory.getAbsolutePath(),
-                DEFAULT_SCRIPT_NAME + SYSTEM_ARG, job.getHardwareConfig());
+                DEFAULT_SCRIPT_NAME + SYSTEM_ARG,
+                new PyNNHardwareConfiguration(job.getHardwareConfig()));
     }
 
 }

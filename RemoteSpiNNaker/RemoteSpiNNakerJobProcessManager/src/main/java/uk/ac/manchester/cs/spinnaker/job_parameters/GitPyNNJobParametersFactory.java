@@ -11,6 +11,7 @@ import org.eclipse.jgit.api.errors.TransportException;
 
 import uk.ac.manchester.cs.spinnaker.job.JobParameters;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
+import uk.ac.manchester.cs.spinnaker.job.pynn.PyNNHardwareConfiguration;
 import uk.ac.manchester.cs.spinnaker.job.pynn.PyNNJobParameters;
 
 /**
@@ -62,6 +63,6 @@ class GitPyNNJobParametersFactory extends JobParametersFactory {
         }
 
         return new PyNNJobParameters(workingDirectory.getAbsolutePath(), script,
-                job.getHardwareConfig());
+                new PyNNHardwareConfiguration(job.getHardwareConfig()));
     }
 }
