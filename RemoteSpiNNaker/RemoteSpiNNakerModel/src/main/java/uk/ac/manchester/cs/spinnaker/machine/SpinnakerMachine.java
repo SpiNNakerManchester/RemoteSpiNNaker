@@ -9,6 +9,10 @@ import java.io.Serializable;
  */
 public class SpinnakerMachine
         implements Serializable, Comparable<SpinnakerMachine> {
+
+    /**
+     * Serial version UID.
+     */
     private static final long serialVersionUID = -2247744763327978524L;
 
     /**

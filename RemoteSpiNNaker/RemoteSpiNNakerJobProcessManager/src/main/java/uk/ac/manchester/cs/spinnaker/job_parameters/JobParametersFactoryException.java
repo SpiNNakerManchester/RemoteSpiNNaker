@@ -5,6 +5,10 @@ package uk.ac.manchester.cs.spinnaker.job_parameters;
  * converting the job to parameters.
  */
 public class JobParametersFactoryException extends Exception {
+
+    /**
+     * Serial version UID.
+     */
     private static final long serialVersionUID = 1L;
 
     /**
