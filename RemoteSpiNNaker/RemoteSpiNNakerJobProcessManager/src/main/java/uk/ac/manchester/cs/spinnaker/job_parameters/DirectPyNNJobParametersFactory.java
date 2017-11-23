@@ -15,6 +15,10 @@ import uk.ac.manchester.cs.spinnaker.job.pynn.PyNNJobParameters;
  * itself as a PyNN script.
  */
 class DirectPyNNJobParametersFactory extends JobParametersFactory {
+
+    /**
+     * Encoding of the output script.
+     */
     private static final String ENCODING = "UTF-8";
 
     @Override
@@ -35,7 +39,15 @@ class DirectPyNNJobParametersFactory extends JobParametersFactory {
         }
     }
 
-    /** Constructs the parameters by writing the script into a local file. */
+   /**
+    * Constructs the parameters by writing the script into a local file.
+    *
+    * @param job The job to construct parameters for
+    * @param workingDirectory The directory where the job should be started
+    * @return The parameters created
+    * @throws FileNotFoundException If the file can't be found to write
+    * @throws UnsupportedEncodingException If the encoding failed (unlikely)
+    */
     private JobParameters constructParameters(final Job job,
             final File workingDirectory)
             throws FileNotFoundException, UnsupportedEncodingException {
@@ -47,5 +59,4 @@ class DirectPyNNJobParametersFactory extends JobParametersFactory {
         return new PyNNJobParameters(workingDirectory.getAbsolutePath(),
                 DEFAULT_SCRIPT_NAME + SYSTEM_ARG, job.getHardwareConfig());
     }
-
 }

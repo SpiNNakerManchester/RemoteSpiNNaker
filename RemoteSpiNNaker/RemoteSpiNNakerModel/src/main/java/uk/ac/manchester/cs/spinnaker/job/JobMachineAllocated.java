@@ -1,6 +1,13 @@
 package uk.ac.manchester.cs.spinnaker.job;
 
+/**
+ * An allocated machine
+ */
 public class JobMachineAllocated {
+
+    /**
+     * True if the
+     */
     private boolean allocated = false;
 
     public JobMachineAllocated() {
