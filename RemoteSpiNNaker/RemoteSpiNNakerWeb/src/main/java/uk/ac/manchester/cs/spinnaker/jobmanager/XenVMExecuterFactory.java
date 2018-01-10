@@ -28,43 +28,106 @@ import com.xensource.xenapi.VBD;
 import com.xensource.xenapi.VDI;
 import com.xensource.xenapi.VM;
 
+/**
+ * Executes jobs on a Xen Virtual Machine.
+ */
 public class XenVMExecuterFactory implements JobExecuterFactory {
+
     /** Bytes in a gigabyte. Well, a gibibyte, but that's a nasty word. */
     private static final long GB = 1024L * 1024L * 1024L;
     /** Time (in ms) between checks to see if a VM is running. */
     private static final int VM_POLL_INTERVAL = 10000;
 
+    /**
+     * Lock object used for synchronisation.
+     */
     private final Object lock = new Object();
+
+    /**
+     * The thread group of any threads.
+     */
     private final ThreadGroup threadGroup;
+
+    /**
+     * Logging.
+     */
     private final Logger logger = getLogger(getClass());
 
+    /**
+     * The URL of the Xen Server.
+     */
     @Value("${xen.server.url}")
     private URL xenServerUrl;
+
+    /**
+     * The username under which to control Xen.
+     */
     @Value("${xen.server.username}")
     private String username;
+
+    /**
+     * The password for the username.
+     */
     @Value("${xen.server.password}")
     private String password;
+
+    /**
+     * The name of the Xen Template VM.
+     */
     @Value("${xen.server.templateVm}")
     private String templateLabel;
+
+    /**
+     * True if the VMs should be deleted on shutdown of the VM.
+     */
     @Value("${deleteJobsOnExit}")
     private boolean deleteOnExit;
+
+    /**
+     * True if the Xen VM should shutdown on exit of the job.
+     */
     @Value("${xen.server.shutdownOnExit}")
     private boolean shutdownOnExit;
+
+    /**
+     * True if the log of the job should upload as it is output.
+     */
     @Value("${liveUploadOutput}")
     private boolean liveUploadOutput;
+
+    /**
+     * True if a spinnaker machine should be requested.
+     */
     @Value("${requestSpiNNakerMachine}")
     private boolean requestSpiNNakerMachine;
+
+    /**
+     * The default size of the disk to attach to the Xen VM.
+     */
     @Value("${xen.server.diskspaceInGbs}")
     private long defaultDiskSizeInGbs;
+
+    /**
+     * The maximum number of VMs to create.
+     */
     @Value("${xen.server.maxVms}")
     private int maxNVirtualMachines;
 
+    /**
+     * The current number of VMs.
+     */
     private int nVirtualMachines = 0;
 
+    /**
+     * Create a new Xen Executor Factory.
+     */
     public XenVMExecuterFactory() {
         this.threadGroup = new ThreadGroup("XenVM");
     }
 
+    /**
+     * Create a job executor for a job.
+     */
     @Override
     public JobExecuter createJobExecuter(final JobManager manager,
             final URL baseUrl) throws IOException {
@@ -79,6 +142,9 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
         }
     }
 
+    /**
+     * Wait for the VM to come up.
+     */
     private void waitToClaimVM() {
         synchronized (lock) {
             logger.debug(nVirtualMachines + " of " + maxNVirtualMachines
@@ -97,6 +163,9 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
         }
     }
 
+    /**
+     * Indicate that a VM has exited.
+     */
     protected void executorFinished() {
         synchronized (lock) {
             nVirtualMachines--;
@@ -108,15 +177,37 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
 
     /** Taming the Xen API a bit. */
     class XenConnection implements AutoCloseable {
+
+        /**
+         * The Xen connection.
+         */
         private Connection conn;
+
+        /**
+         * The ID of the executor on the VM.
+         */
         private final String id;
 
-        XenConnection(final String id) throws XenAPIException, XmlRpcException {
-            this.id = id;
+        /**
+         * Create a connection to Xen.
+         *
+         * @param idParam The ID of the executor.
+         * @throws XenAPIException If there is an error logging in
+         * @throws XmlRpcException If there is an error speaking to Xen
+         */
+        XenConnection(final String idParam)
+                throws XenAPIException, XmlRpcException {
+            this.id = idParam;
             conn = new Connection(xenServerUrl);
             loginWithPassword(conn, username, password);
         }
 
+        /**
+         * Get a VM from Xen.
+         * @return The created VM.
+         * @throws XmlRpcException If there is an error speaking to Xen
+         * @throws IOException If there is a general error speaking to Xen
+         */
         VM getVirtualMachine() throws XmlRpcException, IOException {
             final Set<VM> vmsWithLabel = VM.getByNameLabel(conn, templateLabel);
             if (vmsWithLabel.isEmpty()) {
@@ -127,6 +218,13 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
             return template.createClone(conn, templateLabel + "_" + id);
         }
 
+        /**
+         * Get the virtual block device of a VM.
+         * @param vm The VM.
+         * @return The block device.
+         * @throws XmlRpcException If there is an error speaking to Xen
+         * @throws IOException If there is a general error speaking to Xen
+         */
         VBD getVirtualBlockDevice(final VM vm)
                 throws XmlRpcException, IOException {
             final Set<VBD> disks = vm.getVBDs(conn);
@@ -136,17 +234,40 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
             return disks.iterator().next();
         }
 
+        /**
+         * Get the label to give to a disk based on the base label of another.
+         *
+         * @param vdi The VDI
+         * @param suffix The suffix to add to the label
+         * @return The label
+         * @throws XmlRpcException If there is an error speaking to Xen
+         * @throws XenAPIException If there is an error getting the label
+         */
         String getLabel(final VDI vdi, final String suffix)
                 throws XmlRpcException, XenAPIException {
             return vdi.getNameLabel(conn) + "_" + id + "_" + suffix;
         }
 
+        /**
+         * Get the Base Virtual Disk Image from a disk.
+         * @param disk The Virtual Block Device to get the VDI from.
+         * @return The VDI.
+         * @throws XmlRpcException If there is an error speaking to Xen
+         * @throws XenAPIException If there is an error getting the label
+         */
         VDI getBaseVDI(final VBD disk) throws XmlRpcException, XenAPIException {
             final VDI vdi = disk.getVDI(conn);
             vdi.setNameLabel(conn, getLabel(vdi, "base"));
             return vdi;
         }
 
+        /**
+         * Create a new Virtual Disk Image for a VM.
+         * @param baseVDI The base Virtual Disk Image to copy the setting from
+         * @return The VDI
+         * @throws XmlRpcException If there is an error speaking to Xen
+         * @throws XenAPIException If there is an error getting the label
+         */
         VDI createVDI(final VDI baseVDI)
                 throws XenAPIException, XmlRpcException {
             final VDI.Record descriptor = new VDI.Record();
@@ -158,6 +279,15 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
             return VDI.create(conn, descriptor);
         }
 
+        /**
+         * Create a Virtual Block Device for a VM.
+         *
+         * @param vm The VM to create the device for
+         * @param vdi The Disk Image to put in the VBD
+         * @return The VBD created
+         * @throws XmlRpcException If there is an error speaking to Xen
+         * @throws XenAPIException If there is an error in the API call
+         */
         VBD createVBD(final VM vm, final VDI vdi)
                 throws XenAPIException, XmlRpcException {
             final VBD.Record descriptor = new VBD.Record();
@@ -170,27 +300,72 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
             return VBD.create(conn, descriptor);
         }
 
+        /**
+         * Add VM data that can be read by the VM (used for config parameters).
+         *
+         * @param vm The VM to add the data to.
+         * @param key The key of the data.
+         * @param value The value of the data
+         * @throws XmlRpcException If there is an error speaking to Xen
+         * @throws XenAPIException If there is an error in the API call
+         */
         void addData(final VM vm, final String key, final Object value)
                 throws XenAPIException, XmlRpcException {
             vm.addToXenstoreData(conn, key, value.toString());
         }
 
+        /**
+         * Start a VM.
+         *
+         * @param vm The VM to start.
+         * @throws XmlRpcException If there is an error speaking to Xen
+         * @throws XenAPIException If there is an error in the API call
+         */
         void start(final VM vm) throws XenAPIException, XmlRpcException {
             vm.start(conn, false, true);
         }
 
+        /**
+         * Delete a VM from existence.
+         *
+         * @param vm The VM to delete.
+         * @throws XmlRpcException If there is an error speaking to Xen
+         * @throws XenAPIException If there is an error in the API call
+         */
         void destroy(final VM vm) throws XenAPIException, XmlRpcException {
             vm.destroy(conn);
         }
 
+        /**
+         * Delete a virtual block device from existence.
+         *
+         * @param vm The device to delete.
+         * @throws XmlRpcException If there is an error speaking to Xen
+         * @throws XenAPIException If there is an error in the API call
+         */
         void destroy(final VBD vm) throws XenAPIException, XmlRpcException {
             vm.destroy(conn);
         }
 
+        /**
+         * Delete a virtual disk image.
+         *
+         * @param vm The disk to delete
+         * @throws XmlRpcException If there is an error speaking to Xen
+         * @throws XenAPIException If there is an error in the API call
+         */
         void destroy(final VDI vm) throws XenAPIException, XmlRpcException {
             vm.destroy(conn);
         }
 
+        /**
+         * Get the current power state of a VM (i.e. on or off).
+         *
+         * @param vm The VM to query
+         * @return The state of the VM.
+         * @throws XmlRpcException If there is an error speaking to Xen
+         * @throws XenAPIException If there is an error in the API call
+         */
         VmPowerState getState(final VM vm)
                 throws XenAPIException, XmlRpcException {
             return vm.getPowerState(conn);
@@ -209,43 +384,89 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
         }
     }
 
+    /**
+     * The executor for Xen.
+     */
     class Executer implements JobExecuter, Runnable {
         // Parameters from constructor
+        /**
+         * The Job Manager to report to.
+         */
         private final JobManager jobManager;
+
+        /**
+         * The UUID to assign to this executor.
+         */
         private final String uuid;
+
+        /**
+         * The URL to give to the job process manager for it to speak to the
+         * job manager.
+         */
         private final URL jobProcessManagerUrl;
+
+        /**
+         * The arguments for the job process manager.
+         */
         private final String args;
 
         // Internal entities
+        /**
+         * The VM of the job.
+         */
         private VM clonedVm;
+
+        /**
+         * The disk of the cloned VM.
+         */
         private VBD disk;
+
+        /**
+         * The Virtual Disk Image of the cloned VM.
+         */
         private VDI vdi;
+
+        /**
+         * The Virtual Disk Image added to the VM.
+         */
         private VDI extraVdi;
+
+        /**
+         * The disk added to the VM.
+         */
         private VBD extraDisk;
 
-        Executer(final JobManager jobManager, final URL baseUrl)
+        /**
+         * Create the executer.
+         *
+         * @param jobManagerParam The job manager to report to.
+         * @param baseUrl The base URL of the REST service
+         * @throws XmlRpcException If there is an error speaking to Xen
+         * @throws IOException If there is general IO error
+         */
+        Executer(final JobManager jobManagerParam, final URL baseUrl)
                 throws XmlRpcException, IOException {
-            this.jobManager = jobManager;
+            this.jobManager = jobManagerParam;
             uuid = UUID.randomUUID().toString();
             jobProcessManagerUrl =
                     new URL(baseUrl, "job/" + JOB_PROCESS_MANAGER_ZIP);
 
-            final StringBuilder args = new StringBuilder("-jar ");
-            args.append(JOB_PROCESS_MANAGER_JAR);
-            args.append(" --serverUrl ");
-            args.append(baseUrl);
-            args.append(" --executerId ");
-            args.append(uuid);
+            final StringBuilder execArgs = new StringBuilder("-jar ");
+            execArgs.append(JOB_PROCESS_MANAGER_JAR);
+            execArgs.append(" --serverUrl ");
+            execArgs.append(baseUrl);
+            execArgs.append(" --executerId ");
+            execArgs.append(uuid);
             if (deleteOnExit) {
-                args.append(" --deleteOnExit");
+                execArgs.append(" --deleteOnExit");
             }
             if (liveUploadOutput) {
-                args.append(" --liveUploadOutput");
+                execArgs.append(" --liveUploadOutput");
             }
             if (requestSpiNNakerMachine) {
-                args.append(" --requestMachine");
+                execArgs.append(" --requestMachine");
             }
-            this.args = args.toString();
+            this.args = execArgs.toString();
         }
 
         @Override
@@ -258,6 +479,13 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
             new Thread(threadGroup, this, "Executer (" + uuid + ")").start();
         }
 
+        /**
+         * Create a VM.
+         *
+         * @return The connection to Xen used to create the VM
+         * @throws XmlRpcException If there is an error speaking to Xen
+         * @throws IOException If there is a general IO error
+         */
         synchronized XenConnection createVm()
                 throws XmlRpcException, IOException {
             final XenConnection conn = new XenConnection(uuid);
@@ -276,6 +504,13 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
             return conn;
         }
 
+        /**
+         * Delete a VM for a job.
+         *
+         * @param conn The connection to the Xen server to use.
+         * @throws XenAPIException If there is a Xen API issue
+         * @throws XmlRpcException If there is an error speaking to Xen
+         */
         private synchronized void deleteVm(final XenConnection conn)
                 throws XenAPIException, XmlRpcException {
             if (conn == null) {

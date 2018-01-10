@@ -30,10 +30,23 @@ import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 
+/**
+ * A local executor of jobs.
+ */
 public class LocalJobExecuterFactory implements JobExecuterFactory {
+
+    /**
+     * The job process manager main class.
+     */
     private static final String JOB_PROCESS_MANAGER_MAIN_CLASS =
             "uk.ac.manchester.cs.spinnaker.jobprocessmanager.JobProcessManager";
 
+    /**
+     * Get the java executable.
+     *
+     * @return The java executable.
+     * @throws IOException If the file can't be instantiated
+     */
     private static File getJavaExec() throws IOException {
         final File binDir = new File(System.getProperty("java.home"), "bin");
         File exec = new File(binDir, "java");
@@ -43,22 +56,56 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         return exec;
     }
 
+    /**
+     * True if job files should be deleted on exit.
+     */
     @Value("${deleteJobsOnExit}")
     private boolean deleteOnExit;
+
+    /**
+     * True if the job should live upload the logs.
+     */
     @Value("${liveUploadOutput}")
     private boolean liveUploadOutput;
+
+    /**
+     * True if the job should request a SpiNNaker machine.
+     */
     @Value("${requestSpiNNakerMachine}")
     private boolean requestSpiNNakerMachine;
+
+    /**
+     * A thread group for the executor.
+     */
     private final ThreadGroup threadGroup;
 
+    /**
+     * The class path of the process manager.
+     */
     private final List<File> jobProcessManagerClasspath = new ArrayList<>();
+
+    /**
+     * The directory in which the executor should start.
+     */
     private File jobExecuterDirectory = null;
+
+    /**
+     * Logging.
+     */
     private static Logger log = getLogger(Executer.class);
 
+    /**
+     * Create a new local executor.
+     */
     public LocalJobExecuterFactory() {
         this.threadGroup = new ThreadGroup("LocalJob");
     }
 
+    /**
+     * Start the executor.
+     *
+     * @throws IOException If the local executor couldn't be found.
+     */
     @PostConstruct
     void installJobExecuter() throws IOException {
         // Find the JobManager resource
@@ -95,6 +142,9 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         }
     }
 
+    /**
+     * Create a new local execution.
+     */
     @Override
     public JobExecuter createJobExecuter(final JobManager manager,
             final URL baseUrl) throws IOException {
@@ -118,31 +168,61 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         return new Executer(requireNonNull(manager), arguments, uuid);
     }
 
+    /**
+     * Runs a job locally.
+     */
     class Executer implements JobExecuter, Runnable {
+
+        /**
+         * The job manager to report to.
+         */
         private final JobManager jobManager;
+
+        /**
+         * The arguments to send to the command line.
+         */
         private final List<String> arguments;
+
+        /**
+         * The ID of the executor.
+         */
         private final String id;
+
+        /**
+         * The java executable to run.
+         */
         private final File javaExec;
 
+        /**
+         * The output log file.
+         */
         private final File outputLog = createTempFile("exec", ".log");
+
+        /**
+         * The executing external process.
+         */
         private Process process;
+
+        /**
+         * Any exception discovered when starting the process.
+         */
         private IOException startException;
 
         /**
-         * Create a JobExecuter
+         * Create a JobExecuter.
          *
-         * @param arguments
-         *            The arguments to use
-         * @param id
-         *            The id of the executer
+         * @param jobManagerParam The Job Manager to report to.
+         * @param argumentsParam The command line arguments for the executor.
+         * @param idParam The id of the executer
          * @throws IOException
          *             If there is an error creating the log file
          */
-        Executer(final JobManager jobManager, final List<String> arguments,
-                final String id) throws IOException {
-            this.jobManager = jobManager;
-            this.arguments = arguments;
-            this.id = id;
+        Executer(final JobManager jobManagerParam,
+                final List<String> argumentsParam,
+                final String idParam) throws IOException {
+            this.jobManager = jobManagerParam;
+            this.arguments = argumentsParam;
+            this.id = idParam;
             javaExec = getJavaExec();
         }
 
@@ -157,7 +237,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         }
 
         /**
-         * Runs the external job
+         * Runs the external job.
          *
          * @throws IOException
          *             If there is an error starting the job
@@ -177,6 +257,11 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
             reportResult();
         }
 
+        /**
+         * Construct the arguments from the class properties.
+         *
+         * @return The arguments as a list of strings.
+         */
         private List<String> constructArguments() {
             final List<String> command = new ArrayList<>();
             command.add(javaExec.getAbsolutePath());
@@ -200,6 +285,12 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
             return command;
         }
 
+        /**
+         * Start executing the process.
+         *
+         * @param command The command and arguments
+         * @return The output of the process as a pipe
+         */
         private JobOutputPipe startSubprocess(final List<String> command) {
             final ProcessBuilder builder = new ProcessBuilder(command);
             builder.directory(jobExecuterDirectory);
@@ -223,6 +314,9 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
             return pipe;
         }
 
+        /**
+         * Report the results of the job using the log.
+         */
         private void reportResult() {
             final StringBuilder logToAppend = new StringBuilder();
             try (BufferedReader reader =
@@ -244,6 +338,8 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
          * Gets an OutputStream which writes to the process stdin.
          *
          * @return An OutputStream
+         * @throws IOException If the output stream of the process can't be
+         *     obtained
          */
         public OutputStream getProcessOutputStream() throws IOException {
             synchronized (this) {
@@ -262,7 +358,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         }
 
         /**
-         * Gets the location of the process log file
+         * Gets the location of the process log file.
          *
          * @return The location of the log file
          */
@@ -271,11 +367,32 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         }
     }
 
+    /**
+     * A pipe between the job process output and a writer.
+     */
     class JobOutputPipe extends Thread implements AutoCloseable {
+
+        /**
+         *  The input to the pipe.
+         */
         private final BufferedReader reader;
+
+        /**
+         * The place where the output should be written.
+         */
         private final PrintWriter writer;
+
+        /**
+         * True to stop execution.
+         */
         private volatile boolean done;
 
+        /**
+         * Creates a pipe.
+         *
+         * @param input Input stream to read from
+         * @param output Output writer to write to
+         */
         JobOutputPipe(final InputStream input, final PrintWriter output) {
             super(threadGroup, "JobOutputPipe");
             reader = new BufferedReader(new InputStreamReader(input));
