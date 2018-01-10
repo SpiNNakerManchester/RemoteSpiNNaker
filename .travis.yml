@@ -1,0 +1,20 @@
+language: java
+jdk: oraclejdk8
+cache:
+  directories:
+    - $HOME/.m2
+before_install:
+  - cd RemoteSpiNNaker
+install:
+  - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V -Dmaven.compiler.showDeprecation=true
+script:
+  - mvn test -B -Dmaven.javadoc.skip=true
+  ############################################
+  ### STYLE ENFORCEMENT CURRENTLY DISABLED ###
+  ############################################
+  ### Much work required to fix the code   ###
+  ### style before this can be turned on   ###
+  ### on a main branch.                    ###
+  ############################################
+  # - mvn checkstyle:check -Dmaven.javadoc.skip=true
+  - mvn javadoc:javadoc

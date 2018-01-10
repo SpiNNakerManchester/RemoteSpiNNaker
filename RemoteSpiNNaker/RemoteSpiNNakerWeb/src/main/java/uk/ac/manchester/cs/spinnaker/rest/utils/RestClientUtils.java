@@ -49,7 +49,8 @@ import org.slf4j.Logger;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
-public class RestClientUtils {
+public abstract class RestClientUtils {
+	private RestClientUtils() {} // No instances, please, we're British!
     private static Logger log = getLogger(RestClientUtils.class);
 
     protected static ResteasyClient createRestClient(final URL url,
@@ -109,6 +110,9 @@ public class RestClientUtils {
     private static X509Certificate getTrustedCert() {
         return null;
     }
+    /**
+     * The security protocol that is requested for a secure connection.
+     */
     public static final String SECURE_PROTOCOL = "TLS";
 
     /**
@@ -153,6 +157,8 @@ public class RestClientUtils {
     /**
      * Create a REST client proxy for a class to the given URL
      *
+     * @param <T>
+     *            The type of interface to proxy
      * @param url
      *            The URL of the REST service
      * @param credentials
@@ -161,6 +167,8 @@ public class RestClientUtils {
      *            The authentication scheme in use
      * @param clazz
      *            The interface to proxy
+     * @param providers
+     *            The objects to register with the underlying client
      * @return The proxy instance
      */
     public static <T> T createClient(final URL url,
@@ -180,6 +188,8 @@ public class RestClientUtils {
     /**
      * Create a new REST client with BASIC authentication.
      *
+     * @param <T>
+     *            The type of interface to proxy
      * @param url
      *            The URL of the REST service
      * @param username
@@ -188,6 +198,8 @@ public class RestClientUtils {
      *            The password for authentication
      * @param clazz
      *            The interface to proxy
+     * @param providers
+     *            The objects to register with the underlying client
      * @return The proxy instance
      */
     public static <T> T createBasicClient(final URL url, final String username,
@@ -201,6 +213,8 @@ public class RestClientUtils {
     /**
      * Create a new REST client with APIKey authentication.
      *
+     * @param <T>
+     *            The type of interface to proxy
      * @param url
      *            The URL of the REST service
      * @param username
@@ -210,7 +224,7 @@ public class RestClientUtils {
      * @param clazz
      *            The interface to proxy
      * @param providers
-     *            The objects to register with the underlying client;
+     *            The objects to register with the underlying client
      * @return The proxy instance
      */
     public static <T> T createApiKeyClient(final URL url, final String username,
@@ -231,12 +245,16 @@ public class RestClientUtils {
     /**
      * Create a new REST client with Bearer authentication.
      *
+     * @param <T>
+     *            The type of interface to proxy
      * @param url
      *            The URL of the REST service
      * @param token
      *            The Bearer token for authentication
      * @param clazz
      *            The interface to proxy
+     * @param providers
+     *            The objects to register with the underlying client
      * @return The proxy instance
      */
     public static <T> T createBearerClient(final URL url, final String token,
@@ -253,8 +271,7 @@ public class RestClientUtils {
     }
 
     private static abstract class ConnectionIndependentScheme
-            extends
-                RFC2617Scheme {
+            extends RFC2617Scheme {
         private final boolean complete = false;
         private final String name;
 

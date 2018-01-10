@@ -34,6 +34,8 @@ public class JobProcessFactory {
     /**
      * Adds a new type mapping.
      *
+     * @param <P>
+     *            The type of parameters that this mapping will handle.
      * @param parameterType
      *            The job parameter type
      * @param processType
@@ -52,6 +54,8 @@ public class JobProcessFactory {
     /**
      * Creates a {@link JobProcess} given a {@link JobParameters} instance.
      *
+     * @param <P>
+     *            The type of the job parameters.
      * @param parameters
      *            The parameters of the job
      * @return A JobProcess matching the parameters
