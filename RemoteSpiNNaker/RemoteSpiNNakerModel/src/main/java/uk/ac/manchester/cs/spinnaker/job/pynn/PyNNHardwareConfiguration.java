@@ -16,6 +16,11 @@ public class PyNNHardwareConfiguration {
 
     public static final String SOFTWARE_VERSION_KEY = "spynnaker_version";
 
+    public static final String LOW_LEVEL_SOFTWARE_VERSION_KEY =
+        "spinnaker_tools_version";
+
+    public static final String GIT_BASE_TAG_KEY = "git_base_tag";
+
     public static final String MAKE_DIRS_KEY = "make_dirs";
 
     public static final String PYTHON_SETUP_DIRS_KEY = "setup_dirs";
@@ -24,6 +29,10 @@ public class PyNNHardwareConfiguration {
 
     private static final String DEFAULT_SOFTWARE_VERSION = "4.0.0";
 
+    private static final String DEFAULT_LOW_LEVEL_SOFTWARE_VERSION = "3.1.1";
+
+    private static final String DEFAULT_GIT_BASE_TAG = "master";
+
     private static final String DEFAULT_MAKE_DIRS = "";
 
     private static final String DEFAULT_PYTHON_SETUP_DIRS = "";
@@ -31,6 +40,8 @@ public class PyNNHardwareConfiguration {
     private String pyNNVersion = null;
 
     private String softwareVersion = null;
+
+    private String lowLevelSoftwareVersion = null;
 
     private String[] makeDirs = null;
 

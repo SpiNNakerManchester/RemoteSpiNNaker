@@ -100,6 +100,10 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         GITHUB + "sPyNNaker8"
     };
 
+    private static final String[] GFE_REPOSITORIES = new String[]{
+        GITHUB + "SpiNNakerGraphFrontEnd"
+    };
+
     private static final String[] MAKE_DIRS = new String[]{
         "spinnaker_tools",
         "spinn_common",
@@ -116,9 +120,19 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         "PACMAN",
         "SpiNNMan",
         "SpiNNFrontEndCommon",
-        "sPyNNaker",
-        "sPyNNaker7",
+        "sPyNNaker"
+    };
+
+    private static final String[] PYNN_7_SETUP_DIRS = new String[]{
+        "sPyNNaker7"
+    };
+
+    private static final String[] PYNN_8_SETUP_DIRS = new String[]{
         "sPyNNaker8"
+    };
+
+    private static final String[] GFE_SETUP_DIRS = new String[]{
+
     };
 
     private File workingDirectory = null;
