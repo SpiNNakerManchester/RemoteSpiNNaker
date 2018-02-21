@@ -3,11 +3,14 @@ package uk.ac.manchester.cs.spinnaker.job_parameters;
 import static org.eclipse.jgit.api.Git.cloneRepository;
 
 import java.io.File;
+import java.net.URISyntaxException;
 
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.transport.URIish;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
 import uk.ac.manchester.cs.spinnaker.job.JobParameters;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
@@ -45,11 +48,18 @@ class GitPyNNJobParametersFactory extends JobParametersFactory {
         }
     }
 
-    /** Constructs the parameters by checking out the git repository. */
+    /** Constructs the parameters by checking out the git repository */
     private JobParameters constructParameters(final Job job,
             final File workingDirectory, final String experimentDescription)
-            throws GitAPIException, InvalidRemoteException, TransportException {
+            throws GitAPIException, InvalidRemoteException, TransportException,
+            URISyntaxException {
         final CloneCommand clone = cloneRepository();
+        URIish urish = new URIish(experimentDescription);
+        if (urish.getUser() != null) {
+            clone.setCredentialsProvider(
+                new UsernamePasswordCredentialsProvider(
+                    urish.getUser(), urish.getPass()));
+        }
         clone.setURI(experimentDescription);
         clone.setDirectory(workingDirectory);
         clone.setCloneSubmodules(true);
