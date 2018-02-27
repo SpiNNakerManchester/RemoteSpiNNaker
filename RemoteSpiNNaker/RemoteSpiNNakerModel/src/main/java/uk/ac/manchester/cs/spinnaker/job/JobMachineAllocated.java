@@ -1,21 +1,33 @@
 package uk.ac.manchester.cs.spinnaker.job;
 
+/**
+ * Indicates whether a machine was allocated for a job.
+ */
 public class JobMachineAllocated {
-    private boolean allocated = false;
+	private boolean allocated;
 
-    public JobMachineAllocated() {
-        // Does Nothing
-    }
+	/**
+	 * Default constructor.
+	 */
+	public JobMachineAllocated() {
+		this(false);
+	}
 
-    public JobMachineAllocated(final boolean allocated) {
-        this.allocated = allocated;
-    }
+	/**
+	 * Create an instance.
+	 *
+	 * @param allocated
+	 *            Whether the job was allocated.
+	 */
+	public JobMachineAllocated(boolean allocated) {
+		this.allocated = allocated;
+	}
 
-    public boolean isAllocated() {
-        return this.allocated;
-    }
+	public boolean isAllocated() {
+		return this.allocated;
+	}
 
-    public void setAllocated(final boolean allocated) {
-        this.allocated = allocated;
-    }
+	public void setAllocated(boolean allocated) {
+		this.allocated = allocated;
+	}
 }

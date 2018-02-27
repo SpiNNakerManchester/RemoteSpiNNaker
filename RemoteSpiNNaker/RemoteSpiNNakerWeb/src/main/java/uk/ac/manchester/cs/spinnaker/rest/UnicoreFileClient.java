@@ -13,23 +13,23 @@ import javax.ws.rs.WebApplicationException;
  */
 @Path("/storages")
 public interface UnicoreFileClient {
-    /**
-     * Upload a file
-     *
-     * @param id
-     *            The id of the storage on the server.
-     * @param filePath
-     *            The path at which to store the file (directories are
-     *            automatically created).
-     * @param input
-     *            The input stream containing the file to upload.
-     * @throws WebApplicationException
-     *             If anything goes wrong.
-     */
-    @PUT
-    @Path("{id}/files/{filePath}")
-    @Consumes("application/octet-stream")
-    public void upload(@PathParam("id") String id,
-            @PathParam("filePath") String filePath, InputStream input)
-            throws WebApplicationException;
+	/**
+	 * Upload a file.
+	 *
+	 * @param id
+	 *            The id of the storage on the server.
+	 * @param filePath
+	 *            The path at which to store the file (directories are
+	 *            automatically created).
+	 * @param input
+	 *            The input stream containing the file to upload.
+	 * @throws WebApplicationException
+	 *             If anything goes wrong.
+	 */
+	@PUT
+	@Path("{id}/files/{filePath}")
+	@Consumes("application/octet-stream")
+	void upload(@PathParam("id") String id,
+			@PathParam("filePath") String filePath, InputStream input)
+			throws WebApplicationException;
 }

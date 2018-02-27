@@ -18,48 +18,50 @@ import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
 import uk.ac.manchester.cs.spinnaker.job.JobManagerInterface;
 
+/**
+ * Manufactures communication proxies for the main service website.
+ */
 public abstract class RemoteSpiNNakerAPI {
-    private RemoteSpiNNakerAPI() {
-    }
+	private RemoteSpiNNakerAPI() {
+	}
 
-    private static final Charset UTF8 = Charset.forName("UTF-8");
+	private static final Charset UTF8 = Charset.forName("UTF-8");
 
-    /**
-     * How to talk to the main website.
-     *
-     * @param url
-     *            Where the main website is located.
-     * @param authToken
-     *            How to authenticate to the main website, or <tt>null</tt> to
-     *            not provide auth. If given, Should be the concatenation of the
-     *            username, a colon (<tt>:</tt>), and the password.
-     * @return the proxy for the job manager service
-     */
-    public static JobManagerInterface createJobManager(final String url,
-            final String authToken) {
-        final ResteasyClientBuilder builder = new ResteasyClientBuilder();
-        // TODO Add https trust store, etc.
-        final ResteasyClient client = builder.build();
-        JacksonJsonProvider provider = new JacksonJsonProvider();
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JodaModule());
-        provider.setMapper(mapper);
-        client.register(provider);
-        if (authToken != null) {
-            client.register(getBasicAuthFilter(authToken));
-        }
-        return client.target(url).proxy(JobManagerInterface.class);
-    }
+	/**
+	 * How to talk to the main website.
+	 *
+	 * @param url
+	 *            Where the main website is located.
+	 * @param authToken
+	 *            How to authenticate to the main website, or <tt>null</tt> to
+	 *            not provide auth. If given, Should be the concatenation of the
+	 *            username, a colon (<tt>:</tt>), and the password.
+	 * @return an interface to the job manager, configured ready to be used.
+	 */
+	public static JobManagerInterface createJobManager(String url,
+			String authToken) {
+		ResteasyClientBuilder builder = new ResteasyClientBuilder();
+		// TODO Add https trust store, etc.
+		ResteasyClient client = builder.build();
+		JacksonJsonProvider provider = new JacksonJsonProvider();
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.registerModule(new JodaModule());
+		provider.setMapper(mapper);
+		client.register(provider);
+		if (authToken != null) {
+			client.register(getBasicAuthFilter(authToken));
+		}
+		return client.target(url).proxy(JobManagerInterface.class);
+	}
 
-    private static ClientRequestFilter
-            getBasicAuthFilter(final String authToken) {
-        final String payload = "Basic " + encodeBytes(authToken.getBytes(UTF8));
-        return new ClientRequestFilter() {
-            @Override
-            public void filter(final ClientRequestContext requestContext)
-                    throws IOException {
-                requestContext.getHeaders().add(AUTHORIZATION, payload);
-            }
-        };
-    }
+	private static ClientRequestFilter getBasicAuthFilter(String authToken) {
+		final String payload = "Basic " + encodeBytes(authToken.getBytes(UTF8));
+		return new ClientRequestFilter() {
+			@Override
+			public void filter(ClientRequestContext requestContext)
+					throws IOException {
+				requestContext.getHeaders().add(AUTHORIZATION, payload);
+			}
+		};
+	}
 }

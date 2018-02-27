@@ -1,7 +1,7 @@
 package uk.ac.manchester.cs.spinnaker.rest.utils;
 
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
-import static com.fasterxml.jackson.databind.PropertyNamingStrategy.SNAKE_CASE;
+import static com.fasterxml.jackson.databind.PropertyNamingStrategy.CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES;
 import static javax.ws.rs.core.MediaType.WILDCARD;
 
 import java.io.IOException;
@@ -24,49 +24,62 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
+/**
+ * Extended JSON serialisation handler.
+ */
 @Provider
 @Consumes(WILDCARD)
 @Produces(WILDCARD)
 public class CustomJacksonJsonProvider extends JacksonJsonProvider {
-    private final Set<ObjectMapper> registeredMappers = new HashSet<>();
-    private final SimpleModule module = new SimpleModule();
-    private final JodaModule jodaModule = new JodaModule();
+	private final Set<ObjectMapper> registeredMappers = new HashSet<>();
+	private final SimpleModule module = new SimpleModule();
+	private final JodaModule jodaModule = new JodaModule();
 
-    public <T> void addDeserialiser(final Class<T> type,
-            final StdDeserializer<T> deserialiser) {
-        module.addDeserializer(type, deserialiser);
-    }
+	/**
+	 * Add a deserialiser for a specific type.
+	 *
+	 * @param <T>
+	 *            The type that will be deserialised.
+	 * @param type
+	 *            The type.
+	 * @param deserialiser
+	 *            The deserialiser.
+	 */
+	public <T> void addDeserialiser(Class<T> type,
+			StdDeserializer<T> deserialiser) {
+		module.addDeserializer(type, deserialiser);
+	}
 
-    private void registerMapper(final Class<?> type,
-            final MediaType mediaType) {
-        final ObjectMapper mapper = locateMapper(type, mediaType);
-        if (!registeredMappers.contains(mapper)) {
-            mapper.registerModule(module);
-            mapper.setPropertyNamingStrategy(SNAKE_CASE);
-            mapper.configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
-            mapper.registerModule(jodaModule);
-            registeredMappers.add(mapper);
-        }
-    }
+	@SuppressWarnings("deprecation")
+	private void registerMapper(Class<?> type, MediaType mediaType) {
+		ObjectMapper mapper = locateMapper(type, mediaType);
+		if (!registeredMappers.contains(mapper)) {
+			mapper.registerModule(module);
+			mapper.setPropertyNamingStrategy(
+					CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES);
+			mapper.configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
+			mapper.registerModule(jodaModule);
+			registeredMappers.add(mapper);
+		}
+	}
 
-    @Override
-    public Object readFrom(final Class<Object> type, final Type genericType,
-            final Annotation[] annotations, final MediaType mediaType,
-            final MultivaluedMap<String, String> httpHeaders,
-            final InputStream entityStream) throws IOException {
-        registerMapper(type, mediaType);
-        return super.readFrom(type, genericType, annotations, mediaType,
-                httpHeaders, entityStream);
-    }
+	@Override
+	public Object readFrom(Class<Object> type, Type genericType,
+			Annotation[] annotations, MediaType mediaType,
+			MultivaluedMap<String, String> httpHeaders,
+			InputStream entityStream) throws IOException {
+		registerMapper(type, mediaType);
+		return super.readFrom(type, genericType, annotations, mediaType,
+				httpHeaders, entityStream);
+	}
 
-    @Override
-    public void writeTo(final Object value, final Class<?> type,
-            final Type genericType, final Annotation[] annotations,
-            final MediaType mediaType,
-            final MultivaluedMap<String, Object> httpHeaders,
-            final OutputStream entityStream) throws IOException {
-        registerMapper(type, mediaType);
-        super.writeTo(value, type, genericType, annotations, mediaType,
-                httpHeaders, entityStream);
-    }
+	@Override
+	public void writeTo(Object value, Class<?> type, Type genericType,
+			Annotation[] annotations, MediaType mediaType,
+			MultivaluedMap<String, Object> httpHeaders,
+			OutputStream entityStream) throws IOException {
+		registerMapper(type, mediaType);
+		super.writeTo(value, type, genericType, annotations, mediaType,
+				httpHeaders, entityStream);
+	}
 }

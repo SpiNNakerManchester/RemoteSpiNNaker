@@ -20,80 +20,204 @@ import javax.ws.rs.core.Response;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
 import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
 
+/**
+ * JAX-RS interface to a {@link Job} for the purposes of management.
+ */
 @Path("/job")
 public interface JobManagerInterface {
-    String APPLICATION_ZIP = "application/zip";
-    String JOB_PROCESS_MANAGER_ZIP = "RemoteSpiNNakerJobProcessManager.zip";
+	/** The media type of ZIP files. */
+	String APPLICATION_ZIP = "application/zip";
+	/**
+	 * The name of the ZIP file we like to serve up when giving people a remote
+	 * process manager.
+	 */
+	String JOB_PROCESS_MANAGER_ZIP = "RemoteSpiNNakerJobProcessManager.zip";
 
-    @GET
-    @Path("next")
-    @Produces(APPLICATION_JSON)
-    Job getNextJob(@QueryParam("executerId") String executerId);
+	/**
+	 * Get the job manager to find out what its next job will be.
+	 *
+	 * @param executerId
+	 *            The executor to talk about.
+	 * @return The job discovered.
+	 */
+	@GET
+	@Path("next")
+	@Produces(APPLICATION_JSON)
+	Job getNextJob(@QueryParam("executerId") String executerId);
 
-    @GET
-    @Path("{id}/machine/max")
-    @Produces(APPLICATION_JSON)
-    SpinnakerMachine getLargestJobMachine(@PathParam("id") int id,
-            @QueryParam("runTime") @DefaultValue("-1") double runTime);
+	/**
+	 * Get the largest machine that could run a job.
+	 *
+	 * @param id
+	 *            The job ID.
+	 * @param runTime
+	 *            How much resource to allocate. Can be omitted.
+	 * @return The machine descriptor.
+	 */
+	@GET
+	@Path("{id}/machine/max")
+	@Produces(APPLICATION_JSON)
+	SpinnakerMachine getLargestJobMachine(@PathParam("id") int id,
+			@QueryParam("runTime") @DefaultValue("-1") double runTime);
 
-    @GET
-    @Path("{id}/machine")
-    @Produces(APPLICATION_JSON)
-    SpinnakerMachine getJobMachine(@PathParam("id") int id,
-            @QueryParam("nCores") @DefaultValue("-1") int nCores,
-            @QueryParam("nChips") @DefaultValue("-1") int nChips,
-            @QueryParam("nBoards") @DefaultValue("-1") int nBoards,
-            @QueryParam("runTime") @DefaultValue("-1") double runTime);
+	/**
+	 * Get a machine for running a job. Typically, only one of <tt>nCores</tt>,
+	 * <tt>nChips</tt> and <tt>nBoards</tt> will be specified.
+	 *
+	 * @param id
+	 *            The job ID.
+	 * @param nCores
+	 *            The number of cores wanted. Can be omitted.
+	 * @param nChips
+	 *            The number of chips wanted. Can be omitted.
+	 * @param nBoards
+	 *            The number of boards wanted. Can be omitted.
+	 * @param runTime
+	 *            How much resource to allocate. Can be omitted.
+	 * @return The machine descriptor.
+	 */
+	@GET
+	@Path("{id}/machine")
+	@Produces(APPLICATION_JSON)
+	SpinnakerMachine getJobMachine(@PathParam("id") int id,
+			@QueryParam("nCores") @DefaultValue("-1") int nCores,
+			@QueryParam("nChips") @DefaultValue("-1") int nChips,
+			@QueryParam("nBoards") @DefaultValue("-1") int nBoards,
+			@QueryParam("runTime") @DefaultValue("-1") double runTime);
 
-    @GET
-    @Path("{id}/machine/checkLease")
-    @Produces(APPLICATION_JSON)
-    JobMachineAllocated checkMachineLease(@PathParam("id") int id,
-            @QueryParam("waitTime") @DefaultValue("10000") int waitTime);
+	/**
+	 * Check if the job is still allocated to a machine.
+	 *
+	 * @param id
+	 *            The job ID
+	 * @param waitTime
+	 *            How long should the lease time be. Can be omitted.
+	 * @return Whether the job is allocated.
+	 */
+	@GET
+	@Path("{id}/machine/checkLease")
+	@Produces(APPLICATION_JSON)
+	JobMachineAllocated checkMachineLease(@PathParam("id") int id,
+			@QueryParam("waitTime") @DefaultValue("10000") int waitTime);
 
-    @GET
-    @Path("{id}/machine/extendLease")
-    void extendJobMachineLease(@PathParam("id") int id,
-            @QueryParam("runTime") @DefaultValue("-1") double runTime);
+	/**
+	 * Extend the lease of the job.
+	 *
+	 * @param id
+	 *            The job ID
+	 * @param runTime
+	 *            How long has the job actually run. Can be omitted.
+	 */
+	@GET
+	@Path("{id}/machine/extendLease")
+	void extendJobMachineLease(@PathParam("id") int id,
+			@QueryParam("runTime") @DefaultValue("-1") double runTime);
 
-    @POST
-    @Path("{id}/log")
-    @Consumes("text/plain")
-    void appendLog(@PathParam("id") int id, String logToAppend);
+	/**
+	 * Add to the log of a job.
+	 *
+	 * @param id
+	 *            The job ID
+	 * @param logToAppend
+	 *            The string to append to the log.
+	 */
+	@POST
+	@Path("{id}/log")
+	@Consumes("text/plain")
+	void appendLog(@PathParam("id") int id, String logToAppend);
 
-    @POST
-    @Path("{id}/provenance")
-    void addProvenance(@PathParam("id") int id,
-            @QueryParam("name") List<String> path,
-            @QueryParam("value") String value);
+	/**
+	 * Add to the provenance of a job.
+	 *
+	 * @param id
+	 *            The job ID
+	 * @param path
+	 *            The path into the JSON provenance doc.
+	 * @param value
+	 *            The value to set at that point.
+	 */
+	@POST
+	@Path("{id}/provenance")
+	void addProvenance(@PathParam("id") int id,
+			@QueryParam("name") List<String> path,
+			@QueryParam("value") String value);
 
-    @POST
-    @Path("{projectId}/{id}/addoutput")
-    @Consumes(APPLICATION_OCTET_STREAM)
-    void addOutput(@PathParam("projectId") String projectId,
-            @PathParam("id") int id,
-            @QueryParam("outputFilename") String output, InputStream input);
+	/**
+	 * Add to the output files of a job.
+	 *
+	 * @param projectId
+	 *            The ID of the project owning the job.
+	 * @param id
+	 *            The job ID
+	 * @param output
+	 *            The name of the file to write to.
+	 * @param input
+	 *            The contents of the file, streamed.
+	 */
+	@POST
+	@Path("{projectId}/{id}/addoutput")
+	@Consumes(APPLICATION_OCTET_STREAM)
+	void addOutput(@PathParam("projectId") String projectId,
+			@PathParam("id") int id,
+			@QueryParam("outputFilename") String output, InputStream input);
 
-    @POST
-    @Path("{projectId}/{id}/finished")
-    @Consumes(TEXT_PLAIN)
-    void setJobFinished(@PathParam("projectId") String projectId,
-            @PathParam("id") int id, String logToAppend,
-            @QueryParam("baseFilename") String baseFilename,
-            @QueryParam("outputFilename") List<String> outputs);
+	/**
+	 * Mark the job as finished.
+	 *
+	 * @param projectId
+	 *            The ID of the project owning the job.
+	 * @param id
+	 *            The id of the job.
+	 * @param logToAppend
+	 *            The job log data.
+	 * @param baseFilename
+	 *            The base of filenames.
+	 * @param outputs
+	 *            The list of output files.
+	 */
+	@POST
+	@Path("{projectId}/{id}/finished")
+	@Consumes(TEXT_PLAIN)
+	void setJobFinished(@PathParam("projectId") String projectId,
+			@PathParam("id") int id, String logToAppend,
+			@QueryParam("baseFilename") String baseFilename,
+			@QueryParam("outputFilename") List<String> outputs);
 
-    @POST
-    @Path("{projectId}/{id}/error")
-    @Consumes(APPLICATION_JSON)
-    void setJobError(@PathParam("projectId") String projectId,
-            @PathParam("id") int id, @QueryParam("error") String error,
-            @QueryParam("logToAppend") String logToAppend,
-            @QueryParam("baseFilename") String baseFilename,
-            @QueryParam("outputFilename") List<String> outputs,
-            RemoteStackTrace stackTrace);
+	/**
+	 * Mark the job as finished.
+	 *
+	 * @param projectId
+	 *            The project owning the job.
+	 * @param id
+	 *            The id of the job.
+	 * @param error
+	 *            The error message.
+	 * @param logToAppend
+	 *            The job log data.
+	 * @param baseFilename
+	 *            The base of filenames.
+	 * @param outputs
+	 *            The list of output files.
+	 * @param stackTrace
+	 *            The stack trace of the exception that caused the error.
+	 */
+	@POST
+	@Path("{projectId}/{id}/error")
+	@Consumes(APPLICATION_JSON)
+	void setJobError(@PathParam("projectId") String projectId,
+			@PathParam("id") int id, @QueryParam("error") String error,
+			@QueryParam("logToAppend") String logToAppend,
+			@QueryParam("baseFilename") String baseFilename,
+			@QueryParam("outputFilename") List<String> outputs,
+			RemoteStackTrace stackTrace);
 
-    @GET
-    @Path(JOB_PROCESS_MANAGER_ZIP)
-    @Produces(APPLICATION_ZIP)
-    Response getJobProcessManager();
+	/**
+	 * Get the implementation code of the Job Process Manager.
+	 *
+	 * @return a response containing the ZIP file.
+	 */
+	@GET
+	@Path(JOB_PROCESS_MANAGER_ZIP)
+	@Produces(APPLICATION_ZIP)
+	Response getJobProcessManager();
 }

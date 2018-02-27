@@ -1,16 +1,16 @@
 package uk.ac.manchester.cs.spinnaker.job.nmpi;
 
 /**
- * A message indicating that the queue is empty
+ * A message indicating that the queue is empty.
  */
 public class QueueEmpty implements QueueNextResponse {
-    private String warning;
+	private String warning;
 
-    public String getWarning() {
-        return warning;
-    }
+	public String getWarning() {
+		return warning;
+	}
 
-    public void setWarning(final String warning) {
-        this.warning = warning;
-    }
+	public void setWarning(String warning) {
+		this.warning = warning;
+	}
 }

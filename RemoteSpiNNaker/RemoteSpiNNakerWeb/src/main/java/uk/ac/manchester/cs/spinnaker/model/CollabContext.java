@@ -1,76 +1,79 @@
 package uk.ac.manchester.cs.spinnaker.model;
 
+/**
+ * POJO holding the description of a HBP Collabratory context.
+ */
 public class CollabContext {
-    private String appId;
-    private Collab collab;
-    private String context;
-    private int id;
-    private String name;
-    private int orderIndex;
-    private int parent;
-    private String type;
+	private String appId;
+	private Collab collab;
+	private String context;
+	private int id;
+	private String name;
+	private int orderIndex;
+	private int parent;
+	private String type;
 
-    public String getAppId() {
-        return appId;
-    }
+	public String getAppId() {
+		return appId;
+	}
 
-    public void setAppId(final String appId) {
-        this.appId = appId;
-    }
+	public void setAppId(String appId) {
+		this.appId = appId;
+	}
 
-    public Collab getCollab() {
-        return collab;
-    }
+	public Collab getCollab() {
+		return collab;
+	}
 
-    public void setCollab(final Collab collab) {
-        this.collab = collab;
-    }
+	public void setCollab(Collab collab) {
+		this.collab = collab;
+	}
 
-    public String getContext() {
-        return context;
-    }
+	public String getContext() {
+		return context;
+	}
 
-    public void setContext(final String context) {
-        this.context = context;
-    }
+	public void setContext(String context) {
+		this.context = context;
+	}
 
-    public int getId() {
-        return id;
-    }
+	public int getId() {
+		return id;
+	}
 
-    public void setId(final int id) {
-        this.id = id;
-    }
+	public void setId(int id) {
+		this.id = id;
+	}
 
-    public String getName() {
-        return name;
-    }
+	public String getName() {
+		return name;
+	}
 
-    public void setName(final String name) {
-        this.name = name;
-    }
+	public void setName(String name) {
+		this.name = name;
+	}
 
-    public int getOrderIndex() {
-        return orderIndex;
-    }
+	public int getOrderIndex() {
+		return orderIndex;
+	}
 
-    public void setOrderIndex(final int orderIndex) {
-        this.orderIndex = orderIndex;
-    }
+	public void setOrderIndex(int orderIndex) {
+		this.orderIndex = orderIndex;
+	}
 
-    public int getParent() {
-        return parent;
-    }
+	public int getParent() {
+		return parent;
+	}
 
-    public void setParent(final int parent) {
-        this.parent = parent;
-    }
+	public void setParent(int parent) {
+		this.parent = parent;
+	}
 
-    public String getType() {
-        return type;
-    }
+	public String getType() {
+		return type;
+	}
 
-    public void setType(final String type) {
-        this.type = type;
-    }
+	public void setType(String type) {
+		this.type = type;
+	}
 }

@@ -12,48 +12,72 @@ import org.springframework.beans.factory.annotation.Value;
 import uk.ac.manchester.cs.spinnaker.model.CollabPermissions;
 import uk.ac.manchester.cs.spinnaker.rest.CollabRestService;
 
+/**
+ * The client for the HBP Collabratory security service.
+ */
 public class CollabSecurityService {
-    private final Logger logger = LoggerFactory.getLogger(getClass());
-    @Value("${collab.service.uri}")
-    private URL collabServiceUrl;
+	private final Logger logger = LoggerFactory.getLogger(getClass());
+	@Value("${collab.service.uri}")
+	private URL collabServiceUrl;
 
-    private CollabRestService getServiceInstance() {
-        // Do not factor out; depends on thread context
-        return createOIDCClient(collabServiceUrl, CollabRestService.class);
-    }
+	private CollabRestService getServiceInstance() {
+		// Do not factor out; depends on thread context
+		return createOIDCClient(collabServiceUrl, CollabRestService.class);
+	}
 
-    private CollabPermissions getPermissions(final int id) {
-        return requireNonNull(getServiceInstance().getCollabPermissions(id));
-    }
+	private CollabPermissions getPermissions(int id) {
+		return requireNonNull(getServiceInstance().getCollabPermissions(id));
+	}
 
-    public boolean canRead(final int id) {
-        try {
-            getPermissions(id);
-            return true;
-        } catch (final Exception e) {
-            logger.debug("Error getting collab permissions, "
-                    + "assumed access denied", e);
-            return false;
-        }
-    }
+	/**
+	 * Test if the user has read permissions to the given ID.
+	 *
+	 * @param id
+	 *            Identifier to test against.
+	 * @return true if reading is permitted.
+	 */
+	public boolean canRead(int id) {
+		try {
+			getPermissions(id);
+			return true;
+		} catch (Exception e) {
+			logger.debug("Error getting collab permissions, "
+					+ "assumed access denied", e);
+			return false;
+		}
+	}
 
-    public boolean canUpdate(final int id) {
-        try {
-            return getPermissions(id).isUpdate();
-        } catch (final Exception e) {
-            logger.debug("Error getting collab permissions, "
-                    + "assumed access denied", e);
-            return false;
-        }
-    }
+	/**
+	 * Test if the user has write permissions to the given ID.
+	 *
+	 * @param id
+	 *            Identifier to test against.
+	 * @return true if writing is permitted.
+	 */
+	public boolean canUpdate(int id) {
+		try {
+			return getPermissions(id).isUpdate();
+		} catch (Exception e) {
+			logger.debug("Error getting collab permissions, "
+					+ "assumed access denied", e);
+			return false;
+		}
+	}
 
-    public boolean canDelete(final int id) {
-        try {
-            return getPermissions(id).isDelete();
-        } catch (final Exception e) {
-            logger.debug("Error getting collab permissions, "
-                    + "assumed access denied", e);
-            return false;
-        }
-    }
+	/**
+	 * Test if the user has delete permissions to the given ID.
+	 *
+	 * @param id
+	 *            Identifier to test against.
+	 * @return true if deletion is permitted.
+	 */
+	public boolean canDelete(int id) {
+		try {
+			return getPermissions(id).isDelete();
+		} catch (Exception e) {
+			logger.debug("Error getting collab permissions, "
+					+ "assumed access denied", e);
+			return false;
+		}
+	}
 }

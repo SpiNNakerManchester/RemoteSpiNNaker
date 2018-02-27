@@ -8,18 +8,40 @@ import java.net.URL;
 import org.pac4j.oidc.profile.OidcProfile;
 import org.pac4j.springframework.security.authentication.ClientAuthenticationToken;
 
-public class SpringRestClientUtils {
-    public static <T> T createOIDCClient(final URL url, final Class<T> clazz) {
-        try {
-            final ClientAuthenticationToken clientAuth =
-                    (ClientAuthenticationToken) getContext()
-                            .getAuthentication();
-            final OidcProfile oidcProfile =
-                    (OidcProfile) clientAuth.getUserProfile();
-            return createBearerClient(url, oidcProfile.getIdTokenString(),
-                    clazz);
-        } catch (final ClassCastException e) {
-            throw new RuntimeException("Current Authentication is not OIDC");
-        }
-    }
+/**
+ * Utilities for working with Spring Security.
+ */
+public abstract class SpringRestClientUtils {
+	private SpringRestClientUtils() {
+	}
+
+	/**
+	 * Create a client that authenticates using the current connection's bearer
+	 * token.
+	 *
+	 * @param <T>
+	 *            The type of the client that will be created.
+	 * @param url
+	 *            The URL of the service to be a client to.
+	 * @param clazz
+	 *            The interface to proxy.
+	 * @return The proxy instance
+	 * @throws RuntimeException
+	 *             if there is no bearer token in the current connection's
+	 *             security context.
+	 */
+	public static <T> T createOIDCClient(URL url, Class<T> clazz) {
+		try {
+			OidcProfile oidcProfile = (OidcProfile) getAuth().getUserProfile();
+			return createBearerClient(url, oidcProfile.getIdTokenString(),
+					clazz);
+		} catch (ClassCastException e) {
+			throw new RuntimeException("Current Authentication is not OIDC");
+		}
+	}
+
+	private static ClientAuthenticationToken getAuth()
+			throws ClassCastException {
+		return (ClientAuthenticationToken) getContext().getAuthentication();
+	}
 }

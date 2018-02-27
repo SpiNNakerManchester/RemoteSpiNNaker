@@ -16,6 +16,12 @@
 	</module>
 	<module name="TreeWalker">
 		<property name="tabWidth" value="4" />
+		<module name="RegexpSinglelineJava">
+			<property name="format" value="^\t* +\t*\S" />
+			<property name="message"
+				value="Line has leading space characters; indentation should be performed with tabs only." />
+			<property name="ignoreComments" value="true" />
+		</module>
 		<module name="JavadocMethod">
 			<property name="scope" value="package" />
 			<property name="allowMissingPropertyJavadoc" value="true" />
