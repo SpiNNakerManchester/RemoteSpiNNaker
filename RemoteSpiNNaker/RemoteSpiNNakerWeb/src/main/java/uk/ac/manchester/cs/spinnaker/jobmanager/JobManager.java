@@ -109,12 +109,10 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         }
 
         // Add the job to the set of jobs to be run
-        synchronized (jobExecuters) {
-            jobsToRun.offer(job);
+        jobsToRun.offer(job);
 
-            // Start an executer for the job
-            launchExecuter();
-        }
+        // Start an executer for the job
+        launchExecuter();
     }
 
     /**
@@ -124,7 +122,9 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     private void launchExecuter() throws IOException {
         final JobExecuter executer =
                 jobExecuterFactory.createJobExecuter(this, baseUrl);
-        jobExecuters.put(executer.getExecuterId(), executer);
+        synchronized (jobExecuters) {
+            jobExecuters.put(executer.getExecuterId(), executer);
+        }
         executer.startExecuter();
     }
 
@@ -525,24 +525,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
             logger.error(logToAppend);
 
             if (restartJobExecuterOnFailure) {
-                restartExecuters();
+                logger.warn("Restarting of executers is currently disabled");
             }
-        }
-    }
-
-    private void restartExecuters() {
-        try {
-            int jobSize;
-            synchronized (jobsToRun) {
-                jobSize = jobsToRun.size();
-            }
-            synchronized (jobExecuters) {
-                while (jobSize > jobExecuters.size()) {
-                    launchExecuter();
-                }
-            }
-        } catch (final IOException e) {
-            logger.error("Could not launch a new executer", e);
         }
     }
 
