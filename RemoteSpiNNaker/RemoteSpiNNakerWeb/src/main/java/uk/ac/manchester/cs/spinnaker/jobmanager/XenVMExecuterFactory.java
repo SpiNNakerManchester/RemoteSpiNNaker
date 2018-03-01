@@ -258,9 +258,8 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
             new Thread(threadGroup, this, "Executer (" + uuid + ")").start();
         }
 
-        synchronized XenConnection createVm()
+        synchronized void createVm(final XenConnection conn)
                 throws XmlRpcException, IOException {
-            final XenConnection conn = new XenConnection(uuid);
             clonedVm = conn.getVirtualMachine();
             disk = conn.getVirtualBlockDevice(clonedVm);
             vdi = conn.getBaseVDI(disk);
@@ -273,7 +272,6 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
                 conn.addData(clonedVm, "vm-data/shutdown", true);
             }
             conn.start(clonedVm);
-            return conn;
         }
 
         private synchronized void deleteVm(final XenConnection conn)
@@ -300,7 +298,10 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
 
         @Override
         public void run() {
-            try (XenConnection conn = createVm()) {
+            XenConnection conn = null;
+            try {
+                conn = new XenConnection(uuid);
+                createVm(conn);
                 try {
                     VmPowerState powerState;
                     do {
@@ -315,18 +316,17 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
                 } finally {
                     jobManager.setExecutorExited(uuid, null);
                 }
-
+            } catch (final Exception e) {
+                logger.error("Error setting up VM", e);
+                jobManager.setExecutorExited(uuid, e.getMessage());
+            } finally {
                 try {
-                    if (deleteOnExit) {
+                    if (conn != null && deleteOnExit) {
                         deleteVm(conn);
                     }
                 } catch (final Exception e) {
                     logger.error("Error deleting VM");
                 }
-            } catch (final Exception e) {
-                logger.error("Error setting up VM", e);
-                jobManager.setExecutorExited(uuid, e.getMessage());
-            } finally {
                 executorFinished();
             }
         }

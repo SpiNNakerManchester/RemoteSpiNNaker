@@ -79,8 +79,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     private final Map<Integer, File> jobOutputTempFiles = new HashMap<>();
     private final Map<Integer, Long> jobNCores = new HashMap<>();
     private final Map<Integer, Long> jobResourceUsage = new HashMap<>();
-    private final Map<Integer, ObjectNode> jobProvenance =
-            new HashMap<>();
+    private final Map<Integer, ObjectNode> jobProvenance = new HashMap<>();
     private ThreadGroup threadGroup;
 
     public JobManager(final URL baseUrl) {
@@ -112,18 +111,20 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         jobsToRun.offer(job);
 
         // Start an executer for the job
-        launchExecuter();
+        launchExecuter(job);
     }
 
     /**
      * You need to hold the lock on {@link #jobExecuters} when running this
      * method.
      */
-    private void launchExecuter() throws IOException {
+    private void launchExecuter(Job job) throws IOException {
         final JobExecuter executer =
                 jobExecuterFactory.createJobExecuter(this, baseUrl);
         synchronized (jobExecuters) {
-            jobExecuters.put(executer.getExecuterId(), executer);
+            String executerId = executer.getExecuterId();
+            jobExecuters.put(executerId, executer);
+            executorJobId.put(executerId, job);
         }
         executer.startExecuter();
     }
@@ -133,9 +134,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         try {
             requireNonNull(executerId);
             final Job job = jobsToRun.take();
-            executorJobId.put(executerId, job);
             logger.info(
-                    "Executer " + executerId + " is running " + job.getId());
+                "Executer " + executerId + " is running " + job.getId());
             queueManager.setJobRunning(job.getId());
             return job;
         } catch (final InterruptedException e) {
@@ -341,8 +341,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
             outputItems.addAll(outputManager.addOutputs(projectId, id,
                     new File(baseFile), outputFiles));
         }
-        if (jobOutputTempFiles.containsKey(id)) {
-            final File directory = jobOutputTempFiles.get(id);
+        final File directory = jobOutputTempFiles.remove(id);
+        if (directory != null) {
             outputItems.addAll(outputManager.addOutputs(projectId, id,
                     directory, listFiles(directory, null, true)));
         }
@@ -496,32 +496,42 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
 
     public void setExecutorExited(final String executorId,
             final String logToAppend) {
-        final Job job = executorJobId.remove(requireNonNull(executorId));
+        Job job = null;
         synchronized (jobExecuters) {
+            job = executorJobId.remove(requireNonNull(executorId));
             jobExecuters.remove(executorId);
         }
         if (job != null) {
             final int id = job.getId();
-            logger.debug("Job " + id + " has exited");
+            logger.debug(
+                "Executer " + executorId + " for Job " + id + " has exited");
 
-            if (releaseAllocatedMachines(id)) {
+            String status = job.getStatus();
+            if (status == NMPIQueueManager.STATUS_QUEUED ||
+                    status == NMPIQueueManager.STATUS_RUNNING) {
                 logger.debug("Job " + id + " has not exited cleanly");
+                releaseAllocatedMachines(id);
+                final long resourceUsage = getResourceUsage(id);
+                final ObjectNode prov = getProvenance(id);
                 try {
-                    final long resourceUsage = getResourceUsage(id);
-                    final ObjectNode prov = getProvenance(id);
                     final String projectId =
-                            new File(job.getCollabId()).getName();
+                        new File(job.getCollabId()).getName();
                     queueManager.setJobError(id, logToAppend,
                             getOutputFiles(projectId, id, null, null),
                             new Exception("Job did not finish cleanly"),
                             resourceUsage, prov);
                 } catch (final IOException e) {
                     logger.error("Error creating URLs while updating job", e);
+                    queueManager.setJobError(id, logToAppend,
+                            new ArrayList<DataItem>(),
+                            new Exception("Job did not finish cleanly"),
+                            resourceUsage, prov);
                 }
             }
         } else {
             logger.error(
-                    "An executer has exited.  This could indicate an error!");
+                "An executer " + executorId + " has exited without a job. " +
+                "This could indicate an error!");
             logger.error(logToAppend);
 
             if (restartJobExecuterOnFailure) {
