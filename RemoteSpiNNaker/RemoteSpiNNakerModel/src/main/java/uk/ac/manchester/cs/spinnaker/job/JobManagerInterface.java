@@ -59,7 +59,8 @@ public interface JobManagerInterface {
 
     @DELETE
     @Path("{id}/machine")
-    void releaseMachine(@PathParam("id") int id, String machineName);
+    void releaseMachine(@PathParam("id") int id,
+            @QueryParam("machineName") String machineName);
 
     @POST
     @Path("{id}/log")
