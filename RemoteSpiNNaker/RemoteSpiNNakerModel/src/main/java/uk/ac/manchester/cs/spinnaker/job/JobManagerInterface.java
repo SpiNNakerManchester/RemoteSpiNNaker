@@ -12,6 +12,7 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -19,6 +20,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 
 import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
+import uk.ac.manchester.cs.spinnaker.machine.ChipCoordinates;
 import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
 
 @Path("/job")
@@ -61,6 +63,18 @@ public interface JobManagerInterface {
     @Path("{id}/machine")
     void releaseMachine(@PathParam("id") int id,
             @QueryParam("machineName") String machineName);
+
+    @PUT
+    @Path("{id}/machine/power")
+    void setMachinePower(@PathParam("id") int id,
+            @QueryParam("machineName") String machineName,
+            @QueryParam("on") boolean powerOn);
+
+    @GET
+    @Path("{id}/machine/chipCoordinates")
+    ChipCoordinates getChipCoordinates(@PathParam("id") int id,
+            @QueryParam("machineName") String machineName,
+            @QueryParam("chipX") int chipX, @QueryParam("chipY") int chipY);
 
     @POST
     @Path("{id}/log")

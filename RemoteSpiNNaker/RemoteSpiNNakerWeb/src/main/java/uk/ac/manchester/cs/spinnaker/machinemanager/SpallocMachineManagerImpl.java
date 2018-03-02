@@ -17,6 +17,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -35,6 +36,7 @@ import org.springframework.beans.factory.annotation.Value;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 
+import uk.ac.manchester.cs.spinnaker.machine.ChipCoordinates;
 import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
 import uk.ac.manchester.cs.spinnaker.machinemanager.commands.Command;
 import uk.ac.manchester.cs.spinnaker.machinemanager.commands.CreateJobCommand;
@@ -45,6 +47,11 @@ import uk.ac.manchester.cs.spinnaker.machinemanager.commands.JobKeepAliveCommand
 import uk.ac.manchester.cs.spinnaker.machinemanager.commands.ListMachinesCommand;
 import uk.ac.manchester.cs.spinnaker.machinemanager.commands.NoNotifyJobCommand;
 import uk.ac.manchester.cs.spinnaker.machinemanager.commands.NotifyJobCommand;
+import uk.ac.manchester.cs.spinnaker.machinemanager.commands.PowerOffJobBoardsCommand;
+import uk.ac.manchester.cs.spinnaker.machinemanager.commands.PowerOnJobBoardsCommand;
+import uk.ac.manchester.cs.spinnaker.machinemanager.commands.WhereIsCommand;
+import uk.ac.manchester.cs.spinnaker.machinemanager.responses.WhereIs;
+import uk.ac.manchester.cs.spinnaker.machinemanager.responses.ExceptionResponse;
 import uk.ac.manchester.cs.spinnaker.machinemanager.responses.JobMachineInfo;
 import uk.ac.manchester.cs.spinnaker.machinemanager.responses.JobState;
 import uk.ac.manchester.cs.spinnaker.machinemanager.responses.JobsChangedResponse;
@@ -96,6 +103,7 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
             super(Response.class);
             register("jobs_changed", JobsChangedResponse.class);
             register("return", ReturnResponse.class);
+            register("exception", ExceptionResponse.class);
         }
     }
 
@@ -151,7 +159,7 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
     }
 
     class Comms {
-        private final BlockingQueue<ReturnResponse> responses =
+        private final BlockingQueue<Response> responses =
                 new LinkedBlockingQueue<>();
         private final BlockingQueue<JobsChangedResponse> notifications =
                 new LinkedBlockingQueue<>();
@@ -162,7 +170,7 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
 
         private <T> T getNextResponse(final Class<T> responseType)
                 throws IOException {
-            ReturnResponse response;
+            Response response;
             try {
                 response = responses.take();
             } catch (final InterruptedException e) {
@@ -171,7 +179,19 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
             if (responseType == null) {
                 return null;
             }
-            return mapper.readValue(response.getReturnValue(), responseType);
+            if (response instanceof ReturnResponse) {
+                return mapper.readValue(
+                    ((ReturnResponse) response).getReturnValue(),
+                    responseType);
+            }
+
+            if (response instanceof ExceptionResponse) {
+                throw new IOException(
+                    ((ExceptionResponse) response).getException());
+            }
+
+            // Should never happen!
+            throw new IOException("Unknown Response " + response);
         }
 
         private synchronized void waitForConnection() {
@@ -184,8 +204,9 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
         }
 
         private void writeRequest(final Command<?> request) throws IOException {
-            logger.trace("Sending message of type " + request.getCommand());
-            writer.println(mapper.writeValueAsString(request));
+            String message = mapper.writeValueAsString(request);
+            logger.trace("Sending message " + message);
+            writer.println(message);
             writer.flush();
         }
 
@@ -203,8 +224,9 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
             logger.trace("Received response: " + line);
             final Response response = mapper.readValue(line, Response.class);
             logger.trace("Received response of type " + response);
-            if (response instanceof ReturnResponse) {
-                responses.offer((ReturnResponse) response);
+            if (response instanceof ReturnResponse ||
+                    response instanceof ExceptionResponse) {
+                responses.offer(response);
             } else if (response instanceof JobsChangedResponse) {
                 notifications.offer((JobsChangedResponse) response);
             } else {
@@ -226,8 +248,8 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
                         readResponse();
                     }
                 } catch (final IOException e) {
-                    logger.error("Error receiving", e);
                     if (!done) {
+                        logger.error("Error receiving", e);
                         disconnect();
                     }
                 }
@@ -328,6 +350,20 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
         void destroy() throws IOException {
             comms.sendRequest(new DestroyJobCommand(id));
         }
+
+        void power(final boolean powerOn) throws IOException {
+            if (powerOn) {
+                comms.sendRequest(new PowerOnJobBoardsCommand(id));
+            } else {
+                comms.sendRequest(new PowerOffJobBoardsCommand(id));
+            }
+        }
+
+        WhereIs whereIs(final int chipX, final int chipY)
+                throws IOException {
+            return comms.sendRequest(new WhereIsCommand(id, chipX, chipY),
+                WhereIs.class);
+        }
     }
 
     Machine[] listMachines() throws IOException {
@@ -342,10 +378,11 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
     // ------------------------------ Job ------------------------------
 
     private void updateJobState(final Job job) throws IOException {
-        logger.debug("Getting state of " + job.id);
-        final JobState state = job.getState();
-        logger.debug("Job " + job + " is in state " + state.getState());
+        final JobState state;
         synchronized (machineState) {
+            logger.debug("Getting state of " + job.id);
+            state = job.getState();
+            logger.debug("Job " + job + " is in state " + state.getState());
             machineState.put(job.id, state);
             machineState.notifyAll();
         }
@@ -371,13 +408,16 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
                 MACHINE_VERSION, info.getWidth(), info.getHeight(), 1, null);
     }
 
-    private JobState waitForStates(final Job job, final Integer... states) {
+    private JobState waitForStates(final Job job, final Integer... states)
+            throws IOException {
         final Set<Integer> set = new HashSet<>(asList(states));
         synchronized (machineState) {
+            final JobState state = job.getState();
+            machineState.put(job.id, state);
             while (!machineState.containsKey(job.id)
                     || !set.contains(machineState.get(job.id).getState())) {
                 logger.debug("Waiting for job " + job.id + " to get to one of "
-                        + states);
+                        + Arrays.toString(states));
                 if (waitfor(machineState)) {
                     return null;
                 }
@@ -424,6 +464,7 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
                 JobState state = job.getState();
                 synchronized (machineState) {
                     machineState.put(job.id, state);
+                    machineState.notifyAll();
                 }
                 logger.debug("Notifications for " + job.id + " are on");
 
@@ -498,6 +539,44 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
         }
     }
 
+    @Override
+    public void setMachinePower(
+            final SpinnakerMachine machine, final boolean powerOn) {
+        final Integer jobId = jobByMachine.get(machine);
+        if (jobId != null) {
+            final Job job = new Job(jobId);
+            try {
+                logger.debug("Setting power: " + (powerOn? "on": "off") +
+                    " for job " + jobId);
+                job.power(powerOn);
+                if (powerOn) {
+                    logger.debug("Waiting for powered on machine");
+                    waitForStates(job, READY, DESTROYED);
+                    logger.debug("Machine ready");
+                }
+            } catch (IOException e) {
+                throw new RuntimeException("Could not change power state", e);
+            }
+        }
+    }
+
+    @Override
+    public ChipCoordinates getChipCoordinates(SpinnakerMachine machine, int x,
+            int y) {
+        final Integer jobId = jobByMachine.get(machine);
+        if (jobId == null) {
+            return null;
+        }
+        final Job job = new Job(jobId);
+        try {
+            WhereIs whereIs = job.whereIs(x, y);
+            int[] location = whereIs.getPhysical();
+            return new ChipCoordinates(location[0], location[1], location[2]);
+        } catch (IOException e) {
+            throw new RuntimeException("Error getting coordinates", e);
+        }
+    }
+
     private void keepAllJobsAlive() {
         List<Integer> jobIds;
         synchronized (machineState) {
@@ -538,13 +617,15 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
         public static void main(final String[] args) throws Exception {
             final SpallocMachineManagerImpl manager =
                     new SpallocMachineManagerImpl();
-            manager.ipAddress = "10.0.0.3";
+            manager.ipAddress = "spinnaker.cs.man.ac.uk";
             manager.port = 22244;
             manager.owner = "test";
             manager.startThreads();
 
+            msg("Finding machines");
             for (final SpinnakerMachine machine : manager.getMachines()) {
-                msg("%d x %d", machine.getWidth(), machine.getHeight());
+                msg("%s: %d x %d", machine.getMachineName(),
+                    machine.getWidth(), machine.getHeight());
             }
             final SpinnakerMachine machine = manager.getNextAvailableMachine(1);
 
@@ -563,11 +644,20 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
             t.start();
 
             msg("Machine %s allocated", machine.getMachineName());
-            ThreadUtils.sleep(20000);
+            msg("Powering off machine");
+            manager.setMachinePower(machine, false);
+            ThreadUtils.sleep(2000);
+            msg("Powering on machine");
+            manager.setMachinePower(machine, true);
+            ChipCoordinates coords = manager.getChipCoordinates(machine, 4, 4);
+            msg("Chip 4, 4, cabinet=%d, frame=%d, board=%d",
+                coords.getCabinet(), coords.getFrame(), coords.getBoard());
+            ThreadUtils.sleep(5000);
             msg("Machine %s is available: %s", machine.getMachineName(),
                     manager.isMachineAvailable(machine));
             manager.releaseMachine(machine);
             msg("Machine %s deallocated", machine.getMachineName());
+            t.join();
             manager.close();
         }
     }

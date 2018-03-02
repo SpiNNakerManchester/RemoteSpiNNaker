@@ -41,6 +41,7 @@ import uk.ac.manchester.cs.spinnaker.job.RemoteStackTrace;
 import uk.ac.manchester.cs.spinnaker.job.RemoteStackTraceElement;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.DataItem;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
+import uk.ac.manchester.cs.spinnaker.machine.ChipCoordinates;
 import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
 import uk.ac.manchester.cs.spinnaker.machinemanager.MachineManager;
 import uk.ac.manchester.cs.spinnaker.nmpi.NMPIQueueListener;
@@ -234,6 +235,40 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
                 }
             }
         }
+    }
+
+    @Override
+    public void setMachinePower(int id, String machineName, boolean powerOn) {
+        synchronized (allocatedMachines) {
+            final List<SpinnakerMachine> machines = allocatedMachines.get(id);
+            if (machines != null) {
+                for (int i = 0; i < machines.size(); i++) {
+                    SpinnakerMachine machine = machines.get(i);
+                    if (machine.getMachineName() == machineName) {
+                        machineManager.setMachinePower(machine, powerOn);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public ChipCoordinates getChipCoordinates(int id, String machineName,
+            int chipX, int chipY) {
+        synchronized (allocatedMachines) {
+            final List<SpinnakerMachine> machines = allocatedMachines.get(id);
+            if (machines != null) {
+                for (int i = 0; i < machines.size(); i++) {
+                    SpinnakerMachine machine = machines.get(i);
+                    if (machine.getMachineName() == machineName) {
+                        return machineManager.getChipCoordinates(machine,
+                            chipX, chipY);
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     /** Get a machine to run the job on */
