@@ -17,25 +17,25 @@ public class WhereIs {
         return jobChip;
     }
     /**
-     * Sets the job_chip.
+     * Sets the job chip.
      *
-     * @param job_chip the job_chip to set
+     * @param jobChip the job chip to set
      */
     public void setJobChip(final int[] jobChip) {
         this.jobChip = jobChip;
     }
     /**
-     * Get the job_id.
+     * Get the job id.
      *
-     * @return the job_id
+     * @return the job id
      */
     public int getJobId() {
         return jobId;
     }
     /**
-     * Sets the job_id.
+     * Sets the job id.
      *
-     * @param job_id the job_id to set
+     * @param jobId the job id to set
      */
     public void setJobId(int jobId) {
         this.jobId = jobId;
@@ -89,17 +89,17 @@ public class WhereIs {
         this.machine = machine;
     }
     /**
-     * Get the board_chip.
+     * Get the board chip.
      *
-     * @return the board_chip
+     * @return the board chip
      */
     public int[] getBoardChip() {
         return boardChip;
     }
     /**
-     * Sets the board_chip.
+     * Sets the board chip.
      *
-     * @param boardChip the board_chip to set
+     * @param boardChip the board chip to set
      */
     public void setBoardChip(int[] boardChip) {
         this.boardChip = boardChip;
