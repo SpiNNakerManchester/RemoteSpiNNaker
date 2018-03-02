@@ -73,7 +73,6 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     private final Logger logger = getLogger(getClass());
     private final Map<Integer, List<SpinnakerMachine>> allocatedMachines =
             new HashMap<>();
-    private final BlockingQueue<Job> jobsToRun = new LinkedBlockingQueue<>();
     private final Map<String, JobExecuter> jobExecuters = new HashMap<>();
     private final Map<String, Job> executorJobId = new HashMap<>();
     private final Map<Integer, File> jobOutputTempFiles = new HashMap<>();
@@ -107,9 +106,6 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
             }
         }
 
-        // Add the job to the set of jobs to be run
-        jobsToRun.offer(job);
-
         // Start an executer for the job
         launchExecuter(job);
     }
@@ -125,22 +121,30 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
             String executerId = executer.getExecuterId();
             jobExecuters.put(executerId, executer);
             executorJobId.put(executerId, job);
+            jobExecuters.notifyAll();
         }
         executer.startExecuter();
     }
 
     @Override
     public Job getNextJob(final String executerId) {
-        try {
-            requireNonNull(executerId);
-            final Job job = jobsToRun.take();
-            logger.info(
-                "Executer " + executerId + " is running " + job.getId());
-            queueManager.setJobRunning(job.getId());
-            return job;
-        } catch (final InterruptedException e) {
-            return null;
+        requireNonNull(executerId);
+        Job job = null;
+        synchronized (jobExecuters) {
+            job = executorJobId.get(executerId);
+            while (job == null) {
+                try {
+                    jobExecuters.wait();
+                } catch (InterruptedException e) {
+
+                    // Ignore
+                }
+                job = executorJobId.get(executerId);
+            }
         }
+        logger.info("Executer " + executerId + " is running " + job.getId());
+        queueManager.setJobRunning(job.getId());
+        return job;
     }
 
     @Override
