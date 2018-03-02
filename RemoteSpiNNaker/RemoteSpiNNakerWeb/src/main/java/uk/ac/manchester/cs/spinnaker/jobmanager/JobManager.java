@@ -214,6 +214,28 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         return machine;
     }
 
+    @Override
+    public void releaseMachine(int id, String machineName) {
+        synchronized (allocatedMachines) {
+            final List<SpinnakerMachine> machines = allocatedMachines.get(id);
+            if (machines != null) {
+                int index = -1;
+                SpinnakerMachine machine = null;
+                for (int i = 0; i < machines.size(); i++) {
+                    machine = machines.get(i);
+                    if (machine.getMachineName() == machineName) {
+                        index = i;
+                        break;
+                    }
+                }
+                if (index != -1) {
+                    machines.remove(index);
+                    machineManager.releaseMachine(machine);
+                }
+            }
+        }
+    }
+
     /** Get a machine to run the job on */
     private SpinnakerMachine allocateMachineForJob(final int id,
             final int nBoardsToRequest) {

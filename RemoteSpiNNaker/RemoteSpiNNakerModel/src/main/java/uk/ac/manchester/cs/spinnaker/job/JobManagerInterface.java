@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.util.List;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -55,6 +56,10 @@ public interface JobManagerInterface {
     @Path("{id}/machine/extendLease")
     void extendJobMachineLease(@PathParam("id") int id,
             @QueryParam("runTime") @DefaultValue("-1") double runTime);
+
+    @DELETE
+    @Path("{id}/machine")
+    void releaseMachine(@PathParam("id") int id, String machineName);
 
     @POST
     @Path("{id}/log")
