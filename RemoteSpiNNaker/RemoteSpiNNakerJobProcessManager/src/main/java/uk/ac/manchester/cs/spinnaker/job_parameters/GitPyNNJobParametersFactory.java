@@ -56,9 +56,12 @@ class GitPyNNJobParametersFactory extends JobParametersFactory {
         final CloneCommand clone = cloneRepository();
         URIish urish = new URIish(experimentDescription);
         if (urish.getUser() != null) {
+            String pass = urish.getPass();
+            if (pass == null) {
+                pass = "";
+            }
             clone.setCredentialsProvider(
-                new UsernamePasswordCredentialsProvider(
-                    urish.getUser(), urish.getPass()));
+                new UsernamePasswordCredentialsProvider(urish.getUser(), pass));
         }
         clone.setURI(experimentDescription);
         clone.setDirectory(workingDirectory);
