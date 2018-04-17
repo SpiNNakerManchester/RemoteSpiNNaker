@@ -38,6 +38,27 @@ import uk.ac.manchester.cs.spinnaker.rest.utils.PropertyBasedDeserialiser;
  * Manages the NMPI queue, receiving jobs and submitting them to be run
  */
 public class NMPIQueueManager implements Runnable {
+
+    /**
+     * Job status when finished.
+     */
+    public static final String STATUS_FINISHED = "finished";
+
+    /**
+     * Job status when in the queue but the executer hasn't started.
+     */
+    public static final String STATUS_QUEUED = "queued";
+
+    /**
+     * Job status when running.
+     */
+    public static final String STATUS_RUNNING = "running";
+
+    /**
+     * Job status when in error.
+     */
+    public static final String STATUS_ERROR = "error";
+
     /**
      * The amount of time to sleep when an empty queue is detected.
      */
@@ -168,7 +189,7 @@ public class NMPIQueueManager implements Runnable {
             job.setTimestampSubmission(
                     job.getTimestampSubmission().withZoneRetainFields(UTC));
             job.setTimestampCompletion(null);
-            job.setStatus("queued");
+            job.setStatus(STATUS_QUEUED);
             logger.debug("Updating job status on server");
             queue.updateJob(job.getId(), job);
         } catch (final IOException e) {
@@ -199,7 +220,7 @@ public class NMPIQueueManager implements Runnable {
     public void setJobRunning(final int id) {
         logger.debug("Job " + id + " is running");
         final Job job = getJob(id);
-        job.setStatus("running");
+        job.setStatus(STATUS_RUNNING);
         logger.debug("Updating job status on server");
         queue.updateJob(id, job);
     }
@@ -229,7 +250,7 @@ public class NMPIQueueManager implements Runnable {
         }
 
         final Job job = getJob(id);
-        job.setStatus("finished");
+        job.setStatus(STATUS_FINISHED);
         job.setOutputData(outputs);
         job.setTimestampCompletion(new DateTime(UTC));
         job.setResourceUsage(resourceUsage);
@@ -274,7 +295,7 @@ public class NMPIQueueManager implements Runnable {
         appendJobLog(id, logMessage.toString());
 
         final Job job = getJob(id);
-        job.setStatus("error");
+        job.setStatus(STATUS_ERROR);
         job.setTimestampCompletion(new DateTime(UTC));
         job.setOutputData(outputs);
         job.setResourceUsage(resourceUsage);
