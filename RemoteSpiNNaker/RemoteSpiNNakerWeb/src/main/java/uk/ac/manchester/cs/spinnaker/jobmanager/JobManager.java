@@ -41,6 +41,7 @@ import uk.ac.manchester.cs.spinnaker.job.RemoteStackTrace;
 import uk.ac.manchester.cs.spinnaker.job.RemoteStackTraceElement;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.DataItem;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
+import uk.ac.manchester.cs.spinnaker.machine.ChipCoordinates;
 import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
 import uk.ac.manchester.cs.spinnaker.machinemanager.MachineManager;
 import uk.ac.manchester.cs.spinnaker.nmpi.NMPIQueueListener;
@@ -216,6 +217,69 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
                 machine.getMachineName());
 
         return machine;
+    }
+
+    /**
+     * Searches the list for the machine with the given name.
+     * 
+     * @param machines
+     *            The list of machines (or <tt>null</tt>).
+     * @param machineName
+     *            The name of the machine to find.
+     * @return The index in the list, or <tt>-1</tt> if the machine isn't
+     *         present. (The <tt>null</tt> machine list never contains any
+     *         machines.)
+     */
+    private static int findMachineIndex(List<SpinnakerMachine> machines,
+            String machineName) {
+        if (machines == null) {
+            return -1;
+        }
+        SpinnakerMachine machine = null;
+        for (int i = 0; i < machines.size(); i++) {
+            machine = machines.get(i);
+            if (machine.getMachineName() == machineName) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    @Override
+    public void releaseMachine(int id, String machineName) {
+        synchronized (allocatedMachines) {
+            List<SpinnakerMachine> machines = allocatedMachines.get(id);
+            int index = findMachineIndex(machines, machineName);
+            if (index != -1) {
+                SpinnakerMachine machine = machines.remove(index);
+                machineManager.releaseMachine(machine);
+            }
+        }
+    }
+
+    @Override
+    public void setMachinePower(int id, String machineName, boolean powerOn) {
+        synchronized (allocatedMachines) {
+            List<SpinnakerMachine> machines = allocatedMachines.get(id);
+            int index = findMachineIndex(machines, machineName);
+            if (index != -1) {
+                machineManager.setMachinePower(machines.get(index), powerOn);
+            }
+        }
+    }
+
+    @Override
+    public ChipCoordinates getChipCoordinates(int id, String machineName,
+            int chipX, int chipY) {
+        synchronized (allocatedMachines) {
+            final List<SpinnakerMachine> machines = allocatedMachines.get(id);
+            int index = findMachineIndex(machines, machineName);
+            if (index != -1) {
+                return machineManager.getChipCoordinates(machines.get(index),
+                        chipX, chipY);
+            }
+        }
+        return null;
     }
 
     /** Get a machine to run the job on */

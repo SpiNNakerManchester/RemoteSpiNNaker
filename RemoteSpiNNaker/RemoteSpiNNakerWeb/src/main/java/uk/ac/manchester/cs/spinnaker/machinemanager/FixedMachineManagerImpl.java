@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Value;
 
+import uk.ac.manchester.cs.spinnaker.machine.ChipCoordinates;
 import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
 
 /**
@@ -120,5 +121,16 @@ public class FixedMachineManagerImpl implements MachineManager {
             }
             return machinesAvailable.contains(machine) != isAvailable;
         }
+    }
+
+    @Override
+    public void setMachinePower(SpinnakerMachine machine, boolean powerOn) {
+        // Does Nothing in this implementation
+    }
+
+    @Override
+    public ChipCoordinates getChipCoordinates(SpinnakerMachine machine, int x,
+            int y) {
+        return new ChipCoordinates(0, 0, 0);
     }
 }

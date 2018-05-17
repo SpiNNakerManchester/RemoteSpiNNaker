@@ -8,10 +8,10 @@ import java.util.Map;
 public abstract class Command<A> {
     private final String command;
     private final List<A> args = new ArrayList<>();
-    private final Map<String, String> kwargs = new HashMap<>();
+    private final Map<String, Object> kwargs = new HashMap<>();
 
     protected final void addKwArg(final String key, final Object value) {
-        kwargs.put(key, value.toString());
+        kwargs.put(key, value);
     }
 
     @SafeVarargs
@@ -33,7 +33,7 @@ public abstract class Command<A> {
         return args;
     }
 
-    public Map<String, String> getKwargs() {
+    public Map<String, Object> getKwargs() {
         return kwargs;
     }
 }
