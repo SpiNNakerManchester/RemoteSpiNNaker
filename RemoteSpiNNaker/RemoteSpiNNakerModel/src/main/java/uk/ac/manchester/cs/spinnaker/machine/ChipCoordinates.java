@@ -1,15 +1,13 @@
 package uk.ac.manchester.cs.spinnaker.machine;
 
-
 /**
  * Represents a set of coordinates of a chip within a machine.
- *
  */
 public class ChipCoordinates {
 
     /**
-     * The cabinet containing the frame containing the board
-     * containing the chip.
+     * The cabinet containing the frame containing the board containing the
+     * chip.
      */
     private int cabinet;
 
@@ -26,10 +24,13 @@ public class ChipCoordinates {
     /**
      * Create a new set of ChipCoordinates.
      *
-     * @param cabinetParam The cabinet containing the frame containing the board
-     *                containing the chip.
-     * @param frameParam The frame containing the board containing the chip.
-     * @param boardParam The board containing the chip.
+     * @param cabinetParam
+     *            The cabinet containing the frame containing the board
+     *            containing the chip.
+     * @param frameParam
+     *            The frame containing the board containing the chip.
+     * @param boardParam
+     *            The board containing the chip.
      */
     public ChipCoordinates(final int cabinetParam, final int frameParam,
             final int boardParam) {
@@ -39,8 +40,8 @@ public class ChipCoordinates {
     }
 
     /**
-     * Get the cabinet containing the frame containing the board
-     * containing the chip.
+     * Get the cabinet containing the frame containing the board containing the
+     * chip.
      *
      * @return The cabinet number
      */

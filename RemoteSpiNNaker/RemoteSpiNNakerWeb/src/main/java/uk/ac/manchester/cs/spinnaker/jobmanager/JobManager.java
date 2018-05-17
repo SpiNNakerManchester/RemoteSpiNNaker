@@ -215,24 +215,40 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         return machine;
     }
 
+    /**
+     * Searches the list for the machine with the given name.
+     * 
+     * @param machines
+     *            The list of machines (or <tt>null</tt>).
+     * @param machineName
+     *            The name of the machine to find.
+     * @return The index in the list, or <tt>-1</tt> if the machine isn't
+     *         present. (The <tt>null</tt> machine list never contains any
+     *         machines.)
+     */
+    private static int findMachineIndex(List<SpinnakerMachine> machines,
+            String machineName) {
+        if (machines == null) {
+            return -1;
+        }
+        SpinnakerMachine machine = null;
+        for (int i = 0; i < machines.size(); i++) {
+            machine = machines.get(i);
+            if (machine.getMachineName() == machineName) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     @Override
     public void releaseMachine(int id, String machineName) {
         synchronized (allocatedMachines) {
-            final List<SpinnakerMachine> machines = allocatedMachines.get(id);
-            if (machines != null) {
-                int index = -1;
-                SpinnakerMachine machine = null;
-                for (int i = 0; i < machines.size(); i++) {
-                    machine = machines.get(i);
-                    if (machine.getMachineName() == machineName) {
-                        index = i;
-                        break;
-                    }
-                }
-                if (index != -1) {
-                    machines.remove(index);
-                    machineManager.releaseMachine(machine);
-                }
+            List<SpinnakerMachine> machines = allocatedMachines.get(id);
+            int index = findMachineIndex(machines, machineName);
+            if (index != -1) {
+                SpinnakerMachine machine = machines.remove(index);
+                machineManager.releaseMachine(machine);
             }
         }
     }
@@ -240,15 +256,10 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     @Override
     public void setMachinePower(int id, String machineName, boolean powerOn) {
         synchronized (allocatedMachines) {
-            final List<SpinnakerMachine> machines = allocatedMachines.get(id);
-            if (machines != null) {
-                for (int i = 0; i < machines.size(); i++) {
-                    SpinnakerMachine machine = machines.get(i);
-                    if (machine.getMachineName() == machineName) {
-                        machineManager.setMachinePower(machine, powerOn);
-                        break;
-                    }
-                }
+            List<SpinnakerMachine> machines = allocatedMachines.get(id);
+            int index = findMachineIndex(machines, machineName);
+            if (index != -1) {
+                machineManager.setMachinePower(machines.get(index), powerOn);
             }
         }
     }
@@ -258,14 +269,10 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
             int chipX, int chipY) {
         synchronized (allocatedMachines) {
             final List<SpinnakerMachine> machines = allocatedMachines.get(id);
-            if (machines != null) {
-                for (int i = 0; i < machines.size(); i++) {
-                    SpinnakerMachine machine = machines.get(i);
-                    if (machine.getMachineName() == machineName) {
-                        return machineManager.getChipCoordinates(machine,
-                            chipX, chipY);
-                    }
-                }
+            int index = findMachineIndex(machines, machineName);
+            if (index != -1) {
+                return machineManager.getChipCoordinates(machines.get(index),
+                        chipX, chipY);
             }
         }
         return null;

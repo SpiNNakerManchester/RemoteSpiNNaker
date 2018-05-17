@@ -107,6 +107,7 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
         }
     }
 
+    @SuppressWarnings("deprecation")
     public SpallocMachineManagerImpl() {
         final SimpleModule module = new SimpleModule();
         module.addDeserializer(Response.class, new ResponseBasedDeserializer());
@@ -176,20 +177,18 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
             } catch (final InterruptedException e) {
                 return null;
             }
-            if (responseType == null) {
-                return null;
-            }
-            if (response instanceof ReturnResponse) {
-                return mapper.readValue(
-                    ((ReturnResponse) response).getReturnValue(),
-                    responseType);
-            }
-
             if (response instanceof ExceptionResponse) {
                 throw new IOException(
-                    ((ExceptionResponse) response).getException());
+                        ((ExceptionResponse) response).getException());
             }
-
+            if (response instanceof ReturnResponse) {
+                if (responseType == null) {
+                    return null;
+                }
+                return mapper.readValue(
+                        ((ReturnResponse) response).getReturnValue(),
+                        responseType);
+            }
             // Should never happen!
             throw new IOException("Unknown Response " + response);
         }
@@ -388,13 +387,13 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
         }
 
         if (state.getState() == DESTROYED) {
-            final SpinnakerMachine machine = machinesAllocated.remove(job);
+            final SpinnakerMachine machine = machinesAllocated.remove(job.id);
             if (machine == null) {
                 logger.error("Unrecognized job: " + job);
                 return;
             }
             jobByMachine.remove(machine);
-            final MachineNotificationReceiver callback = callbacks.get(job);
+            final MachineNotificationReceiver callback = callbacks.get(job.id);
             if (callback != null) {
                 callback.machineUnallocated(machine);
             }
