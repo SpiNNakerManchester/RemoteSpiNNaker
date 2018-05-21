@@ -57,6 +57,11 @@ public class SpinnakerMachine
      *
      * @param value
      *            The name of the machine to parse.
+     * @return The parsed machine descriptor.
+     * @throws IllegalArgumentException
+     *             if the description has the wrong overall format
+     * @throws NumberFormatException
+     *             if one of the parts that should be numeric isn't
      */
     public static SpinnakerMachine parse(final String value) {
         if (!value.startsWith("(") || !value.endsWith(")")) {
@@ -88,19 +93,29 @@ public class SpinnakerMachine
     }
 
     /**
-     * Creates a new Spinnaker Machine.
+     * Creates a new SpiNNaker Machine description.
      *
      * @param machineName
      *            The name of the machine
+     * @param version
+     *            The version of the machine
+     * @param width
+     *            The width of the machine, in boards
+     * @param height
+     *            The width of the machine, in boards
+     * @param numBoards
+     *            The number of boards in the machine
+     * @param bmpDetails
+     *            How to contact the machine's Board Management Processor
      */
     public SpinnakerMachine(final String machineName, final String version,
-            final int width, final int height, final int nBoards,
+            final int width, final int height, final int numBoards,
             final String bmpDetails) {
         this.machineName = machineName;
         this.version = version;
         this.width = width;
         this.height = height;
-        this.nBoards = nBoards;
+        this.nBoards = numBoards;
         this.bmpDetails = bmpDetails;
     }
 
