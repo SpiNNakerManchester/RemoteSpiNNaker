@@ -67,7 +67,7 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
 
     public interface MachineNotificationReceiver {
         /**
-         * Indicates that a machine is no longer allocated
+         * Indicates that a machine is no longer allocated.
          *
          * @param machine
          *            The machine that is no longer allocated
@@ -83,10 +83,13 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
     private String owner;
 
     private final ObjectMapper mapper = new ObjectMapper();
-    private final Map<Integer, SpinnakerMachine> machinesAllocated = new HashMap<>();
-    private final Map<SpinnakerMachine, SpallocJob> jobByMachine = new HashMap<>();
+    private final Map<Integer, SpinnakerMachine> machinesAllocated =
+            new HashMap<>();
+    private final Map<SpinnakerMachine, SpallocJob> jobByMachine =
+            new HashMap<>();
     private final Map<Integer, JobState> machineState = new HashMap<>();
-    private final Map<Integer, MachineNotificationReceiver> callbacks = new HashMap<>();
+    private final Map<Integer, MachineNotificationReceiver> callbacks =
+            new HashMap<>();
     private final Logger logger = getLogger(getClass());
     private final Comms comms = new Comms();
 
@@ -94,7 +97,7 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
     private final MachineNotificationReceiver callback = null;
 
     @SuppressWarnings("serial")
-    static private class ResponseBasedDeserializer
+    private static class ResponseBasedDeserializer
             extends PropertyBasedDeserialiser<Response> {
         ResponseBasedDeserializer() {
             super(Response.class);
@@ -115,6 +118,7 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
     }
 
     ScheduledExecutorService scheduler;
+    private static final int PERIOD = 5;
 
     @PostConstruct
     void startThreads() {
@@ -142,7 +146,7 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
             public void run() {
                 keepAllJobsAlive();
             }
-        }, 5, 5, SECONDS);
+        }, PERIOD, PERIOD, SECONDS);
     }
 
     // ------------------------------ COMMS ------------------------------
@@ -157,8 +161,10 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
     }
 
     class Comms {
-        private final BlockingQueue<Response> responses = new LinkedBlockingQueue<>();
-        private final BlockingQueue<JobsChangedResponse> notifications = new LinkedBlockingQueue<>();
+        private final BlockingQueue<Response> responses =
+                new LinkedBlockingQueue<>();
+        private final BlockingQueue<JobsChangedResponse> notifications =
+                new LinkedBlockingQueue<>();
         private Socket socket;
         private BufferedReader reader;
         private PrintWriter writer;
@@ -228,6 +234,12 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
             }
         }
 
+        /**
+         * How long to wait after disconnecting before reconnecting. In
+         * milliseconds.
+         */
+        private static final int POST_DISCONNECT_PAUSE = 1000;
+
         public void mainLoop() {
             while (!done) {
                 try {
@@ -249,7 +261,7 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
                 }
                 if (!done) {
                     logger.warn("Disconnected from machine server...");
-                    sleep(1000);
+                    sleep(POST_DISCONNECT_PAUSE);
                 }
             }
         }
@@ -314,6 +326,7 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
 
     final class SpallocJob {
         final int id;
+        private static final int MAGIC = 0xbadf00d;
 
         SpallocJob(final int jobId) {
             this.id = jobId;
@@ -360,7 +373,7 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
 
         @Override
         public int hashCode() {
-            return id | 0xbadf00d;
+            return id | MAGIC;
         }
 
         @Override
@@ -429,8 +442,8 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
         }
     }
 
-    private static int MACHINE_WIDTH_FACTOR = 12;
-    private static int MACHINE_HEIGHT_FACTOR = 12;
+    private static final int MACHINE_WIDTH_FACTOR = 12;
+    private static final int MACHINE_HEIGHT_FACTOR = 12;
 
     @Override
     public List<SpinnakerMachine> getMachines() {
@@ -615,10 +628,20 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
             System.out.println(String.format(msg, args));
         }
 
+        private static final String HOST = "spinnaker.cs.man.ac.uk";
+        private static final int PORT = 22244;
+        private static final int S = 1000;
+        private static final int TEN_S = 10 * S;
+        private static final int FIVE_S = 5 * S;
+        private static final int TWO_S = 2 * S;
+        private static final int X = 4;
+        private static final int Y = 4;
+
         public static void main(final String[] args) throws Exception {
-            final SpallocMachineManagerImpl manager = new SpallocMachineManagerImpl();
-            manager.ipAddress = "spinnaker.cs.man.ac.uk";
-            manager.port = 22244;
+            final SpallocMachineManagerImpl manager =
+                    new SpallocMachineManagerImpl();
+            manager.ipAddress = HOST;
+            manager.port = PORT;
             manager.owner = "test";
             manager.startThreads();
 
@@ -635,7 +658,7 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
                     boolean available = manager.isMachineAvailable(machine);
                     while (available) {
                         msg("Waiting for Machine to go");
-                        manager.waitForMachineStateChange(machine, 10000);
+                        manager.waitForMachineStateChange(machine, TEN_S);
                         available = manager.isMachineAvailable(machine);
                     }
                     msg("Machine gone");
@@ -646,13 +669,13 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
             msg("Machine %s allocated", machine.getMachineName());
             msg("Powering off machine");
             manager.setMachinePower(machine, false);
-            ThreadUtils.sleep(2000);
+            ThreadUtils.sleep(TWO_S);
             msg("Powering on machine");
             manager.setMachinePower(machine, true);
-            ChipCoordinates coords = manager.getChipCoordinates(machine, 4, 4);
-            msg("Chip 4, 4, cabinet=%d, frame=%d, board=%d",
+            ChipCoordinates coords = manager.getChipCoordinates(machine, X, Y);
+            msg("Chip (%d,%d) cabinet=%d, frame=%d, board=%d", X, Y,
                     coords.getCabinet(), coords.getFrame(), coords.getBoard());
-            ThreadUtils.sleep(5000);
+            ThreadUtils.sleep(FIVE_S);
             msg("Machine %s is available: %s", machine.getMachineName(),
                     manager.isMachineAvailable(machine));
             manager.releaseMachine(machine);

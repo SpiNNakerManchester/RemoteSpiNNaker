@@ -44,7 +44,7 @@ import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
 import uk.ac.manchester.cs.spinnaker.utils.ThreadUtils;
 
 /**
- * A process for running PyNN jobs
+ * A process for running PyNN jobs.
  */
 public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
     private static final String PROVENANCE_DIRECTORY = "provenance_data";
@@ -149,10 +149,10 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             }
 
             // If the exit is an error, mark an error
-            if (exitValue > 127) {
+            if (exitValue >= MIN_SIGNAL_OFFSET) {
                 // Useful to distinguish this case
                 throw new Exception("Python exited with signal ("
-                        + (exitValue - 128) + ")");
+                        + (exitValue - MIN_SIGNAL_OFFSET) + ")");
             }
             if (exitValue != 0) {
                 throw new Exception("Python exited with a non-zero code ("
@@ -165,6 +165,8 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             status = Error;
         }
     }
+
+    private static final int MIN_SIGNAL_OFFSET = 128;
 
     /** How to actually run a subprocess. */
     private int runSubprocess(final PyNNJobParameters parameters,
@@ -245,12 +247,14 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         }
     }
 
+    private static final int BUFFER_SIZE = 8 * 1024;
+
     private void zipProvenance(final ZipOutputStream reportsZip,
             final File directory, final String path)
             throws IOException, JAXBException {
 
         // Go through the report files and zip them up
-        final byte[] buffer = new byte[8196];
+        final byte[] buffer = new byte[BUFFER_SIZE];
         for (final File file : directory.listFiles()) {
             if (file.isDirectory()) {
                 zipProvenance(reportsZip, file, path + "/" + file.getName());
@@ -332,7 +336,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
          * @param writer
          *            The writer to write to
          */
-        public ReaderLogWriter(final Reader reader, final LogWriter writer) {
+        ReaderLogWriter(final Reader reader, final LogWriter writer) {
             super(threadGroup, "Reader Log Writer");
             requireNonNull(reader);
             if (reader instanceof BufferedReader) {
@@ -353,10 +357,9 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
          * @param writer
          *            The writer to write to.
          */
-        public ReaderLogWriter(final InputStream input,
-                final LogWriter writer) {
-            this(new InputStreamReader(input), writer);
-        }
+		ReaderLogWriter(final InputStream input, final LogWriter writer) {
+			this(new InputStreamReader(input), writer);
+		}
 
         @Override
         public void run() {
@@ -389,7 +392,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         }
 
         /**
-         * Closes the reader/writer
+         * Closes the reader/writer.
          */
         @Override
         public void close() {

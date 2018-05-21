@@ -48,7 +48,7 @@ class GitPyNNJobParametersFactory extends JobParametersFactory {
         }
     }
 
-    /** Constructs the parameters by checking out the git repository */
+    /** Constructs the parameters by checking out the git repository. */
     private JobParameters constructParameters(final Job job,
             final File workingDirectory, final String experimentDescription)
             throws GitAPIException, InvalidRemoteException, TransportException,

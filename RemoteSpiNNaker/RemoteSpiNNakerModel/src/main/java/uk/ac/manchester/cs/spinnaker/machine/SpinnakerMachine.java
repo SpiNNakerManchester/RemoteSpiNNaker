@@ -14,41 +14,43 @@ public class SpinnakerMachine
     private static final long serialVersionUID = -2247744763327978524L;
 
     /**
-     * The name of the machine
+     * The name of the machine.
      */
     private String machineName = null;
 
     /**
-     * The version of the machine
+     * The version of the machine.
      */
     private String version = null;
 
     /**
-     * The width of the machine
+     * The width of the machine.
      */
     private int width = 0;
 
     /**
-     * The height of the machine
+     * The height of the machine.
      */
     private int height = 0;
 
     /**
-     * The number of boards in the machine
+     * The number of boards in the machine.
      */
     private int nBoards = 0;
 
     /**
-     * The BMP details of the machine
+     * The BMP details of the machine.
      */
     private String bmpDetails = null;
 
     /**
-     * Creates an empty machine
+     * Creates an empty machine.
      */
     public SpinnakerMachine() {
         // Does Nothing
     }
+
+    private static final int EXPECTED_NUM_PARTS = 6;
 
     /**
      * Creates a new Spinnaker Machine by parsing the name of a machine.
@@ -64,15 +66,16 @@ public class SpinnakerMachine
 
         final String[] parts =
                 value.substring(1, value.length() - 1).split(":");
-        if (parts.length != 6) {
+        if (parts.length != EXPECTED_NUM_PARTS) {
             throw new IllegalArgumentException(
                     "Wrong number of :-separated arguments - " + parts.length
                             + " found but 6 required");
         }
 
-        return new SpinnakerMachine(parts[0].trim(), parts[1].trim(),
-                parseInt(parts[2].trim()), parseInt(parts[3].trim()),
-                parseInt(parts[4].trim()), parts[4].trim());
+        int i = 0;
+        return new SpinnakerMachine(parts[i++].trim(), parts[i++].trim(),
+                parseInt(parts[i++].trim()), parseInt(parts[i++].trim()),
+                parseInt(parts[i++].trim()), parts[i++].trim());
     }
 
     @Override
@@ -85,7 +88,7 @@ public class SpinnakerMachine
     }
 
     /**
-     * Creates a new Spinnaker Machine
+     * Creates a new Spinnaker Machine.
      *
      * @param machineName
      *            The name of the machine
@@ -102,7 +105,7 @@ public class SpinnakerMachine
     }
 
     /**
-     * Gets the name of the machine
+     * Gets the name of the machine.
      *
      * @return The name of the machine
      */
@@ -111,7 +114,7 @@ public class SpinnakerMachine
     }
 
     /**
-     * Sets the name of the machine
+     * Sets the name of the machine.
      *
      * @param machineName
      *            The name of the machine
@@ -121,7 +124,7 @@ public class SpinnakerMachine
     }
 
     /**
-     * Gets the version of the machine
+     * Gets the version of the machine.
      *
      * @return The version of the machine
      */
@@ -130,7 +133,7 @@ public class SpinnakerMachine
     }
 
     /**
-     * Sets the version of the machine
+     * Sets the version of the machine.
      *
      * @param version
      *            The version of the machine
@@ -140,7 +143,7 @@ public class SpinnakerMachine
     }
 
     /**
-     * Gets the width of the machine
+     * Gets the width of the machine.
      *
      * @return The width of the machine
      */
@@ -149,7 +152,7 @@ public class SpinnakerMachine
     }
 
     /**
-     * Sets the width of the machine
+     * Sets the width of the machine.
      *
      * @param width
      *            The width of the machine
@@ -159,7 +162,7 @@ public class SpinnakerMachine
     }
 
     /**
-     * Gets the height of the machine
+     * Gets the height of the machine.
      *
      * @return The height of the machine
      */
@@ -168,7 +171,7 @@ public class SpinnakerMachine
     }
 
     /**
-     * Sets the height of the machine
+     * Sets the height of the machine.
      *
      * @param height
      *            The height of the machine
@@ -183,7 +186,7 @@ public class SpinnakerMachine
     }
 
     /**
-     * Gets the number of boards in the machine
+     * Gets the number of boards in the machine.
      *
      * @return The number of boards in the machine
      */
@@ -192,7 +195,7 @@ public class SpinnakerMachine
     }
 
     /**
-     * Sets the number of boards in the machine
+     * Sets the number of boards in the machine.
      *
      * @param nBoards
      *            The number of boards in the machine
@@ -202,7 +205,7 @@ public class SpinnakerMachine
     }
 
     /**
-     * Gets the BMP details of the machine
+     * Gets the BMP details of the machine.
      *
      * @return The BMP details of the machine
      */
@@ -211,7 +214,7 @@ public class SpinnakerMachine
     }
 
     /**
-     * Sets the BMP details of the machine
+     * Sets the BMP details of the machine.
      *
      * @param bmpDetails
      *            The BMP details of the machine

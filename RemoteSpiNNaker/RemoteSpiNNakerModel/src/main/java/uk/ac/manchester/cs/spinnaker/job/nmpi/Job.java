@@ -12,7 +12,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
- * A NMPI job
+ * A NMPI job.
  */
 public class Job implements QueueNextResponse {
     private String code;
