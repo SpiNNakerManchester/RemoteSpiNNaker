@@ -357,9 +357,9 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
          * @param writer
          *            The writer to write to.
          */
-		ReaderLogWriter(final InputStream input, final LogWriter writer) {
-			this(new InputStreamReader(input), writer);
-		}
+        ReaderLogWriter(final InputStream input, final LogWriter writer) {
+            this(new InputStreamReader(input), writer);
+        }
 
         @Override
         public void run() {

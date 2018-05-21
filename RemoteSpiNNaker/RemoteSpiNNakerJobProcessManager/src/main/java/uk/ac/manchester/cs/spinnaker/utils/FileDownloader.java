@@ -24,10 +24,10 @@ import org.apache.commons.codec.binary.Base64;
 import org.jboss.resteasy.util.ParameterParser;
 
 public abstract class FileDownloader {
-	private FileDownloader() {
-	}
+    private FileDownloader() {
+    }
 
-	private static String getFileName(final String contentDisposition) {
+    private static String getFileName(final String contentDisposition) {
         if (contentDisposition != null) {
             final String cdl = contentDisposition.toLowerCase();
             if (cdl.startsWith("form-data") || cdl.startsWith("attachment")) {

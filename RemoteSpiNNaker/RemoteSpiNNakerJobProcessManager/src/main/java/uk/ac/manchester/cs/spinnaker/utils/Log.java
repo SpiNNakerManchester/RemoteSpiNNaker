@@ -1,10 +1,10 @@
 package uk.ac.manchester.cs.spinnaker.utils;
 
 public abstract class Log {
-	private Log() {
-	}
+    private Log() {
+    }
 
-	public static void log(final String message) {
+    public static void log(final String message) {
         System.err.println(message);
     }
 
