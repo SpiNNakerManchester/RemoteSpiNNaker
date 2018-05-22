@@ -39,6 +39,24 @@ public interface JobManagerInterface {
     SpinnakerMachine getLargestJobMachine(@PathParam("id") int id,
             @QueryParam("runTime") @DefaultValue("-1") double runTime);
 
+    /**
+     * Get the descriptor of a machine for a job. One of <tt>nCores</tt>,
+     * <tt>nChips</tt> and <tt>nBoards</tt> should be set unless a truly default
+     * allocation is desired.
+     * 
+     * @param id
+     *            The ID of the job.
+     * @param nCores
+     *            The number of cores to request. Use -1 for a default value.
+     * @param nChips
+     *            The number of chips to request. Use -1 for a default value.
+     * @param nBoards
+     *            The number of boards to request. Use -1 for a default value.
+     * @param runTime
+     *            The running time to request. Use -1 for a default value.
+     * @return The descriptor, or <tt>null</tt> if the request cannot be
+     *         satisfied.
+     */
     @GET
     @Path("{id}/machine")
     @Produces(APPLICATION_JSON)

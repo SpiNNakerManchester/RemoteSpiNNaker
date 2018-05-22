@@ -141,12 +141,12 @@ public class JobProcessManager {
 
             // Create a process to process the request
             log("Creating process from parameters");
-			JobProcess<JobParameters> process = jobProcessFactory
-					.createProcess(parameters);
-			logWriter = getLogWriter();
+            JobProcess<JobParameters> process = jobProcessFactory
+                    .createProcess(parameters);
+            logWriter = getLogWriter();
 
-			// Read the machine
-			Machine machine = getMachine();
+            // Read the machine
+            Machine machine = getMachine();
 
             // Execute the process
             log("Running job " + job.getId() + " on " + machine + " using "
@@ -315,27 +315,27 @@ public class JobProcessManager {
 
         switch (status) {
         case Error:
-        	Throwable error = process.getError();
-        	String message = error.getMessage();
-        	if (message == null) {
-        		message = "No Error Message";
-        	}
-        	jobManager.setJobError(projectId, job.getId(), message, log,
-        			workingDirectory.getAbsolutePath(), outputsAsStrings,
-        			new RemoteStackTrace(error));
-        	break;
+            Throwable error = process.getError();
+            String message = error.getMessage();
+            if (message == null) {
+                message = "No Error Message";
+            }
+            jobManager.setJobError(projectId, job.getId(), message, log,
+                    workingDirectory.getAbsolutePath(), outputsAsStrings,
+                    new RemoteStackTrace(error));
+            break;
         case Finished:
-        	jobManager.setJobFinished(projectId, job.getId(), log,
-        			workingDirectory.getAbsolutePath(), outputsAsStrings);
+            jobManager.setJobFinished(projectId, job.getId(), log,
+                    workingDirectory.getAbsolutePath(), outputsAsStrings);
 
-        	// Clean up
-        	process.cleanup();
-        	if (deleteOnExit) {
-        		deleteQuietly(workingDirectory);
-        	}
-        	break;
+            // Clean up
+            process.cleanup();
+            if (deleteOnExit) {
+                deleteQuietly(workingDirectory);
+            }
+            break;
         default:
-        	throw new IllegalStateException("Unknown status returned!");
+            throw new IllegalStateException("Unknown status returned!");
         }
     }
 }

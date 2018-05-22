@@ -211,8 +211,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         long resourceUsage = (long) ((runTime / 1000.0) * quotaNCores);
         logger.info("Resource usage " + resourceUsage);
         synchronized (jobResourceUsage) {
-        	jobResourceUsage.put(id, resourceUsage);
-        	jobNCores.put(id, quotaNCores);
+            jobResourceUsage.put(id, resourceUsage);
+            jobNCores.put(id, quotaNCores);
         }
         addProvenance(id, Arrays.asList(new String[]{"spinnaker_machine"}),
                 machine.getMachineName());
