@@ -72,7 +72,7 @@ public class SpinnakerMachine
 
         return new SpinnakerMachine(parts[0].trim(), parts[1].trim(),
                 parseInt(parts[2].trim()), parseInt(parts[3].trim()),
-                parseInt(parts[4].trim()), parts[4].trim());
+                parseInt(parts[4].trim()), parts[5].trim());
     }
 
     @Override
