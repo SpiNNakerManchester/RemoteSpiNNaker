@@ -107,6 +107,9 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
         }
     }
 
+    /**
+     * Make a machine manager that talks to Spalloc to do its work.
+     */
     @SuppressWarnings("deprecation")
     public SpallocMachineManagerImpl() {
         final SimpleModule module = new SimpleModule();
@@ -120,8 +123,11 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
     ScheduledExecutorService scheduler;
     private static final int PERIOD = 5;
 
+    /**
+     * Launch this manager's threads.
+     */
     @PostConstruct
-    void startThreads() {
+    private void startThreads() {
         final ThreadGroup group = new ThreadGroup("Spalloc");
         scheduler = newScheduledThreadPool(1, new ThreadFactory() {
             @Override
@@ -240,6 +246,10 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
          */
         private static final int POST_DISCONNECT_PAUSE = 1000;
 
+        /**
+         * The main connection management loop. This will reconnect to the
+         * server if it gets disconnected by surprise.
+         */
         public void mainLoop() {
             while (!done) {
                 try {
@@ -266,6 +276,12 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
             }
         }
 
+        /**
+         * Connect to the Spalloc server.
+         *
+         * @throws IOException
+         *             If anything goes wrong
+         */
         public synchronized void connect() throws IOException {
             socket = new Socket(ipAddress, port);
             reader = new BufferedReader(
@@ -278,6 +294,9 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
             notifyAll();
         }
 
+        /**
+         * Disconnect from the Spalloc server.
+         */
         public void disconnect() {
             connected = false;
             closeQuietly(writer);
@@ -285,6 +304,19 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
             closeQuietly(socket);
         }
 
+        /**
+         * Send a request that expects a response that needs to be deserialised.
+         *
+         * @param <T>
+         *            The type of the response.
+         * @param request
+         *            The request to send.
+         * @param responseType
+         *            The expected type of response.
+         * @return The response.
+         * @throws IOException
+         *             If anything goes wrong
+         */
         public <T> T sendRequest(final Command<?> request,
                 final Class<T> responseType) throws IOException {
             synchronized (SpallocMachineManagerImpl.this) {
@@ -294,6 +326,15 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
             }
         }
 
+        /**
+         * Send a request that doesn't expect a response that needs to be
+         * deserialised (that is, a generic OK).
+         *
+         * @param request
+         *            The request to send.
+         * @throws IOException
+         *             If anything goes wrong
+         */
         public void sendRequest(final Command<?> request) throws IOException {
             synchronized (SpallocMachineManagerImpl.this) {
                 waitForConnection();
@@ -328,20 +369,48 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
         final int id;
         private static final int MAGIC = 0xbadf00d;
 
+        /**
+         * Make a job handle.
+         *
+         * @param jobId
+         *            The ID code of the job.
+         */
         SpallocJob(final int jobId) {
             this.id = jobId;
         }
 
+        /**
+         * Get what machine the job has been allocated to.
+         *
+         * @return The machine descriptor.
+         * @throws IOException
+         *             If anything goes wrong
+         */
         JobMachineInfo getMachineInfo() throws IOException {
             return comms.sendRequest(new GetJobMachineInfoCommand(id),
                     JobMachineInfo.class);
         }
 
+        /**
+         * Get the state of the job.
+         *
+         * @return The state descriptor.
+         * @throws IOException
+         *             If anything goes wrong
+         */
         JobState getState() throws IOException {
             return comms.sendRequest(new GetJobStateCommand(id),
                     JobState.class);
         }
 
+        /**
+         * Enable or disable notifications about this job's state changes.
+         *
+         * @param enable
+         *            True to turn the notifications on.
+         * @throws IOException
+         *             If anything goes wrong
+         */
         void notify(final boolean enable) throws IOException {
             if (enable) {
                 comms.sendRequest(new NotifyJobCommand(id));
@@ -350,14 +419,34 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
             }
         }
 
+        /**
+         * Keep the job alive (by sending effectively a NOP).
+         *
+         * @throws IOException
+         *             If anything goes wrong
+         */
         void keepAlive() throws IOException {
             comms.sendRequest(new JobKeepAliveCommand(id));
         }
 
+        /**
+         * Destroy the job.
+         *
+         * @throws IOException
+         *             If anything goes wrong
+         */
         void destroy() throws IOException {
             comms.sendRequest(new DestroyJobCommand(id));
         }
 
+        /**
+         * Turn power on or off for a job's boards.
+         *
+         * @param powerOn
+         *            True to turn the boards on, false to turn them off.
+         * @throws IOException
+         *             If anything goes wrong
+         */
         void power(final boolean powerOn) throws IOException {
             if (powerOn) {
                 comms.sendRequest(new PowerOnJobBoardsCommand(id));
@@ -366,6 +455,17 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
             }
         }
 
+        /**
+         * Find one of his job's chips.
+         *
+         * @param chipX
+         *            The x coordinate of the chip
+         * @param chipY
+         *            The y coordinate of the chip
+         * @return The location description
+         * @throws IOException
+         *             If anything goes wrong
+         */
         WhereIs whereIs(final int chipX, final int chipY) throws IOException {
             return comms.sendRequest(new WhereIsCommand(id, chipX, chipY),
                     WhereIs.class);
@@ -382,10 +482,25 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
         }
     }
 
+    /**
+     * Get the machines known to the Spalloc server.
+     *
+     * @return The known machines
+     * @throws IOException If anything goes wrong
+     */
     Machine[] listMachines() throws IOException {
         return comms.sendRequest(new ListMachinesCommand(), Machine[].class);
     }
 
+    /**
+     * Create a Spalloc job.
+     *
+     * @param nBoards
+     *            The number of boards to ask for
+     * @return The job handle
+     * @throws IOException
+     *             If anything goes wrong
+     */
     SpallocJob createJob(final int nBoards) throws IOException {
         return new SpallocJob(comms.sendRequest(
                 new CreateJobCommand(nBoards, owner), Integer.class));
@@ -637,6 +752,14 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
         private static final int X = 4;
         private static final int Y = 4;
 
+        /**
+         * Demo code.
+         *
+         * @param args
+         *            The command line arguments
+         * @throws Exception
+         *             anything that goes wrong
+         */
         public static void main(final String[] args) throws Exception {
             final SpallocMachineManagerImpl manager =
                     new SpallocMachineManagerImpl();

@@ -13,6 +13,12 @@ public class RemoteStackTrace {
         // Does Nothing
     }
 
+    /**
+     * Create a basic remote stack trace from an exception.
+     *
+     * @param throwable
+     *            The exception to make the stack trace from.
+     */
     public RemoteStackTrace(final Throwable throwable) {
         for (final StackTraceElement element : throwable.getStackTrace()) {
             elements.add(new RemoteStackTraceElement(element));

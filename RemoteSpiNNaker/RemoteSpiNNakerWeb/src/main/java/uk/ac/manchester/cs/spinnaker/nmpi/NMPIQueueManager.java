@@ -103,6 +103,9 @@ public class NMPIQueueManager implements Runnable {
         @SuppressWarnings("serial")
         class QueueResponseDeserialiser
                 extends PropertyBasedDeserialiser<QueueNextResponse> {
+            /**
+             * Make a deserialiser.
+             */
             QueueResponseDeserialiser() {
                 super(QueueNextResponse.class);
                 register("id", Job.class);
@@ -127,7 +130,7 @@ public class NMPIQueueManager implements Runnable {
      * cache.
      *
      * @param id
-     *            The id of the job
+     *            The ID of the job
      * @return The job
      */
     private Job getJob(final int id) {
@@ -201,7 +204,7 @@ public class NMPIQueueManager implements Runnable {
      * Appends log messages to the log.
      *
      * @param id
-     *            The id of the job
+     *            The ID of the job
      * @param logToAppend
      *            The messages to append
      */
@@ -216,6 +219,12 @@ public class NMPIQueueManager implements Runnable {
         queue.updateLog(id, existingLog);
     }
 
+    /**
+     * Mark a job as running.
+     *
+     * @param id
+     *            The ID of the job.
+     */
     public void setJobRunning(final int id) {
         logger.debug("Job " + id + " is running");
         final Job job = getJob(id);
@@ -228,7 +237,7 @@ public class NMPIQueueManager implements Runnable {
      * Marks a job as finished successfully.
      *
      * @param id
-     *            The id of the job
+     *            The ID of the job
      * @param logToAppend
      *            Any additional log messages to append to the existing log
      *            (null if none)
@@ -263,7 +272,7 @@ public class NMPIQueueManager implements Runnable {
      * Marks a job as finished with an error.
      *
      * @param id
-     *            The id of the job
+     *            The ID of the job
      * @param logToAppend
      *            Any additional log messages to append to the existing log
      *            (null if none)

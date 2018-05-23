@@ -154,6 +154,14 @@ public class Job implements QueueNextResponse {
         this.provenance = provenance;
     }
 
+    /**
+     * Used for JSON serialisation.
+     *
+     * @param name
+     *            The parameter to set.
+     * @param value
+     *            The value to set it to.
+     */
     @JsonAnySetter
     public void set(final String name, final Object value) {
         System.err.println("Warning: Job contains unexpected item " + name);

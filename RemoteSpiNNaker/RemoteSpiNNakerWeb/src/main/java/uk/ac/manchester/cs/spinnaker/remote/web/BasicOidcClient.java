@@ -24,6 +24,7 @@ class BasicOidcClient extends OidcClient {
         super.setDiscoveryURI(oidcDiscoveryUri);
     }
 
+    /** Default constructor. */
     BasicOidcClient() {
         setScope("openid profile hbp.collab");
         setPreferredJwsAlgorithm(RS256);

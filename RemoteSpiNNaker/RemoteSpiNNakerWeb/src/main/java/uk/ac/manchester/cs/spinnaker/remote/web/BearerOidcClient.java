@@ -9,6 +9,7 @@ import static org.pac4j.core.context.HttpConstants.DEFAULT_READ_TIMEOUT;
 import static org.pac4j.core.exception.RequiresHttpAction.unauthorized;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 
 import javax.annotation.PostConstruct;
@@ -46,6 +47,11 @@ public class BearerOidcClient
     private String realmName;
     private OIDCProviderMetadata oidcProvider;
 
+    /**
+     * Get (and cache if building) the metadata for the OpenID Connect provider.
+     *
+     * @return The OIDC metadata.
+     */
     @PostConstruct
     private OIDCProviderMetadata getOIDCProvider() {
         try {
@@ -79,6 +85,14 @@ public class BearerOidcClient
         // Does Nothing
     }
 
+    private URI getUserInfoEndpoint() {
+        OIDCProviderMetadata o = getOIDCProvider();
+        if (o == null) {
+            return null;
+        }
+        return o.getUserInfoEndpointURI();
+    }
+
     @Override
     public BearerCredentials getCredentials(final WebContext context)
             throws RequiresHttpAction {
@@ -97,7 +111,7 @@ public class BearerOidcClient
         }
         try {
             final BearerAccessToken token = new BearerAccessToken(accessToken);
-            if (getOIDCProvider().getUserInfoEndpointURI() == null) {
+            if (getUserInfoEndpoint() == null) {
                 logger.error("No User Info Endpoint!");
                 return null;
             }
@@ -113,7 +127,7 @@ public class BearerOidcClient
             final BearerAccessToken token)
             throws IOException, ParseException, RequiresHttpAction {
         final UserInfoRequest userInfoRequest = new UserInfoRequest(
-                getOIDCProvider().getUserInfoEndpointURI(), token);
+                getUserInfoEndpoint(), token);
         final HTTPRequest userInfoHttpRequest = userInfoRequest.toHTTPRequest();
         userInfoHttpRequest.setConnectTimeout(DEFAULT_CONNECT_TIMEOUT);
         userInfoHttpRequest.setReadTimeout(DEFAULT_READ_TIMEOUT);
@@ -167,6 +181,14 @@ public class BearerOidcClient
         private String accessToken;
         private OidcProfile profile;
 
+        /**
+         * Make the credentials.
+         *
+         * @param accessToken
+         *            The token.
+         * @param profile
+         *            The profile.
+         */
         BearerCredentials(String accessToken, OidcProfile profile) {
             this.accessToken = accessToken;
             this.profile = profile;

@@ -61,6 +61,9 @@ public class JobProcessManager {
     class UploadingJobManagerLogWriter extends JobManagerLogWriter {
         private final Timer sendTimer;
 
+        /**
+         * Make a log writer that uploads the log every half second.
+         */
         UploadingJobManagerLogWriter() {
             sendTimer = new Timer(UPDATE_INTERVAL, new ActionListener() {
                 @Override
@@ -111,6 +114,24 @@ public class JobProcessManager {
     private Job job;
     private String projectId;
 
+    /**
+     * Create an object that manages the running of a single job.
+     *
+     * @param serverUrl
+     *            The URL to the server, used for writing back results.
+     * @param deleteOnExit
+     *            Whether to delete the job's resources on termination.
+     * @param isLocal
+     *            Whether the job is local.
+     * @param executerId
+     *            The ID of the executer.
+     * @param liveUploadOutput
+     *            Whether to do live upload of output data.
+     * @param requestMachine
+     *            Whether to request a machine.
+     * @param authToken
+     *            The authorisation token for the server.
+     */
     public JobProcessManager(final String serverUrl, final boolean deleteOnExit,
             final boolean isLocal, final String executerId,
             final boolean liveUploadOutput, final boolean requestMachine,
@@ -126,6 +147,9 @@ public class JobProcessManager {
         this.authToken = authToken;
     }
 
+    /**
+     * Run a single job.
+     */
     public void runJob() {
         try {
             jobManager = createJobManager(serverUrl, authToken);
@@ -189,6 +213,15 @@ public class JobProcessManager {
         }
     }
 
+    /**
+     * How to run a Job Process Manager. This is the execution entry point for
+     * this Maven module.
+     *
+     * @param args
+     *            The command line arguments.
+     * @throws Exception
+     *             No guarantees made about what can go wrong.
+     */
     public static void main(final String[] args) throws Exception {
         String serverUrl = null;
         boolean deleteOnExit = false;
@@ -378,6 +411,11 @@ abstract class JobManagerLogWriter implements LogWriter {
         cached.append(msg);
     }
 
+    /**
+     * Get the current log contents and reset the internal buffer.
+     *
+     * @return The contents of the log prior to this call.
+     */
     final String takeCache() {
         try {
             return cached.toString();

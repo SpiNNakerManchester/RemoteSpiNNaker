@@ -86,8 +86,11 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         this.baseUrl = requireNonNull(baseUrl);
     }
 
+    /**
+     * Start the manager's worker threads.
+     */
     @PostConstruct
-    void startManager() {
+    private void startManager() {
         threadGroup = new ThreadGroup("NMPI");
         // Start the queue manager
         queueManager.addListener(this);
@@ -567,6 +570,14 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         return exception;
     }
 
+    /**
+     * Mark the executor as having exited.
+     *
+     * @param executorId
+     *            The ID of the executor in question
+     * @param logToAppend
+     *            The log messages
+     */
     public void setExecutorExited(final String executorId,
             final String logToAppend) {
         Job job = null;

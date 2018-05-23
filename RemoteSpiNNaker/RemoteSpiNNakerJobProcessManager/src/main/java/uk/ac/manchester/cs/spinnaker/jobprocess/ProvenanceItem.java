@@ -8,6 +8,14 @@ public class ProvenanceItem {
 
     private String value;
 
+    /**
+     * Create a provenance item.
+     *
+     * @param path
+     *            The location of the item in the provenance tree.
+     * @param value
+     *            The content of the value.
+     */
     public ProvenanceItem(List<String> path, String value) {
         this.path = path;
         this.value = value;

@@ -114,8 +114,11 @@ public class OutputManagerImpl implements OutputManager {
         timeToKeepResults = MILLISECONDS.convert(nDaysToKeepResults, DAYS);
     }
 
+    /**
+     * Arrange for old output to be purged once per day.
+     */
     @PostConstruct
-    void initPurgeScheduler() {
+    private void initPurgeScheduler() {
         final ScheduledExecutorService scheduler = newScheduledThreadPool(1);
         scheduler.scheduleAtFixedRate(new Runnable() {
             @Override

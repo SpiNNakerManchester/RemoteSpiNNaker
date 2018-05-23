@@ -59,8 +59,14 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         this.threadGroup = new ThreadGroup("LocalJob");
     }
 
+    /**
+     * Initialise the system state.
+     *
+     * @throws IOException
+     *             if things go wrong.
+     */
     @PostConstruct
-    void installJobExecuter() throws IOException {
+    private void installJobExecuter() throws IOException {
         // Find the JobManager resource
         final InputStream jobManagerStream =
                 getClass().getResourceAsStream("/" + JOB_PROCESS_MANAGER_ZIP);
@@ -131,6 +137,8 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         /**
          * Create a JobExecuter.
          *
+         * @param jobManager
+         *            The job manager that wanted an executer made.
          * @param arguments
          *            The arguments to use
          * @param id
@@ -276,6 +284,14 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         private final PrintWriter writer;
         private volatile boolean done;
 
+        /**
+         * Connect the input to the output.
+         *
+         * @param input
+         *            Where things are coming from.
+         * @param output
+         *            Where things are going to.
+         */
         JobOutputPipe(final InputStream input, final PrintWriter output) {
             super(threadGroup, "JobOutputPipe");
             reader = new BufferedReader(new InputStreamReader(input));
