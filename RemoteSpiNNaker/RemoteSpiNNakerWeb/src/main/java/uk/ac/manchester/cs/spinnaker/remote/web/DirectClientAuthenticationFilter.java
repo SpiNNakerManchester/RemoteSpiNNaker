@@ -33,6 +33,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class DirectClientAuthenticationFilter extends OncePerRequestFilter {
     private static final String MUST_AUTH_HEADER = "WWW-Authenticate";
     private static final String MUST_AUTH_PAYLOAD = "Bearer realm=\"%s\"";
+    /** The default authentication realm. "<tt>SpiNNaker</tt>" */
     public static final String DEFAULT_REALM = "SpiNNaker";
     private final Logger logger = getLogger(getClass());
 

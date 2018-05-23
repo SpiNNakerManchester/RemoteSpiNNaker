@@ -33,8 +33,6 @@
 		<module name="JavadocVariable">
 			<property name="scope" value="package" />
 			<property name="ignoreNamePattern" value="log|logger" />
-			<!-- TEMPORARY: Make most javadoc errors ignored -->
-	        <property name="severity" value="ignore"/>
 		</module>
 		<module name="JavadocStyle" />
 		<module name="ConstantName">

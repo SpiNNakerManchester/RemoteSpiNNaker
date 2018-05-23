@@ -117,6 +117,9 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
         mapper.configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
+    /**
+     * Thread pool.
+     */
     ScheduledExecutorService scheduler;
     private static final int PERIOD = 5;
 
@@ -325,7 +328,8 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
     // ------------------------------ WIRE Job ------------------------------
 
     final class SpallocJob {
-        final int id;
+        /** The spalloc job ID. */
+        public final int id;
         private static final int MAGIC = 0xbadf00d;
 
         SpallocJob(final int jobId) {

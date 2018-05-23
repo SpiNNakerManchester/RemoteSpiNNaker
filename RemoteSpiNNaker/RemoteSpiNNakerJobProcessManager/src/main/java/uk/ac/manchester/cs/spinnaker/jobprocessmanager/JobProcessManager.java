@@ -343,7 +343,9 @@ public class JobProcessManager {
 }
 
 class Machine {
+    /** The machine. Knows its service URL. */
     SpinnakerMachine machine;
+    /** The service URL. */
     String url;
 
     Machine(final SpinnakerMachine machine) {

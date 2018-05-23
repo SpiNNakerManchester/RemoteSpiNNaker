@@ -25,7 +25,12 @@ import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
 
 @Path("/job")
 public interface JobManagerInterface {
+    /** The media type of ZIP files. */
     String APPLICATION_ZIP = "application/zip";
+    /**
+     * The name of the ZIP file we like to serve up when giving people a remote
+     * process manager.
+     */
     String JOB_PROCESS_MANAGER_ZIP = "RemoteSpiNNakerJobProcessManager.zip";
 
     @GET
