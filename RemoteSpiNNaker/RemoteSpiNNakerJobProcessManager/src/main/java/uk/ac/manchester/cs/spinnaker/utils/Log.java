@@ -1,5 +1,8 @@
 package uk.ac.manchester.cs.spinnaker.utils;
 
+/**
+ * A very simple-minded logger.
+ */
 public abstract class Log {
     private Log() {
     }

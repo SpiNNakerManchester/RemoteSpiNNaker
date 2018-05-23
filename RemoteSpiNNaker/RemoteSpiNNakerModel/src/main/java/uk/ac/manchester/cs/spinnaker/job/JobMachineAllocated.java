@@ -1,5 +1,8 @@
 package uk.ac.manchester.cs.spinnaker.job;
 
+/**
+ * Indicates whether a machine was allocated for a job.
+ */
 public class JobMachineAllocated {
     private boolean allocated = false;
 

@@ -2,6 +2,9 @@ package uk.ac.manchester.cs.spinnaker.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * POJO describing the permissions to a collabratory object.
+ */
 public class CollabPermissions {
     private boolean delete;
     private boolean update;

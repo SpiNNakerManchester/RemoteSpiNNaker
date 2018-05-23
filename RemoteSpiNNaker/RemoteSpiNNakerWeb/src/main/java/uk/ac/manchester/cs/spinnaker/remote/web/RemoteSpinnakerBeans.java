@@ -43,6 +43,9 @@ import uk.ac.manchester.cs.spinnaker.output.OutputManagerImpl;
 import uk.ac.manchester.cs.spinnaker.rest.OutputManager;
 import uk.ac.manchester.cs.spinnaker.rest.utils.NullExceptionMapper;
 
+/**
+ * Builds the Spring beans in the application.
+ */
 @Configuration
 // @EnableGlobalMethodSecurity(prePostEnabled=true, proxyTargetClass=true)
 // @EnableWebSecurity
@@ -86,6 +89,9 @@ public class RemoteSpinnakerBeans {
     @Value("${baseserver.url}${callback.path}")
     private String oidcRedirectUri;
 
+    /**
+     * Configuration that connects to external HBP services.
+     */
     // TODO unused
     class HbpServices {
         // @Autowired

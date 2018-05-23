@@ -30,6 +30,9 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+/**
+ * Authentication filter that supports HBP auth mechanisms.
+ */
 public class DirectClientAuthenticationFilter extends OncePerRequestFilter {
     private static final String MUST_AUTH_HEADER = "WWW-Authenticate";
     private static final String MUST_AUTH_PAYLOAD = "Bearer realm=\"%s\"";

@@ -8,6 +8,9 @@ import java.net.URL;
 import org.pac4j.oidc.profile.OidcProfile;
 import org.pac4j.springframework.security.authentication.ClientAuthenticationToken;
 
+/**
+ * Utilities for working with Spring Security.
+ */
 public abstract class SpringRestClientUtils {
     public static <T> T createOIDCClient(URL url, Class<T> clazz) {
         try {

@@ -24,6 +24,9 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
+/**
+ * Extended JSON serialisation handler.
+ */
 @Provider
 @Consumes(WILDCARD)
 @Produces(WILDCARD)

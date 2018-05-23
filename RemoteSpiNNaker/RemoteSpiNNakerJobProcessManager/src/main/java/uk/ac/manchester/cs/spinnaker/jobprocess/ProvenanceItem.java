@@ -2,6 +2,9 @@ package uk.ac.manchester.cs.spinnaker.jobprocess;
 
 import java.util.List;
 
+/**
+ * A single item of provenance data.
+ */
 public class ProvenanceItem {
 
     private List<String> path;

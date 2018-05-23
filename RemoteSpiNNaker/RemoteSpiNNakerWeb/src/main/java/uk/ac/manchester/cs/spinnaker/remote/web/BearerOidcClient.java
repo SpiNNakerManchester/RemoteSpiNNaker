@@ -35,6 +35,9 @@ import com.nimbusds.openid.connect.sdk.UserInfoSuccessResponse;
 import com.nimbusds.openid.connect.sdk.claims.UserInfo;
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata;
 
+/**
+ * HBP token bearer authentication client.
+ */
 public class BearerOidcClient
         extends
             DirectClient<BearerOidcClient.BearerCredentials, OidcProfile> {
@@ -161,6 +164,9 @@ public class BearerOidcClient
         return HEADER_BASED;
     }
 
+    /**
+     * OIDC bearer credentials. Consists of an access token and a profile.
+     */
     static class BearerCredentials extends Credentials {
         private static final long serialVersionUID = 5585200812175851776L;
 

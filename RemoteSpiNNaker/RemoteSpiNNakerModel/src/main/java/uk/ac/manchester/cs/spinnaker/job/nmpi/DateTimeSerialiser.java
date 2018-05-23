@@ -11,6 +11,9 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
+/**
+ * Simple serialiser for ISO 8601 dates, as Java likes them to be.
+ */
 @SuppressWarnings("serial")
 public class DateTimeSerialiser extends StdSerializer<DateTime> {
     private static final DateTimeFormatter FORMAT =

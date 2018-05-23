@@ -18,6 +18,9 @@ import javax.ws.rs.ext.Provider;
 import org.apache.commons.io.output.WriterOutputStream;
 import org.slf4j.Logger;
 
+/**
+ * Better logging of errors.
+ */
 // Only public because of the annotation
 @Provider
 public class ErrorCaptureResponseFilter implements ClientResponseFilter {

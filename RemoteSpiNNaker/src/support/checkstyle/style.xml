@@ -27,8 +27,6 @@
 		</module>
 		<module name="JavadocType">
 			<property name="scope" value="package" />
-			<!-- TEMPORARY: Make most javadoc errors ignored -->
-	        <property name="severity" value="ignore"/>
 		</module>
 		<module name="JavadocVariable">
 			<property name="scope" value="package" />

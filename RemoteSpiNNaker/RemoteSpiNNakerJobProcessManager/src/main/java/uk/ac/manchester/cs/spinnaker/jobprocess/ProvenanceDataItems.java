@@ -9,6 +9,9 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+/**
+ * The POJO representation of a collection of data items.
+ */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "provenance_data_items")
 public class ProvenanceDataItems {

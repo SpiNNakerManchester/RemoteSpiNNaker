@@ -30,6 +30,9 @@ import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 
+/**
+ * An executer that runs its subprocesses on the local machine.
+ */
 public class LocalJobExecuterFactory implements JobExecuterFactory {
     private static final String JOB_PROCESS_MANAGER_MAIN_CLASS =
             "uk.ac.manchester.cs.spinnaker.jobprocessmanager.JobProcessManager";
@@ -118,6 +121,9 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         return new Executer(requireNonNull(manager), arguments, uuid);
     }
 
+    /**
+     * The executer thread.
+     */
     class Executer implements JobExecuter, Runnable {
         private final JobManager jobManager;
         private final List<String> arguments;
@@ -271,6 +277,9 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         }
     }
 
+    /**
+     * The pipe copier.
+     */
     class JobOutputPipe extends Thread implements AutoCloseable {
         private final BufferedReader reader;
         private final PrintWriter writer;

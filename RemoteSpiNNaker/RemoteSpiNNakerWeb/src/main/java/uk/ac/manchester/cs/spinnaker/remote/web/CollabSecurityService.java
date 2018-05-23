@@ -12,6 +12,9 @@ import org.springframework.beans.factory.annotation.Value;
 import uk.ac.manchester.cs.spinnaker.model.CollabPermissions;
 import uk.ac.manchester.cs.spinnaker.rest.CollabRestService;
 
+/**
+ * The client for the HBP Collabratory security service.
+ */
 public class CollabSecurityService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     @Value("${collab.service.uri}")

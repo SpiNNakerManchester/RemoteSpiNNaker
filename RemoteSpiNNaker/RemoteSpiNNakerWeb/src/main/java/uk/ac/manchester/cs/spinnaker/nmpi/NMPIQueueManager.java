@@ -100,6 +100,9 @@ public class NMPIQueueManager implements Runnable {
         final CustomJacksonJsonProvider provider =
                 new CustomJacksonJsonProvider();
 
+        /**
+         * How to understand messages coming from the queue.
+         */
         @SuppressWarnings("serial")
         class QueueResponseDeserialiser
                 extends PropertyBasedDeserialiser<QueueNextResponse> {
