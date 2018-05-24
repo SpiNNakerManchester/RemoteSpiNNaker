@@ -56,6 +56,9 @@ import uk.ac.manchester.cs.spinnaker.rest.OutputManager;
 public class JobManager implements NMPIQueueListener, JobManagerInterface {
     private static final double CHIPS_PER_BOARD = 48.0;
     private static final double CORES_PER_CHIP = 15.0;
+    /**
+     * The name of the JAR containing the job process manager implementation.
+     */
     public static final String JOB_PROCESS_MANAGER_JAR =
             "RemoteSpiNNakerJobProcessManager.jar";
 

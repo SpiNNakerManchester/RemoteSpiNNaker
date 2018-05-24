@@ -72,7 +72,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
     private Throwable error = null;
     private final List<File> outputs = new ArrayList<>();
     private final List<ProvenanceItem> provenance = new ArrayList<>();
-    ThreadGroup threadGroup;
+    private ThreadGroup threadGroup;
 
     private static Set<File> gatherFiles(final File directory) {
         return new LinkedHashSet<>(

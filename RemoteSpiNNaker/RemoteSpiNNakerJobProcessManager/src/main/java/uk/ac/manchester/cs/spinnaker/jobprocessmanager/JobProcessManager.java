@@ -382,7 +382,9 @@ public class JobProcessManager {
  * A description of a machine.
  */
 class Machine {
+    /** The machine. Knows its service URL. */
     SpinnakerMachine machine;
+    /** The service URL. */
     String url;
 
     Machine(final SpinnakerMachine machine) {
