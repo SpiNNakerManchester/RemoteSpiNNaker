@@ -322,6 +322,9 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         // Does Nothing
     }
 
+    /**
+     * Thread for copying a {@link Reader} to a {@link LogWriter}.
+     */
     class ReaderLogWriter extends Thread implements AutoCloseable {
         private final BufferedReader reader;
         private final LogWriter writer;

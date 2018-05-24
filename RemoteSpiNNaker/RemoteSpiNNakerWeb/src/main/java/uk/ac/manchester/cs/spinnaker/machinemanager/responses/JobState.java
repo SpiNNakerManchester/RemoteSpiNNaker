@@ -1,5 +1,10 @@
 package uk.ac.manchester.cs.spinnaker.machinemanager.responses;
 
+/**
+ * A description of the state of a job, in terms of its state, whether its
+ * boards are powered, the advised keep-alive polling interval and the reason
+ * that the job died (if in the <tt>DESTROYED</tt> state).
+ */
 public class JobState {
     public static final int UNKNOWN = 0;
     public static final int QUEUED = 1;

@@ -19,6 +19,9 @@ import javax.ws.rs.core.Response;
 
 import uk.ac.manchester.cs.spinnaker.job.nmpi.DataItem;
 
+/**
+ * The REST API for the output manager.
+ */
 @Path("/output")
 public interface OutputManager {
     /**

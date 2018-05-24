@@ -2,6 +2,9 @@ package uk.ac.manchester.cs.spinnaker.machinemanager.responses;
 
 import java.util.List;
 
+/**
+ * Describes a machine by its name, tags, width and height.
+ */
 public class Machine {
     private String name;
     private List<String> tags;

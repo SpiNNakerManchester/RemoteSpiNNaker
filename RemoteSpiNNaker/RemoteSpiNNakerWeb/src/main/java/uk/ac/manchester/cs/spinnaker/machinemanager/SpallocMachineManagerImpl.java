@@ -61,10 +61,16 @@ import uk.ac.manchester.cs.spinnaker.machinemanager.responses.ReturnResponse;
 import uk.ac.manchester.cs.spinnaker.rest.utils.PropertyBasedDeserialiser;
 import uk.ac.manchester.cs.spinnaker.utils.ThreadUtils;
 
+/**
+ * A machine manager that interfaces to the spalloc service.
+ */
 public class SpallocMachineManagerImpl implements MachineManager, Runnable {
     private static final String MACHINE_VERSION = "5";
     private static final String DEFAULT_TAG = "default";
 
+    /**
+     * Used for callbacks about machines.
+     */
     public interface MachineNotificationReceiver {
         /**
          * Indicates that a machine is no longer allocated.
@@ -160,6 +166,9 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
         }
     }
 
+    /**
+     * Communications API wrapper.
+     */
     class Comms {
         private final BlockingQueue<Response> responses =
                 new LinkedBlockingQueue<>();
@@ -324,6 +333,9 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
 
     // ------------------------------ WIRE Job ------------------------------
 
+    /**
+     * Interface to an existing spalloc job.
+     */
     final class SpallocJob {
         final int id;
         private static final int MAGIC = 0xbadf00d;
@@ -623,6 +635,9 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
 
     // --------------------------- DEMO/TEST CODE ---------------------------
 
+    /**
+     * Demo code.
+     */
     public static class Demo {
         private static void msg(final String msg, final Object... args) {
             System.out.println(String.format(msg, args));

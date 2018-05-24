@@ -1,5 +1,8 @@
 package uk.ac.manchester.cs.spinnaker.machinemanager.responses;
 
+/**
+ * The description of where some resource is on a SpiNNaker system.
+ */
 public class WhereIs {
     private int[] jobChip;
     private int jobId;

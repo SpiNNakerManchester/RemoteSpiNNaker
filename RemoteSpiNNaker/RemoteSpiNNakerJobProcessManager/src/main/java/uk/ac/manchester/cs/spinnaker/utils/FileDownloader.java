@@ -23,6 +23,9 @@ import javax.net.ssl.X509TrustManager;
 import org.apache.commons.codec.binary.Base64;
 import org.jboss.resteasy.util.ParameterParser;
 
+/**
+ * Utilities for downloading a file.
+ */
 public abstract class FileDownloader {
     private FileDownloader() {
     }

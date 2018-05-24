@@ -28,6 +28,9 @@ import com.xensource.xenapi.VBD;
 import com.xensource.xenapi.VDI;
 import com.xensource.xenapi.VM;
 
+/**
+ * Executer factory that uses Xen VMs.
+ */
 public class XenVMExecuterFactory implements JobExecuterFactory {
     /** Bytes in a gigabyte. Well, a gibibyte, but that's a nasty word. */
     private static final long GB = 1024L * 1024L * 1024L;
@@ -209,6 +212,9 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
         }
     }
 
+    /**
+     * The executer core connector.
+     */
     class Executer implements JobExecuter, Runnable {
         // Parameters from constructor
         private final JobManager jobManager;

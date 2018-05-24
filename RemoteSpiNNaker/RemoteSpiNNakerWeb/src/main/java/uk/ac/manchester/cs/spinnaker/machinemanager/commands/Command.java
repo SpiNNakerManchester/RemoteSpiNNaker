@@ -5,6 +5,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * A serialisable request to spalloc.
+ *
+ * @param <A>
+ *            The type of arguments.
+ */
 public abstract class Command<A> {
     private final String command;
     private final List<A> args = new ArrayList<>();

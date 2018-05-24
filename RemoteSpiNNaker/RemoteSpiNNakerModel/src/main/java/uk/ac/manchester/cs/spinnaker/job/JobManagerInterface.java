@@ -23,6 +23,9 @@ import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
 import uk.ac.manchester.cs.spinnaker.machine.ChipCoordinates;
 import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
 
+/**
+ * JAX-RS interface to a {@link Job} for the purposes of management.
+ */
 @Path("/job")
 public interface JobManagerInterface {
     String APPLICATION_ZIP = "application/zip";

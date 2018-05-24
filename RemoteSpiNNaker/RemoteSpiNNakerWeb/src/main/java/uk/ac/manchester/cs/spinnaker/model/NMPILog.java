@@ -1,5 +1,8 @@
 package uk.ac.manchester.cs.spinnaker.model;
 
+/**
+ * A Neuromorphic Platform Interface log core.
+ */
 public class NMPILog {
     private StringBuilder content;
 

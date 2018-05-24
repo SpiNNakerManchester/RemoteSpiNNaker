@@ -58,6 +58,9 @@ public class JobProcessManager {
                 PyNNJobProcess.class);
     }
 
+    /**
+     * A log writer that uploads to the server.
+     */
     class UploadingJobManagerLogWriter extends JobManagerLogWriter {
         private final Timer sendTimer;
 
@@ -342,6 +345,9 @@ public class JobProcessManager {
     }
 }
 
+/**
+ * A description of a machine.
+ */
 class Machine {
     SpinnakerMachine machine;
     String url;
@@ -363,6 +369,9 @@ class Machine {
     }
 }
 
+/**
+ * How to write to the log.
+ */
 abstract class JobManagerLogWriter implements LogWriter {
     private final StringBuilder cached = new StringBuilder();
 
@@ -390,6 +399,9 @@ abstract class JobManagerLogWriter implements LogWriter {
     }
 }
 
+/**
+ * A simple log implementation.
+ */
 class SimpleJobManagerLogWriter extends JobManagerLogWriter {
     @Override
     public void append(final String logMsg) {
@@ -400,6 +412,9 @@ class SimpleJobManagerLogWriter extends JobManagerLogWriter {
     }
 }
 
+/**
+ * Exception indicating errors with the job factory.
+ */
 @SuppressWarnings("serial")
 class JobErrorsException extends IOException {
     private static final String MAIN_MSG = "The job type was recognised"

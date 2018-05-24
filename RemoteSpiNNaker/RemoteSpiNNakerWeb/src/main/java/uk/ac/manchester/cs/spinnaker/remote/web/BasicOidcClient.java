@@ -5,6 +5,9 @@ import static com.nimbusds.jose.JWSAlgorithm.RS256;
 import org.pac4j.oidc.client.OidcClient;
 import org.springframework.beans.factory.annotation.Value;
 
+/**
+ * Simple client that uses basic auth.
+ */
 class BasicOidcClient extends OidcClient {
     @Override
     @Value("${oidc.clientId}")

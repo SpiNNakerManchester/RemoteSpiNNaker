@@ -2,6 +2,11 @@ package uk.ac.manchester.cs.spinnaker.job;
 
 import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
 
+/**
+ * The specification for a job. Can be any type of job, though the rest of this
+ * implementation only really supports PyNN jobs running on SpiNNaker hardware
+ * using sPyNNaker.
+ */
 public class JobSpecification {
     private SpinnakerMachine machine;
     private JobParameters parameters;
