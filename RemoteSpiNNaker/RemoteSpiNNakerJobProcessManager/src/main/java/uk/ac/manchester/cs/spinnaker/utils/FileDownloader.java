@@ -23,7 +23,10 @@ import javax.net.ssl.X509TrustManager;
 import org.apache.commons.codec.binary.Base64;
 import org.jboss.resteasy.util.ParameterParser;
 
-public class FileDownloader {
+public abstract class FileDownloader {
+    private FileDownloader() {
+    }
+
     private static String getFileName(final String contentDisposition) {
         if (contentDisposition != null) {
             final String cdl = contentDisposition.toLowerCase();
@@ -130,7 +133,7 @@ public class FileDownloader {
         // Set up to trust everyone
         try {
             SSLContext sc = SSLContext.getInstance("SSL");
-            sc.init(null, new TrustManager[]{new X509TrustManager() {
+            TrustManager tm = new X509TrustManager() {
                 @Override
                 public X509Certificate[] getAcceptedIssuers() {
                     return null;
@@ -145,7 +148,8 @@ public class FileDownloader {
                 public void checkServerTrusted(X509Certificate[] certs,
                         String authType) {
                 }
-            }}, new SecureRandom());
+            };
+            sc.init(null, new TrustManager[] {tm}, new SecureRandom());
 
             connection.setSSLSocketFactory(sc.getSocketFactory());
             connection.setHostnameVerifier(new HostnameVerifier() {

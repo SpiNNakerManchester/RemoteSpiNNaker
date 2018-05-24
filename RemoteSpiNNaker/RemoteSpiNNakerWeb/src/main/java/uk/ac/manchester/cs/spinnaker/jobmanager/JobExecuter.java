@@ -1,14 +1,14 @@
 package uk.ac.manchester.cs.spinnaker.jobmanager;
 
 /**
- * Executes jobs in an external process
+ * Executes jobs in an external process.
  *
  * @see LocalJobExecuterFactory.Executer
  * @see XenVMExecuterFactory.Executer
  */
 public interface JobExecuter {
     /**
-     * Gets the id of the executer
+     * Gets the id of the executer.
      *
      * @return The id
      */

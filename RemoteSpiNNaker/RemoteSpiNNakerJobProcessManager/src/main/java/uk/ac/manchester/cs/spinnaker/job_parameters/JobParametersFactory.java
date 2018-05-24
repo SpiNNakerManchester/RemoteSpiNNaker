@@ -7,7 +7,7 @@ import uk.ac.manchester.cs.spinnaker.job.JobParameters;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
 
 /**
- * A factory that produces job parameters
+ * A factory that produces job parameters.
  */
 public abstract class JobParametersFactory {
     /**

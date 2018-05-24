@@ -9,7 +9,7 @@ import uk.ac.manchester.cs.spinnaker.job.JobParameters;
 
 /**
  * A factory for creating {@link JobProcess} instances given a
- * {@link JobParameters} instance
+ * {@link JobParameters} instance.
  */
 public class JobProcessFactory {
     private final ThreadGroup threadGroup;

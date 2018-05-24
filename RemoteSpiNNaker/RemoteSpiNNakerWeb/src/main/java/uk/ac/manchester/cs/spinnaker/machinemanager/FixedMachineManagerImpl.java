@@ -11,11 +11,11 @@ import uk.ac.manchester.cs.spinnaker.machine.ChipCoordinates;
 import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
 
 /**
- * A manager of SpiNNaker machines
+ * A manager of directly-connected SpiNNaker machines.
  */
 public class FixedMachineManagerImpl implements MachineManager {
     /**
-     * The queue of available machines
+     * The queue of available machines.
      */
     private final Set<SpinnakerMachine> machinesAvailable = new HashSet<>();
     private final Set<SpinnakerMachine> machinesAllocated = new HashSet<>();
@@ -38,7 +38,7 @@ public class FixedMachineManagerImpl implements MachineManager {
     }
 
     /**
-     * Gets the next machine available, or waits if no machine is available
+     * Gets the next machine available, or waits if no machine is available.
      *
      * @param nBoards
      *            The number of boards to request
@@ -77,7 +77,7 @@ public class FixedMachineManagerImpl implements MachineManager {
     }
 
     /**
-     * Releases a machine that was previously in use
+     * Releases a machine that was previously in use.
      *
      * @param machine
      *            The machine to release
@@ -92,7 +92,7 @@ public class FixedMachineManagerImpl implements MachineManager {
     }
 
     /**
-     * Closes the manager
+     * Closes the manager.
      */
     @Override
     public void close() {

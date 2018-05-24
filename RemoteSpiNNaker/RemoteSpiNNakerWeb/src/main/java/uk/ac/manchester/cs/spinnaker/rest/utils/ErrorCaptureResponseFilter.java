@@ -25,9 +25,9 @@ public class ErrorCaptureResponseFilter implements ClientResponseFilter {
             new CustomJacksonJsonProvider();
     private static final Logger log =
             getLogger(ErrorCaptureResponseFilter.class);
-    public volatile boolean writeToLog = true;
+    private volatile boolean writeToLog = true;
 
-    private static final String INDENT = "    ";// 4 spaces
+    private static final String INDENT = "    "; // 4 spaces
     private static final String IND2 = INDENT + INDENT;
 
     @Override

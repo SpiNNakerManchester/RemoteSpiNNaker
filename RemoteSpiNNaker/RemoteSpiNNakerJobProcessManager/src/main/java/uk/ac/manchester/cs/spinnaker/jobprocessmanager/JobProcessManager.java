@@ -51,17 +51,17 @@ public class JobProcessManager {
     private static final int UPDATE_INTERVAL = 500;
 
     /** The factory for converting parameters into processes. */
-    private static final JobProcessFactory jobProcessFactory =
+    private static final JobProcessFactory JOB_PROCESS_FACTORY =
             new JobProcessFactory("JobProcess");
     static {
-        jobProcessFactory.addMapping(PyNNJobParameters.class,
+        JOB_PROCESS_FACTORY.addMapping(PyNNJobParameters.class,
                 PyNNJobProcess.class);
     }
 
     class UploadingJobManagerLogWriter extends JobManagerLogWriter {
         private final Timer sendTimer;
 
-        public UploadingJobManagerLogWriter() {
+        UploadingJobManagerLogWriter() {
             sendTimer = new Timer(UPDATE_INTERVAL, new ActionListener() {
                 @Override
                 public void actionPerformed(final ActionEvent e) {
@@ -74,8 +74,7 @@ public class JobProcessManager {
             String toWrite = null;
             synchronized (this) {
                 if (isPopulated()) {
-                    toWrite = cached.toString();
-                    cached.setLength(0);
+                    toWrite = takeCache();
                 }
             }
             if (toWrite != null) {
@@ -88,7 +87,7 @@ public class JobProcessManager {
         public void append(final String logMsg) {
             log("Process Output: " + logMsg);
             synchronized (this) {
-                cached.append(logMsg);
+                appendCache(logMsg);
                 sendTimer.restart();
             }
         }
@@ -143,7 +142,7 @@ public class JobProcessManager {
             // Create a process to process the request
             log("Creating process from parameters");
             final JobProcess<JobParameters> process =
-                    jobProcessFactory.createProcess(parameters);
+                    JOB_PROCESS_FACTORY.createProcess(parameters);
             logWriter = getLogWriter();
 
             // Read the machine
@@ -365,7 +364,7 @@ class Machine {
 }
 
 abstract class JobManagerLogWriter implements LogWriter {
-    protected final StringBuilder cached = new StringBuilder();
+    private final StringBuilder cached = new StringBuilder();
 
     protected boolean isPopulated() {
         return cached.length() > 0;
@@ -373,6 +372,18 @@ abstract class JobManagerLogWriter implements LogWriter {
 
     public synchronized String getLog() {
         return cached.toString();
+    }
+
+    final void appendCache(String msg) {
+        cached.append(msg);
+    }
+
+    final String takeCache() {
+        try {
+            return cached.toString();
+        } finally {
+            cached.setLength(0);
+        }
     }
 
     void stop() {
@@ -384,7 +395,7 @@ class SimpleJobManagerLogWriter extends JobManagerLogWriter {
     public void append(final String logMsg) {
         log("Process Output: " + logMsg);
         synchronized (this) {
-            cached.append(logMsg);
+            appendCache(logMsg);
         }
     }
 }

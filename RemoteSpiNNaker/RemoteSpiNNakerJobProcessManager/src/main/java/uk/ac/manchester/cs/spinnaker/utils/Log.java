@@ -1,6 +1,9 @@
 package uk.ac.manchester.cs.spinnaker.utils;
 
-public class Log {
+public abstract class Log {
+    private Log() {
+    }
+
     public static void log(final String message) {
         System.err.println(message);
     }

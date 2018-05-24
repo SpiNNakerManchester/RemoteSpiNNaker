@@ -163,13 +163,17 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         return largest;
     }
 
+    private static final double MS_PER_S = 1000.0;
+    private static final double SLOP_FACTOR = 0.1;
+    private static final int DEFAULT_BOARDS = 3;
+
     @Override
     public SpinnakerMachine getJobMachine(final int id, final int nCores,
             final int nChips, final int nBoards, final double runTime) {
         // TODO Check quota
 
         logger.info("Request for " + nCores + " cores or " + nChips
-                + " chips or " + nBoards + " boards for " + (runTime / 1000.0)
+                + " chips or " + nBoards + " boards for " + (runTime / MS_PER_S)
                 + " seconds");
 
         int nBoardsToRequest = nBoards;
@@ -177,8 +181,9 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
 
         // If nothing specified, use 3 boards
         if ((nBoards <= 0) && (nChips <= 0) && (nCores <= 0)) {
-            nBoardsToRequest = 3;
-            quotaNCores = (long) (3 * CORES_PER_CHIP * CHIPS_PER_BOARD);
+            nBoardsToRequest = DEFAULT_BOARDS;
+            quotaNCores = (long) (DEFAULT_BOARDS * CORES_PER_CHIP
+                    * CHIPS_PER_BOARD);
         }
 
         // If boards not specified, use cores or chips
@@ -194,7 +199,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
 
             double nBoardsExact = nChips / CHIPS_PER_BOARD;
 
-            if ((ceil(nBoardsExact) - nBoardsExact) < 0.1) {
+            if ((ceil(nBoardsExact) - nBoardsExact) < SLOP_FACTOR) {
                 nBoardsExact += 1.0;
             }
             if (nBoardsExact < 1.0) {
@@ -207,7 +212,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         final SpinnakerMachine machine =
                 allocateMachineForJob(id, nBoardsToRequest);
         logger.info("Running " + id + " on " + machine.getMachineName());
-        final long resourceUsage = (long) ((runTime / 1000.0) * quotaNCores);
+        final long resourceUsage = (long) ((runTime / MS_PER_S) * quotaNCores);
         logger.info("Resource usage " + resourceUsage);
         synchronized (jobResourceUsage) {
             jobResourceUsage.put(id, resourceUsage);
@@ -221,7 +226,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
 
     /**
      * Searches the list for the machine with the given name.
-     * 
+     *
      * @param machines
      *            The list of machines (or <tt>null</tt>).
      * @param machineName
@@ -282,7 +287,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         return null;
     }
 
-    /** Get a machine to run the job on */
+    /** Get a machine to run the job on. */
     private SpinnakerMachine allocateMachineForJob(final int id,
             final int nBoardsToRequest) {
         final SpinnakerMachine machine =
@@ -308,7 +313,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
 
         long usage;
         synchronized (jobResourceUsage) {
-            usage = (long) (jobNCores.get(id) * (runTime / 1000.0));
+            usage = (long) (jobNCores.get(id) * (runTime / MS_PER_S));
             jobResourceUsage.put(id, usage);
         }
         logger.info("Usage for " + id + " now " + usage);
@@ -447,9 +452,9 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
                 // error as a non-object can't contain values
                 } else {
                     add = false;
-                    logger.warn(
-                        "Could not add provenance item " + path + " to job " +
-                        id + ": Node " + item + " is not an object");
+                    logger.warn("Could not add provenance item " + path
+                            + " to job " + id + ": Node " + item
+                            + " is not an object");
                     break;
                 }
             }
@@ -575,8 +580,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
                 "Executer " + executorId + " for Job " + id + " has exited");
 
             String status = job.getStatus();
-            if (status == NMPIQueueManager.STATUS_QUEUED ||
-                    status == NMPIQueueManager.STATUS_RUNNING) {
+            if (status == NMPIQueueManager.STATUS_QUEUED
+                    || status == NMPIQueueManager.STATUS_RUNNING) {
                 logger.debug("Job " + id + " has not exited cleanly");
                 releaseAllocatedMachines(id);
                 final long resourceUsage = getResourceUsage(id);
@@ -598,8 +603,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
             }
         } else {
             logger.error(
-                "An executer " + executorId + " has exited without a job. " +
-                "This could indicate an error!");
+                    "An executer " + executorId + " has exited without a job. "
+                            + "This could indicate an error!");
             logger.error(logToAppend);
 
             if (restartJobExecuterOnFailure) {

@@ -129,7 +129,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         private IOException startException;
 
         /**
-         * Create a JobExecuter
+         * Create a JobExecuter.
          *
          * @param arguments
          *            The arguments to use
@@ -157,7 +157,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         }
 
         /**
-         * Runs the external job
+         * Runs the external job.
          *
          * @throws IOException
          *             If there is an error starting the job
@@ -262,7 +262,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         }
 
         /**
-         * Gets the location of the process log file
+         * Gets the location of the process log file.
          *
          * @return The location of the log file
          */

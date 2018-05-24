@@ -22,13 +22,19 @@
 			<property name="validateThrows" value="true" />
 			<property name="allowMissingThrowsTags" value="true" />
 			<property name="allowUndeclaredRTE" value="true" />
+			<!-- TEMPORARY: Make most javadoc errors ignored -->
+	        <property name="severity" value="ignore"/>
 		</module>
 		<module name="JavadocType">
 			<property name="scope" value="package" />
+			<!-- TEMPORARY: Make most javadoc errors ignored -->
+	        <property name="severity" value="ignore"/>
 		</module>
 		<module name="JavadocVariable">
 			<property name="scope" value="package" />
 			<property name="ignoreNamePattern" value="log|logger" />
+			<!-- TEMPORARY: Make most javadoc errors ignored -->
+	        <property name="severity" value="ignore"/>
 		</module>
 		<module name="JavadocStyle" />
 		<module name="ConstantName">

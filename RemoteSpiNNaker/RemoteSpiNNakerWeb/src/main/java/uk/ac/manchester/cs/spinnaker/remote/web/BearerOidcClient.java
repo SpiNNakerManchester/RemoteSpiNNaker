@@ -167,8 +167,7 @@ public class BearerOidcClient
         private String accessToken;
         private OidcProfile profile;
 
-        public BearerCredentials(final String accessToken,
-                final OidcProfile profile) {
+        BearerCredentials(String accessToken, OidcProfile profile) {
             this.accessToken = accessToken;
             this.profile = profile;
         }
