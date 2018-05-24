@@ -45,14 +45,23 @@ public class DirectClientAuthenticationFilter extends OncePerRequestFilter {
     private final WebAuthenticationDetailsSource detailsSource;
     private final AuthenticationManager authenticationManager;
 
+    /**
+     * Make an instance of the filter.
+     *
+     * @param authenticationManager
+     *            The authentication manager that takes the decisions.
+     */
     public DirectClientAuthenticationFilter(
             final AuthenticationManager authenticationManager) {
         this.authenticationManager = requireNonNull(authenticationManager);
         detailsSource = new WebAuthenticationDetailsSource();
     }
 
+    /**
+     * Ensure that this bean will behave sanely in service.
+     */
     @PostConstruct
-    void checkForSanity() {
+    private void checkForSanity() {
         requireNonNull(client);
         if (authenticationEntryPoint == null) {
             authenticationEntryPoint = new AuthenticationEntryPoint() {

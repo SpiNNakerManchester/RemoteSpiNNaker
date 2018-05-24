@@ -17,6 +17,18 @@ public class JobSpecification {
         // Does Nothing
     }
 
+    /**
+     * Create the specification for running a job.
+     *
+     * @param machine
+     *            The machine to run the job on.
+     * @param parameters
+     *            The parameters to the job.
+     * @param id
+     *            The ID of the job.
+     * @param url
+     *            The URL
+     */
     public JobSpecification(final SpinnakerMachine machine,
             final JobParameters parameters, final int id, final String url) {
         this.machine = machine;

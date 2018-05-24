@@ -13,6 +13,13 @@ public class RemoteStackTraceElement {
         // Does Nothing
     }
 
+    /**
+     * Create an element of a remoteable stack trace from a standard stack trace
+     * element.
+     *
+     * @param element
+     *            The stack trace element to convert.
+     */
     public RemoteStackTraceElement(final StackTraceElement element) {
         this.className = element.getClassName();
         this.methodName = element.getMethodName();
@@ -52,6 +59,12 @@ public class RemoteStackTraceElement {
         this.lineNumber = lineNumber;
     }
 
+    /**
+     * Convert this remote stack trace element to a standard Java stack trace
+     * element.
+     *
+     * @return The created stack trace element.
+     */
     public StackTraceElement toSTE() {
         return new StackTraceElement(getClassName(), getMethodName(),
                 getFileName(), getLineNumber());

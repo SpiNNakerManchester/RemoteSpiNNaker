@@ -66,6 +66,17 @@ public abstract class RestClientUtils {
 
     private static Logger log = getLogger(RestClientUtils.class);
 
+    /**
+     * Manufacture a client.
+     *
+     * @param url
+     *            What this client talks to.
+     * @param credentials
+     *            What this client will authenticate with.
+     * @param authScheme
+     *            The authentication scheme.
+     * @return the client
+     */
     protected static ResteasyClient createRestClient(final URL url,
             final Credentials credentials, final AuthScheme authScheme) {
         try {

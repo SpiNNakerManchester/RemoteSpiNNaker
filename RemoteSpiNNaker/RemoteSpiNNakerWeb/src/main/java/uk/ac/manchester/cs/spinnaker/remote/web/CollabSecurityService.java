@@ -29,6 +29,13 @@ public class CollabSecurityService {
         return requireNonNull(getServiceInstance().getCollabPermissions(id));
     }
 
+    /**
+     * Test if the user has read permissions to the given ID.
+     *
+     * @param id
+     *            Identifier to test against.
+     * @return true if reading is permitted.
+     */
     public boolean canRead(final int id) {
         try {
             getPermissions(id);
@@ -40,6 +47,13 @@ public class CollabSecurityService {
         }
     }
 
+    /**
+     * Test if the user has write permissions to the given ID.
+     *
+     * @param id
+     *            Identifier to test against.
+     * @return true if writing is permitted.
+     */
     public boolean canUpdate(final int id) {
         try {
             return getPermissions(id).isUpdate();
@@ -50,6 +64,13 @@ public class CollabSecurityService {
         }
     }
 
+    /**
+     * Test if the user has delete permissions to the given ID.
+     *
+     * @param id
+     *            Identifier to test against.
+     * @return true if deleting is permitted.
+     */
     public boolean canDelete(final int id) {
         try {
             return getPermissions(id).isDelete();

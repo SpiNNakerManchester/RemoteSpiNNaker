@@ -18,6 +18,16 @@ public class PyNNJobParameters implements JobParameters {
         // Does Nothing
     }
 
+    /**
+     * Create a description of the job parameters for a PyNN job.
+     *
+     * @param workingDirectory
+     *            The working directory to use.
+     * @param script
+     *            The script to run.
+     * @param hardwareConfiguration
+     *            The hardware configuration desired.
+     */
     public PyNNJobParameters(final String workingDirectory, final String script,
             final Map<String, Object> hardwareConfiguration) {
         this.workingDirectory = workingDirectory;
