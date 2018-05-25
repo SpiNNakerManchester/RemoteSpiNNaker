@@ -22,6 +22,12 @@ public class FixedMachineManagerImpl implements MachineManager {
     private final Object lock = new Object();
     private boolean done = false;
 
+    /**
+     * Sets the initial set of machines that are available.
+     *
+     * @param machines
+     *            the collection of machines to use
+     */
     @Value("${machines}")
     void setInitialMachines(final List<SpinnakerMachine> machines) {
         machinesAvailable.addAll(machines);

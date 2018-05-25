@@ -9,6 +9,9 @@ import java.util.List;
 public class RemoteStackTrace {
     private List<RemoteStackTraceElement> elements = new ArrayList<>();
 
+    /**
+     * Create a basic remote stack trace without stack elements.
+     */
     public RemoteStackTrace() {
         // Does Nothing
     }
@@ -25,6 +28,12 @@ public class RemoteStackTrace {
         }
     }
 
+    /**
+     * Create a basic remote stack trace from a list of elements.
+     *
+     * @param elements
+     *            The elements to make the stack trace from.
+     */
     public RemoteStackTrace(final List<RemoteStackTraceElement> elements) {
         this.elements = elements;
     }

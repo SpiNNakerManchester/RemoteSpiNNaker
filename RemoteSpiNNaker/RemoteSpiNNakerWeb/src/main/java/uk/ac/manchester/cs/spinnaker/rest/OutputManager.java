@@ -85,6 +85,25 @@ public interface OutputManager {
             @PathParam("filename") String filename,
             @QueryParam("download") @DefaultValue("true") boolean download);
 
+    /**
+     * Upload a file to the HPC store.
+     *
+     * @param projectId
+     *            The project ID
+     * @param id
+     *            The job ID
+     * @param serverUrl
+     *            The HPC storage service
+     * @param storageId
+     *            The ID for the storage on the HPC service
+     * @param filePath
+     *            The path within the storage
+     * @param userId
+     *            The HPC user ID
+     * @param token
+     *            The auth token
+     * @return Description of whether the upload was successful.
+     */
     @POST
     @Produces(TEXT_PLAIN)
     @Path("{projectId}/{id}/uploadToHPC")

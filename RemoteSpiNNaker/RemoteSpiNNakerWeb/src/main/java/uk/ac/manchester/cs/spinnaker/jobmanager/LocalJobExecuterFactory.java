@@ -299,7 +299,8 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
          * @param input
          *            Where things are coming from.
          * @param output
-         *            Where things are going to.
+         *            Where things are going to. This class will close this when
+         *            it is no longer required.
          */
         JobOutputPipe(final InputStream input, final PrintWriter output) {
             super(threadGroup, "JobOutputPipe");
@@ -311,22 +312,25 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
 
         @Override
         public void run() {
-            while (!done) {
-                String line;
-                try {
-                    line = reader.readLine();
-                } catch (final IOException e) {
-                    break;
+            try {
+                while (!done) {
+                    String line;
+                    try {
+                        line = reader.readLine();
+                    } catch (final IOException e) {
+                        break;
+                    }
+                    if (line == null) {
+                        break;
+                    }
+                    if (!line.isEmpty()) {
+                        log.debug(line);
+                        writer.println(line);
+                    }
                 }
-                if (line == null) {
-                    break;
-                }
-                if (!line.isEmpty()) {
-                    log.debug(line);
-                    writer.println(line);
-                }
+            } finally {
+                writer.close();
             }
-            writer.close();
         }
 
         @Override

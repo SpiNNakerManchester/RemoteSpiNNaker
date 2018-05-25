@@ -158,6 +158,15 @@ public class BearerOidcClient
         return new BearerCredentials(accessToken, profile);
     }
 
+    /**
+     * Get the user profile from the credentials.
+     *
+     * @param credentials
+     *            The credentials
+     * @param context
+     *            The web context
+     * @return the profile, or <tt>null</tt> if there isn't one.
+     */
     @Override
     protected OidcProfile retrieveUserProfile(
             final BearerCredentials credentials, final WebContext context) {

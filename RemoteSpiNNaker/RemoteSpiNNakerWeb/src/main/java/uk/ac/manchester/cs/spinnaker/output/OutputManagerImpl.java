@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
@@ -108,6 +109,13 @@ public class OutputManagerImpl implements OutputManager {
         }
     }
 
+    /**
+     * Instantiate the output manager.
+     *
+     * @param baseServerUrl
+     *            The base URL of the overall service, used when generating
+     *            internal URLs.
+     */
     public OutputManagerImpl(final URL baseServerUrl) {
         this.baseServerUrl = baseServerUrl;
     }
@@ -117,18 +125,25 @@ public class OutputManagerImpl implements OutputManager {
         timeToKeepResults = MILLISECONDS.convert(nDaysToKeepResults, DAYS);
     }
 
+    private final ScheduledExecutorService scheduler = newScheduledThreadPool(
+            1);
+
     /**
      * Arrange for old output to be purged once per day.
      */
     @PostConstruct
     private void initPurgeScheduler() {
-        final ScheduledExecutorService scheduler = newScheduledThreadPool(1);
         scheduler.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
                 removeOldFiles();
             }
         }, 0, 1, DAYS);
+    }
+
+    @PreDestroy
+    private void stopPurgeScheduler() {
+        scheduler.shutdown();
     }
 
     private File getProjectDirectory(final String projectId) {

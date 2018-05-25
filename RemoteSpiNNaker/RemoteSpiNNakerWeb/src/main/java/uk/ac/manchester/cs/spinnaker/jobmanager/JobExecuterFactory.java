@@ -11,7 +11,7 @@ import java.net.URL;
  */
 public interface JobExecuterFactory {
     /**
-     * Creates a new JobExecuter.
+     * Creates a new {@link JobExecuter}.
      *
      * @param manager
      *            The manager requesting the creation

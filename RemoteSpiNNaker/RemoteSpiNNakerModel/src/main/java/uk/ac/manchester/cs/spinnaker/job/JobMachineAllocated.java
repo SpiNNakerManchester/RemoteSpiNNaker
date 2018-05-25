@@ -10,6 +10,12 @@ public class JobMachineAllocated {
         // Does Nothing
     }
 
+    /**
+     * Create an instance.
+     *
+     * @param allocated
+     *            Whether the job was allocated.
+     */
     public JobMachineAllocated(final boolean allocated) {
         this.allocated = allocated;
     }
