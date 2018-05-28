@@ -6,8 +6,6 @@ import static java.util.Collections.singleton;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
 
 import org.apache.cxf.bus.spring.SpringBus;
 import org.apache.cxf.endpoint.Server;
@@ -262,8 +260,7 @@ public class RemoteSpinnakerBeans {
      * @return bean
      */
     @Bean
-    public NMPIQueueManager queueManager()
-            throws NoSuchAlgorithmException, KeyManagementException {
+    public NMPIQueueManager queueManager() {
         return new NMPIQueueManager();
     }
 
@@ -273,7 +270,7 @@ public class RemoteSpinnakerBeans {
      * @return bean
      */
     @Bean
-    public JobExecuterFactory jobExecuterFactory() throws IOException {
+    public JobExecuterFactory jobExecuterFactory() {
         if (!useXenVms) {
             return new LocalJobExecuterFactory();
         }
@@ -308,8 +305,7 @@ public class RemoteSpinnakerBeans {
      * @return bean
      */
     @Bean
-    public Server jaxRsServer() throws KeyManagementException,
-            NoSuchAlgorithmException, IOException {
+    public Server jaxRsServer() {
         final JAXRSServerFactoryBean factory = new JAXRSServerFactoryBean();
         factory.setAddress(restPath);
         factory.setBus(ctx.getBean(SpringBus.class));
