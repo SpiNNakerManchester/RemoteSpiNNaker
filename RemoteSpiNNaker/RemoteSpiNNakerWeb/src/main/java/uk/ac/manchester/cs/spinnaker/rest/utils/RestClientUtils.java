@@ -158,7 +158,7 @@ public abstract class RestClientUtils {
 
     /**
      * What issuers do we trust? None really, but we claim we do.
-     * 
+     *
      * @return The issuer certificate to trust. Or <tt>null</tt>.
      */
     private static X509Certificate getTrustedCert() {
