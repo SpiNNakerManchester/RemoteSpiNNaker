@@ -1,4 +1,4 @@
 /**
- * Contains the details of a machine.
+ * The description of SpiNNaker machines.
  */
 package uk.ac.manchester.cs.spinnaker.machine;

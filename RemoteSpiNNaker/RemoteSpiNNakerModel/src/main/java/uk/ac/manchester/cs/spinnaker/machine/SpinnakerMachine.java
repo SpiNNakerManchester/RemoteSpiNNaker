@@ -90,8 +90,13 @@ public class SpinnakerMachine
     /**
      * Creates a new Spinnaker Machine by parsing the name of a machine.
      *
-     * @param value The name of the machine to parse.
-     * @return the machine parsed.
+     * @param value
+     *            The name of the machine to parse.
+     * @return The parsed machine descriptor.
+     * @throws IllegalArgumentException
+     *             if the description has the wrong overall format
+     * @throws NumberFormatException
+     *             if one of the parts that should be numeric isn't
      */
     public static SpinnakerMachine parse(final String value) {
         if (!value.startsWith("(") || !value.endsWith(")")) {
@@ -136,24 +141,30 @@ public class SpinnakerMachine
     }
 
     /**
-     * Create a new SpiNNaker Machine.
+     * Creates a new SpiNNaker Machine description.
      *
-     * @param machineNameParam The name of the machine
-     * @param versionParam The version of the machine
-     * @param widthParam The width of the machine
-     * @param heightParam The height of the machine
-     * @param nBoardsParam The number of boards in the machine
-     * @param bmpDetailsParam The details of the machine
+     * @param machineNameParam
+     *            The name of the machine
+     * @param versionParam
+     *            The version of the machine
+     * @param widthParam
+     *            The width of the machine, in boards
+     * @param heightParam
+     *            The width of the machine, in boards
+     * @param numBoardsParam
+     *            The number of boards in the machine
+     * @param bmpDetailsParam
+     *            How to contact the machine's Board Management Processor
      */
     public SpinnakerMachine(
             final String machineNameParam, final String versionParam,
-            final int widthParam, final int heightParam, final int nBoardsParam,
-            final String bmpDetailsParam) {
+            final int widthParam, final int heightParam,
+            final int numBoardsParam, final String bmpDetailsParam) {
         this.machineName = machineNameParam;
         this.version = versionParam;
         this.width = widthParam;
         this.height = heightParam;
-        this.nBoards = nBoardsParam;
+        this.nBoards = numBoardsParam;
         this.bmpDetails = bmpDetailsParam;
     }
 

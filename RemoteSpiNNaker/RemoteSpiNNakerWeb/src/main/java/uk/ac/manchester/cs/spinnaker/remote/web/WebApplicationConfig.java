@@ -20,7 +20,10 @@ import org.springframework.web.context.ContextLoaderListener;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 import org.springframework.web.filter.DelegatingFilterProxy;
 
-/* Instead of web.xml; application entry point */
+/**
+ * Main webapp entry point. Launches the rest of the application and replaces
+ * web.xml.
+ */
 public class WebApplicationConfig implements WebApplicationInitializer {
     /**
      * The name of the <i>system property</i> that describes where to load

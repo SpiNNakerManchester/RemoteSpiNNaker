@@ -19,18 +19,22 @@ public class JobProcessFactory {
     private final ThreadGroup threadGroup;
 
     /**
-     * Creates a factory with a specified thread group.
+     * Create a factory.
      *
-     * @param threadGroupParam The thread group to use
+     * @param threadGroupParam
+     *            The thread group for the factory. All threads created by the
+     *            factory will be within this group.
      */
     public JobProcessFactory(final ThreadGroup threadGroupParam) {
         this.threadGroup = threadGroupParam;
     }
 
     /**
-     * Creates a factory with a new thread group.
+     * Create a factory.
      *
-     * @param threadGroupName The name to give the thread group
+     * @param threadGroupName
+     *            The name of the thread group for the factory. All threads
+     *            created by the factory will be within this group.
      */
     public JobProcessFactory(final String threadGroupName) {
         this(new ThreadGroup(threadGroupName));

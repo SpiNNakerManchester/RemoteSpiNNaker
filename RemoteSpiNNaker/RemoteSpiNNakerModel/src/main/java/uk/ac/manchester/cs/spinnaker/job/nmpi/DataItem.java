@@ -1,7 +1,7 @@
 package uk.ac.manchester.cs.spinnaker.job.nmpi;
 
 /**
- * An item of data in a job.
+ * A reference to some data to be moved into or out of a {@link Job}.
  */
 public class DataItem {
 
@@ -18,9 +18,11 @@ public class DataItem {
     }
 
     /**
-     * Creates an item of data with a URL.
+     * Make an instance that wraps a URL. The meaning of the URL depends on the
+     * usage of the data item.
      *
-     * @param urlParam The URL of the item
+     * @param urlParam
+     *            The URL to wrap.
      */
     public DataItem(final String urlParam) {
         this.url = urlParam;

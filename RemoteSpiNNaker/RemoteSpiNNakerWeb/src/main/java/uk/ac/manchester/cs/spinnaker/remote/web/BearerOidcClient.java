@@ -9,6 +9,7 @@ import static org.pac4j.core.context.HttpConstants.DEFAULT_READ_TIMEOUT;
 import static org.pac4j.core.exception.RequiresHttpAction.unauthorized;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 
 import javax.annotation.PostConstruct;
@@ -35,6 +36,9 @@ import com.nimbusds.openid.connect.sdk.UserInfoSuccessResponse;
 import com.nimbusds.openid.connect.sdk.claims.UserInfo;
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata;
 
+/**
+ * HBP token bearer authentication client.
+ */
 public class BearerOidcClient
         extends
             DirectClient<BearerOidcClient.BearerCredentials, OidcProfile> {
@@ -46,6 +50,11 @@ public class BearerOidcClient
     private String realmName;
     private OIDCProviderMetadata oidcProvider;
 
+    /**
+     * Get (and cache if building) the metadata for the OpenID Connect provider.
+     *
+     * @return The OIDC metadata.
+     */
     @PostConstruct
     private OIDCProviderMetadata getOIDCProvider() {
         try {
@@ -79,6 +88,14 @@ public class BearerOidcClient
         // Does Nothing
     }
 
+    private URI getUserInfoEndpoint() {
+        OIDCProviderMetadata o = getOIDCProvider();
+        if (o == null) {
+            return null;
+        }
+        return o.getUserInfoEndpointURI();
+    }
+
     @Override
     public BearerCredentials getCredentials(final WebContext context)
             throws RequiresHttpAction {
@@ -97,7 +114,7 @@ public class BearerOidcClient
         }
         try {
             final BearerAccessToken token = new BearerAccessToken(accessToken);
-            if (getOIDCProvider().getUserInfoEndpointURI() == null) {
+            if (getUserInfoEndpoint() == null) {
                 logger.error("No User Info Endpoint!");
                 return null;
             }
@@ -113,7 +130,7 @@ public class BearerOidcClient
             final BearerAccessToken token)
             throws IOException, ParseException, RequiresHttpAction {
         final UserInfoRequest userInfoRequest = new UserInfoRequest(
-                getOIDCProvider().getUserInfoEndpointURI(), token);
+                getUserInfoEndpoint(), token);
         final HTTPRequest userInfoHttpRequest = userInfoRequest.toHTTPRequest();
         userInfoHttpRequest.setConnectTimeout(DEFAULT_CONNECT_TIMEOUT);
         userInfoHttpRequest.setReadTimeout(DEFAULT_READ_TIMEOUT);
@@ -141,6 +158,15 @@ public class BearerOidcClient
         return new BearerCredentials(accessToken, profile);
     }
 
+    /**
+     * Get the user profile from the credentials.
+     *
+     * @param credentials
+     *            The credentials
+     * @param context
+     *            The web context
+     * @return the profile, or <tt>null</tt> if there isn't one.
+     */
     @Override
     protected OidcProfile retrieveUserProfile(
             final BearerCredentials credentials, final WebContext context) {
@@ -161,14 +187,24 @@ public class BearerOidcClient
         return HEADER_BASED;
     }
 
+    /**
+     * OIDC bearer credentials. Consists of an access token and a profile.
+     */
     static class BearerCredentials extends Credentials {
         private static final long serialVersionUID = 5585200812175851776L;
 
         private String accessToken;
         private OidcProfile profile;
 
-        public BearerCredentials(final String accessToken,
-                final OidcProfile profile) {
+        /**
+         * Make the credentials.
+         *
+         * @param accessToken
+         *            The token.
+         * @param profile
+         *            The profile.
+         */
+        BearerCredentials(String accessToken, OidcProfile profile) {
             this.accessToken = accessToken;
             this.profile = profile;
         }

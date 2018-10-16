@@ -1,4 +1,4 @@
 /**
- * Contains the details of an Remote SpiNNaker job.
+ * The description of SpiNNaker jobs.
  */
 package uk.ac.manchester.cs.spinnaker.job;

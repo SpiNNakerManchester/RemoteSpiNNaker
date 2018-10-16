@@ -96,7 +96,7 @@ public class Job implements QueueNextResponse {
     /**
      * Additional fields that are not supported, but don't cause errors.
      */
-    private Map<String, Object> others = new HashMap<String, Object>();
+    private Map<String, Object> others = new HashMap<>();
 
     /**
      * Get the code.
@@ -372,10 +372,12 @@ public class Job implements QueueNextResponse {
     }
 
     /**
-     * Sets any other parameter.
+     * Used for JSON serialisation.
      *
-     * @param name The name of the parameter
-     * @param value The value of the parameter
+     * @param name
+     *            The parameter to set.
+     * @param value
+     *            The value to set it to.
      */
     @JsonAnySetter
     public void set(final String name, final Object value) {

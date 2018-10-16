@@ -53,7 +53,14 @@ public class JobProcessManager {
      */
     private static final int UPDATE_INTERVAL = 500;
 
-    /** The factory for converting parameters into processes. */
+    /**
+     * Default parameters for getting a machine.
+     */
+    private static final int DEFAULT = -1;
+
+    /**
+     * The factory for converting parameters into processes.
+     */
     private static final JobProcessFactory JOB_PROCESS_FACTORY =
             new JobProcessFactory("JobProcess");
     static {
@@ -62,8 +69,7 @@ public class JobProcessManager {
     }
 
     /**
-     * A log writer that uploads the log at a fixed time since the last change
-     * was made.
+     * A log writer that uploads to the server.
      */
     class UploadingJobManagerLogWriter extends JobManagerLogWriter {
 
@@ -73,7 +79,7 @@ public class JobProcessManager {
         private final Timer sendTimer;
 
         /**
-         * Create a new uploading writer.
+         * Make a log writer that uploads the log every half second.
          */
         UploadingJobManagerLogWriter() {
             sendTimer = new Timer(UPDATE_INTERVAL, new ActionListener() {
@@ -91,11 +97,10 @@ public class JobProcessManager {
             String toWrite = null;
             synchronized (this) {
                 if (isPopulated()) {
-                    toWrite = getLog();
-                    resetCache();
+                    toWrite = takeCache();
                 }
             }
-            if (toWrite != null) {
+            if (toWrite != null && !toWrite.isEmpty()) {
                 log("Sending cached data to job manager");
                 jobManager.appendLog(job.getId(), toWrite);
             }
@@ -172,18 +177,22 @@ public class JobProcessManager {
     private String projectId;
 
     /**
-     * Creates a manager of a Job Process.
+     * Create an object that manages the running of a single job.
      *
-     * @param serverUrlParam The URL of the server
-     * @param deleteOnExitParam True if the job output should be deleted
-     * @param isLocalParam True if the job is running on the same machine as
-     *     the server
-     * @param executerIdParam The ID of the job execution
-     * @param liveUploadOutputParam True if the output of the job should be live
-     *     uploaded to the server
-     * @param requestMachineParam True if a machine should be requested for the
-     *     job
-     * @param authTokenParam The authorisation token of the job
+     * @param serverUrlParam
+     *            The URL to the server, used for writing back results.
+     * @param deleteOnExitParam
+     *            Whether to delete the job's resources on termination.
+     * @param isLocalParam
+     *            Whether the job is local.
+     * @param executerIdParam
+     *            The ID of the executer.
+     * @param liveUploadOutputParam
+     *            Whether to do live upload of output data.
+     * @param requestMachineParam
+     *            Whether to request a machine.
+     * @param authTokenParam
+     *            The authorisation token for the server.
      */
     public JobProcessManager(final String serverUrlParam,
             final boolean deleteOnExitParam, final boolean isLocalParam,
@@ -201,7 +210,7 @@ public class JobProcessManager {
     }
 
     /**
-     * Runs the job.
+     * Run a single job.
      */
     public void runJob() {
         try {
@@ -222,20 +231,14 @@ public class JobProcessManager {
                     JOB_PROCESS_FACTORY.createProcess(parameters);
             logWriter = getLogWriter();
 
-            // Get a machine
-            SpinnakerMachine machine = null;
-            String machineUrl = null;
-            if (requestMachine) {
-                machine = jobManager.getJobMachine(job.getId(), DEFAULT,
-                        DEFAULT, DEFAULT, DEFAULT);
-            } else {
-                machineUrl = format("%sjob/%d/machine", serverUrl, job.getId());
-            }
+            // Read the machine
+            final Machine machine = getMachine();
 
             // Execute the process
             log("Running job " + job.getId() + " on " + machine + " using "
                     + parameters.getClass() + " reporting to " + serverUrl);
-            process.execute(machineUrl, machine, parameters, logWriter);
+            process.execute(machine.getURL(), machine.getMachine(), parameters,
+                    logWriter);
             logWriter.stop();
 
             // Get the exit status
@@ -278,10 +281,13 @@ public class JobProcessManager {
     }
 
     /**
-     * Main Method.
+     * How to run a Job Process Manager. This is the execution entry point for
+     * this Maven module.
      *
-     * @param args Main arguments
-     * @throws Exception If anything goes wrong!
+     * @param args
+     *            The command line arguments.
+     * @throws Exception
+     *             No guarantees made about what can go wrong.
      */
     public static void main(final String[] args) throws Exception {
         String serverUrl = null;
@@ -330,9 +336,18 @@ public class JobProcessManager {
     }
 
     /**
-     * The default value for setting up a machine.
+     * Get a machine for use in the job.
+     *
+     * @return a machine
      */
-    private static final int DEFAULT = -1;
+    private Machine getMachine() {
+        // (get a 3 board machine just now)
+        if (requestMachine) {
+            return new Machine(jobManager.getJobMachine(job.getId(), DEFAULT,
+                    DEFAULT, DEFAULT, DEFAULT));
+        }
+        return new Machine(serverUrl, job.getId());
+    }
 
     /**
      * Sort out the parameters to a job. Includes downloading any necessary
@@ -444,14 +459,88 @@ public class JobProcessManager {
 }
 
 /**
- * Job writer that writes logs to the JobManager.
+ * A description of a machine.
+ */
+class Machine {
+    /** The machine. Knows its service URL. */
+    private SpinnakerMachine machine;
+    /** The service URL. */
+    private String url;
+
+    /**
+     * Create a machine known by object.
+     *
+     * @param machineParam
+     *            The machine object.
+     */
+    Machine(final SpinnakerMachine machineParam) {
+        this.machine = machineParam;
+    }
+
+    /**
+     * Create a machine known by service job name.
+     *
+     * @param baseUrl
+     *            The base URL for the machine.
+     * @param id
+     *            The ID for the job.
+     */
+    Machine(final String baseUrl, final int id) {
+        this.url = format("%sjob/%d/machine", baseUrl, id);
+    }
+
+    /**
+     * Get the machine.
+     *
+     * @return the machine
+     */
+    SpinnakerMachine getMachine() {
+        return machine;
+    }
+
+    /**
+     * Get the URL.
+     *
+     * @return the URL
+     */
+    String getURL() {
+        return url;
+    }
+
+    @Override
+    public String toString() {
+        if (machine != null) {
+            return machine.toString();
+        }
+        return url;
+    }
+}
+
+/**
+ * How to write to the log.
  */
 abstract class JobManagerLogWriter implements LogWriter {
 
     /**
+     * Create a machine known by object.
+     *
+     * @param machine
+     *            The machine object.
+     */
+    /**
      * The cached message.
      */
     private final StringBuilder cached = new StringBuilder();
+
+
+    /**
+     * Does the log have anything in it?
+     *
+     * @return Whether the log cache is non-empty.
+     */
+    protected synchronized boolean isPopulated() {
+        return cached.length() > 0;
+    }
 
     /**
      * Adds a message to the cache.
@@ -463,38 +552,36 @@ abstract class JobManagerLogWriter implements LogWriter {
     }
 
     /**
-     * Reset the cache to contain nothing.
-     */
-    protected synchronized void resetCache() {
-        cached.setLength(0);
-    }
-
-    /**
-     * Determine if the cache has any data in it.
+     * Get the current contents of the log cache.
      *
-     * @return True if there is data, False otherwise.
-     */
-    protected synchronized boolean isPopulated() {
-        return cached.length() > 0;
-    }
-
-    /**
-     * Get the current content of the cache.
-     * @return The current content of the log.
+     * @return Copy of the log contents.
      */
     public synchronized String getLog() {
         return cached.toString();
     }
 
     /**
-     * Stop the log.
+     * Get the current log contents and reset the internal buffer.
+     *
+     * @return The contents of the log prior to this call.
+     */
+    public final synchronized String takeCache() {
+        try {
+            return cached.toString();
+        } finally {
+            cached.setLength(0);
+        }
+    }
+
+    /**
+     * Stop any background activity associated with the log.
      */
     void stop() {
     }
 }
 
 /**
- *
+ * A simple log implementation.
  */
 class SimpleJobManagerLogWriter extends JobManagerLogWriter {
     @Override
@@ -507,7 +594,7 @@ class SimpleJobManagerLogWriter extends JobManagerLogWriter {
 }
 
 /**
- * An exception in the job.
+ * Exception indicating errors with the job factory.
  */
 @SuppressWarnings("serial")
 class JobErrorsException extends IOException {

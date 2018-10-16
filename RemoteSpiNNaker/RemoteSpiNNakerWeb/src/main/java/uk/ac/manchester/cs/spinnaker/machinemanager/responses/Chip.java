@@ -5,6 +5,9 @@ import static com.fasterxml.jackson.annotation.JsonFormat.Shape.ARRAY;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/**
+ * Describes a chip by its X,Y location.
+ */
 @JsonPropertyOrder({"x", "y"})
 @JsonFormat(shape = ARRAY)
 public class Chip {

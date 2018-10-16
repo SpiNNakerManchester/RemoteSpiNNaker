@@ -1,9 +1,9 @@
 package uk.ac.manchester.cs.spinnaker.utils;
 
 /**
- * A log utility.
+ * A very simple-minded logger.
  */
-public final class Log {
+public abstract class Log {
 
     /**
      * Avoid instantiation.
@@ -14,18 +14,20 @@ public final class Log {
     }
 
     /**
-     * Log a message.
+     * Write a message to the log.
      *
-     * @param message The message to log
+     * @param message
+     *            The message to write.
      */
     public static void log(final String message) {
         System.err.println(message);
     }
 
     /**
-     * Log an exception.
+     * Write an exception to the log.
      *
-     * @param exception The exception to log
+     * @param exception
+     *            The exception to write.
      */
     public static void log(final Throwable exception) {
         exception.printStackTrace(System.err);

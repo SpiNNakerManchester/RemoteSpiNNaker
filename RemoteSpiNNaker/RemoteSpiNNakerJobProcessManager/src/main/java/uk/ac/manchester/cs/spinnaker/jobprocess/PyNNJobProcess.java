@@ -54,9 +54,9 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
     private static final int BUFFER_SIZE = 8196;
 
     /**
-     * The maximum error level expected.
+     * The error level that represents a signal.
      */
-    private static final int MAX_ERROR_LEVEL = 128;
+    private static final int MIN_SIGNAL_OFFSET = 128;
 
     /**
      * The directory containing provenance within the reports.
@@ -233,10 +233,10 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             }
 
             // If the exit is an error, mark an error
-            if (exitValue >= MAX_ERROR_LEVEL) {
+            if (exitValue >= MIN_SIGNAL_OFFSET) {
                 // Useful to distinguish this case
                 throw new Exception("Python exited with signal ("
-                        + (exitValue - MAX_ERROR_LEVEL) + ")");
+                        + (exitValue - MIN_SIGNAL_OFFSET) + ")");
             }
             if (exitValue != 0) {
                 throw new Exception("Python exited with a non-zero code ("
@@ -251,13 +251,18 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
     }
 
     /**
-     * Runs the sub process.
+     * How to actually run a subprocess.
      *
-     * @param parameters The parameters to execute the process with
-     * @param logWriter A writer to write log messages to
-     * @return The exit value of the process
-     * @throws IOException If there was an error starting the process
-     * @throws InterruptedException If the process was interrupted before return
+     * @param parameters
+     *            The parameters to the subprocess.
+     * @param logWriter
+     *            Where to send log messages.
+     * @return
+     *            The exit value of the process
+     * @throws IOException
+     *            If there was an error starting the process
+     * @throws InterruptedException
+     *            If the process was interrupted before return
      */
     private int runSubprocess(final PyNNJobParameters parameters,
             final LogWriter logWriter)
@@ -289,11 +294,16 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
     }
 
     /**
-     * Put the provenance data in to the local storage.
+     * Enter some provenance into the provenance map.
      *
-     * @param items The hierarchy of items to be added
-     * @param path The string path of the items
-     * @param pathList The list path of the items
+     * @param items
+     *            The items to insert.
+     * @param path
+     *            Where to insert these items relative to the current node, as a
+     *            string.
+     * @param pathList
+     *            Where to insert these items relative to the current node, as a
+     *            list.
      */
     private void putProvenanceInMap(final ProvenanceDataItems items,
             final String path, final LinkedList<String> pathList) {
@@ -324,11 +334,14 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
     }
 
     /**
-     * Add provenance items from a directory of xml files.
+     * Add the provenance contained in the files in the given directory.
      *
-     * @param provenanceDirectory The directory containing the files
-     * @throws IOException If there was an error reading the files
-     * @throws JAXBException If there was an error processing the files
+     * @param provenanceDirectory
+     *            Where to look for XML files.
+     * @throws JAXBException
+     *             If things go wrong in deserialisation.
+     * @throws IOException
+     *             If anything goes wrong with I/O.
      */
     private void addProvenance(final File provenanceDirectory)
             throws IOException, JAXBException {
@@ -352,13 +365,18 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
     }
 
     /**
-     * Put the provenance data in to a zip file.
+     * Used for creating a ZIP of the provenance.
      *
-     * @param reportsZip The zip file to put the data in
-     * @param directory The directory containing the data
-     * @param path The path to the directory
-     * @throws IOException If there is an exception reading or writing files
-     * @throws JAXBException If there is an exception processing files
+     * @param reportsZip
+     *            Open handle to the ZIP being created.
+     * @param directory
+     *            Where to get provenance data from.
+     * @param path
+     *            The path within the ZIP.
+     * @throws IOException
+     *             If anything goes wrong with I/O.
+     * @throws JAXBException
+     *             If anything goes wrong with deserialisation of the XML.
      */
     private void zipProvenance(final ZipOutputStream reportsZip,
             final File directory, final String path)
@@ -378,23 +396,26 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
                 final ZipEntry entry =
                         new ZipEntry(path + "/" + file.getName());
                 reportsZip.putNextEntry(entry);
-                final FileInputStream in = new FileInputStream(file);
-                int bytesRead = in.read(buffer);
-                while (bytesRead >= 0) {
-                    reportsZip.write(buffer, 0, bytesRead);
-                    bytesRead = in.read(buffer);
+                try (FileInputStream in = new FileInputStream(file)) {
+                    int bytesRead = in.read(buffer);
+                    while (bytesRead >= 0) {
+                        reportsZip.write(buffer, 0, bytesRead);
+                        bytesRead = in.read(buffer);
+                    }
                 }
-                in.close();
             }
         }
     }
 
     /**
-     * Gather provenance files from the reports directory.
+     * Gather the provenance information from the job's reports directory.
      *
-     * @param workingDirectoryParam The process working directory
-     * @throws IOException If there is an error reading the files
-     * @throws JAXBException If there is an error processing the files
+     * @param workingDirectoryParam
+     *            The job's working directory.
+     * @throws IOException
+     *             If anything goes wrong with I/O.
+     * @throws JAXBException
+     *             If anything goes wrong with deserialisation of XML.
      */
     private void gatherProvenance(final File workingDirectoryParam)
             throws IOException, JAXBException {
@@ -404,14 +425,13 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         if (reportsFolder.isDirectory()) {
 
             // Create a zip file of the reports
-            final ZipOutputStream reportsZip =
+            try (ZipOutputStream reportsZip =
                     new ZipOutputStream(new FileOutputStream(
-                            new File(workingDirectoryParam, "reports.zip")));
-
-            // Gather items into the reports zip, keeping an eye out for
-            // the "provenance data" folder
-            zipProvenance(reportsZip, reportsFolder, "reports");
-            reportsZip.close();
+                            new File(workingDirectoryParam, "reports.zip")))) {
+                // Gather items into the reports zip, keeping an eye out for
+                // the "provenance data" folder
+                zipProvenance(reportsZip, reportsFolder, "reports");
+            }
         }
     }
 
@@ -456,7 +476,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
     }
 
     /**
-     * Transfers log messages from a read to a LogWriter.
+     * Thread for copying a {@link Reader} to a {@link LogWriter}.
      */
     class ReaderLogWriter extends Thread implements AutoCloseable {
 
@@ -478,8 +498,10 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         /**
          * Creates a new ReaderLogWriter with another reader.
          *
-         * @param readerParam The reader to read from
-         * @param writerParam The writer to write to
+         * @param readerParam
+         *            The reader to read from
+         * @param writerParam
+         *            The writer to write to
          */
         ReaderLogWriter(
                 final Reader readerParam, final LogWriter writerParam) {
@@ -498,8 +520,10 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
          * Creates a new ReaderLogWriter with an input stream. This will be
          * treated as a text stream using the system encoding.
          *
-         * @param input The input stream to read from.
-         * @param writerParam The writer to write to.
+         * @param input
+         *            The input stream to read from.
+         * @param writerParam
+         *            The writer to write to.
          */
         ReaderLogWriter(final InputStream input,
                 final LogWriter writerParam) {

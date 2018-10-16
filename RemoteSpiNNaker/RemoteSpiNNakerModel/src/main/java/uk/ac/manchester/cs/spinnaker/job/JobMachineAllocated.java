@@ -1,7 +1,7 @@
 package uk.ac.manchester.cs.spinnaker.job;
 
 /**
- * An allocated machine.
+ * Indicates whether a machine was allocated for a job.
  */
 public class JobMachineAllocated {
 
@@ -18,9 +18,10 @@ public class JobMachineAllocated {
     }
 
     /**
-     * Creates a allocated flag.
+     * Create an instance.
      *
-     * @param allocatedParam The flag
+     * @param allocatedParam
+     *            Whether the job was allocated.
      */
     public JobMachineAllocated(final boolean allocatedParam) {
         this.allocated = allocatedParam;

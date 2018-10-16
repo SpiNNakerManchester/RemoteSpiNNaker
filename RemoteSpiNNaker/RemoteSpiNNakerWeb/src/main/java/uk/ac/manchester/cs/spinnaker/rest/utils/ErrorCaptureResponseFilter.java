@@ -18,6 +18,9 @@ import javax.ws.rs.ext.Provider;
 import org.apache.commons.io.output.WriterOutputStream;
 import org.slf4j.Logger;
 
+/**
+ * Better logging of errors.
+ */
 // Only public because of the annotation
 @Provider
 public class ErrorCaptureResponseFilter implements ClientResponseFilter {
@@ -25,9 +28,9 @@ public class ErrorCaptureResponseFilter implements ClientResponseFilter {
             new CustomJacksonJsonProvider();
     private static final Logger log =
             getLogger(ErrorCaptureResponseFilter.class);
-    public volatile boolean writeToLog = true;
+    private volatile boolean writeToLog = true;
 
-    private static final String INDENT = "    ";// 4 spaces
+    private static final String INDENT = "    "; // 4 spaces
     private static final String IND2 = INDENT + INDENT;
 
     @Override

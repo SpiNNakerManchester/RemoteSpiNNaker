@@ -6,8 +6,10 @@ import static java.util.Objects.requireNonNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLDecoder;
 import java.util.Map;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
@@ -18,12 +20,13 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import org.apache.commons.codec.binary.Base64;
 import org.jboss.resteasy.util.ParameterParser;
 
 /**
- * A class for downloading files.
+ * Utilities for downloading a file.
  */
-public final class FileDownloader {
+public abstract class FileDownloader {
 
     /**
      * Stops instantiation.
@@ -56,6 +59,36 @@ public final class FileDownloader {
     }
 
     /**
+     * Create an authenticated connection.
+     *
+     * @param url The URL to connect to
+     * @param userInfo The authentication to use, as username:password
+     * @throws IOException if an I/O error occurs
+     * @return The created connection
+     */
+    private static URLConnection createConnectionWithAuth(final URL url,
+            final String userInfo) throws IOException {
+        URLConnection urlConnection =
+                requireNonNull(url).openConnection();
+        urlConnection.setDoInput(true);
+
+        if (urlConnection instanceof HttpsURLConnection) {
+            initVeryTrustingSSLContext((HttpsURLConnection) urlConnection);
+        }
+
+        urlConnection.setRequestProperty("Accept", "*/*");
+        if (userInfo != null && urlConnection instanceof HttpURLConnection) {
+            HttpURLConnection httpConnection =
+                (HttpURLConnection) urlConnection;
+            String basicAuth = "Basic " + Base64.encodeBase64URLSafeString(
+                userInfo.getBytes("UTF8"));
+            httpConnection.setRequestProperty("Authorization", basicAuth);
+            httpConnection.setInstanceFollowRedirects(false);
+        }
+        return urlConnection;
+    }
+
+    /**
      * Downloads a file from a URL.
      *
      * @param url
@@ -74,17 +107,34 @@ public final class FileDownloader {
         requireNonNull(workingDirectory);
 
         // Open a connection
-        final URLConnection urlConnection =
-                requireNonNull(url).openConnection();
-        urlConnection.setDoInput(true);
+        String userInfo = URLDecoder.decode(url.getUserInfo(), "UTF8");
+        URLConnection urlConnection = createConnectionWithAuth(url, userInfo);
 
-        if (urlConnection instanceof HttpsURLConnection) {
-            initVeryTrustingSSLContext((HttpsURLConnection) urlConnection);
+        if (urlConnection instanceof HttpURLConnection) {
+            boolean redirect = false;
+            do {
+                redirect = false;
+                HttpURLConnection httpConnection =
+                    (HttpURLConnection) urlConnection;
+                httpConnection.connect();
+                int responseCode = httpConnection.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_MOVED_TEMP
+                        || responseCode == HttpURLConnection.HTTP_MOVED_PERM) {
+                    String location = httpConnection.getHeaderField("Location");
+                    if (location == null) {
+                        location = url.toString();
+                    }
+                    urlConnection = createConnectionWithAuth(
+                        new URL(location), userInfo);
+                    redirect = true;
+
+                }
+            } while (redirect);
         }
 
         // Work out the output filename
         final File output = getTargetFile(url, workingDirectory,
-                defaultFilename, urlConnection);
+            defaultFilename, urlConnection);
 
         // Write the file
         copy(urlConnection.getInputStream(), output.toPath());
@@ -106,7 +156,7 @@ public final class FileDownloader {
         // Set up to trust everyone
         try {
             SSLContext sc = SSLContext.getInstance("SSL");
-            sc.init(null, new TrustManager[]{new X509TrustManager() {
+            TrustManager tm = new X509TrustManager() {
                 @Override
                 public X509Certificate[] getAcceptedIssuers() {
                     return null;
@@ -121,7 +171,8 @@ public final class FileDownloader {
                 public void checkServerTrusted(final X509Certificate[] certs,
                         final String authType) {
                 }
-            } }, new SecureRandom());
+            };
+            sc.init(null, new TrustManager[] {tm}, new SecureRandom());
 
             connection.setSSLSocketFactory(sc.getSocketFactory());
             connection.setHostnameVerifier(new HostnameVerifier() {

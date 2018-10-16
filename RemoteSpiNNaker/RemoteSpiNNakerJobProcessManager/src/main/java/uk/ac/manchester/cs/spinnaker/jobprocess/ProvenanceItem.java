@@ -3,8 +3,7 @@ package uk.ac.manchester.cs.spinnaker.jobprocess;
 import java.util.List;
 
 /**
- * An item of provenance in a hierarchy with a path.
- *
+ * A single item of provenance data.
  */
 public class ProvenanceItem {
 
@@ -19,10 +18,12 @@ public class ProvenanceItem {
     private final String value;
 
     /**
-     * Create a new item.
+     * Create a provenance item.
      *
-     * @param pathParam The path to the item
-     * @param valueParam The value of the item
+     * @param pathParam
+     *            The location of the item in the provenance tree.
+     * @param valueParam
+     *            The content of the value.
      */
     public ProvenanceItem(
             final List<String> pathParam, final String valueParam) {

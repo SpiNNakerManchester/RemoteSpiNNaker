@@ -35,41 +35,62 @@ import uk.ac.manchester.cs.spinnaker.rest.utils.CustomJacksonJsonProvider;
 import uk.ac.manchester.cs.spinnaker.rest.utils.PropertyBasedDeserialiser;
 
 /**
- * Manages the NMPI queue, receiving jobs and submitting them to be run
+ * Manages the NMPI queue, receiving jobs and submitting them to be run.
  */
 public class NMPIQueueManager implements Runnable {
+
+    /**
+     * Job status when finished.
+     */
+    public static final String STATUS_FINISHED = "finished";
+
+    /**
+     * Job status when in the queue but the executer hasn't started.
+     */
+    public static final String STATUS_QUEUED = "queued";
+
+    /**
+     * Job status when running.
+     */
+    public static final String STATUS_RUNNING = "running";
+
+    /**
+     * Job status when in error.
+     */
+    public static final String STATUS_ERROR = "error";
+
     /**
      * The amount of time to sleep when an empty queue is detected.
      */
     private static final int EMPTY_QUEUE_SLEEP_MS = 10000;
 
-    /** The queue to get jobs from */
+    /** The queue to get jobs from. */
     private NMPIQueue queue;
-    /** Marker to indicate if the manager is done or not */
+    /** Marker to indicate if the manager is done or not. */
     private boolean done = false;
-    /** The set of listeners for this queue */
+    /** The set of listeners for this queue. */
     private final Set<NMPIQueueListener> listeners = new HashSet<>();
-    /** A cache of jobs that have been received */
+    /** A cache of jobs that have been received. */
     private final Map<Integer, Job> jobCache = new HashMap<>();
-    /** The log of the job so far */
+    /** The log of the job so far. */
     private final Map<Integer, NMPILog> jobLog = new HashMap<>();
     private final Logger logger = getLogger(getClass());
 
-    /** The hardware identifier for the queue */
+    /** The hardware identifier for the queue. */
     @Value("${nmpi.hardware}")
     private String hardware;
-    /** The URL from which to load the data */
+    /** The URL from which to load the data. */
     @Value("${nmpi.url}")
     private URL nmpiUrl;
-    /** The username to log in to the server with */
+    /** The username to log in to the server with. */
     @Value("${nmpi.username}")
     private String nmpiUsername;
-    /** The password or API key to log in to the server with */
+    /** The password or API key to log in to the server with. */
     @Value("${nmpi.password}")
     private String nmpiPassword;
     /**
      * True if the password is an API key, False if the password should be used
-     * to obtain the key
+     * to obtain the key.
      */
     @Value("${nmpi.passwordIsApiKey}")
     private boolean nmpiPasswordIsApiKey;
@@ -79,11 +100,16 @@ public class NMPIQueueManager implements Runnable {
         final CustomJacksonJsonProvider provider =
                 new CustomJacksonJsonProvider();
 
+        /**
+         * How to understand messages coming from the queue.
+         */
         @SuppressWarnings("serial")
         class QueueResponseDeserialiser
-                extends
-                    PropertyBasedDeserialiser<QueueNextResponse> {
-            public QueueResponseDeserialiser() {
+                extends PropertyBasedDeserialiser<QueueNextResponse> {
+            /**
+             * Make a deserialiser.
+             */
+            QueueResponseDeserialiser() {
                 super(QueueNextResponse.class);
                 register("id", Job.class);
                 register("warning", QueueEmpty.class);
@@ -104,10 +130,10 @@ public class NMPIQueueManager implements Runnable {
 
     /**
      * Gets a job from the cache, or from the server if the job is not in the
-     * cache
+     * cache.
      *
      * @param id
-     *            The id of the job
+     *            The ID of the job
      * @return The job
      */
     private Job getJob(final int id) {
@@ -122,7 +148,7 @@ public class NMPIQueueManager implements Runnable {
     }
 
     /**
-     * Register a listener against the manager for new jobs
+     * Register a listener against the manager for new jobs.
      *
      * @param listener
      *            The listener to register
@@ -168,7 +194,7 @@ public class NMPIQueueManager implements Runnable {
             job.setTimestampSubmission(
                     job.getTimestampSubmission().withZoneRetainFields(UTC));
             job.setTimestampCompletion(null);
-            job.setStatus("queued");
+            job.setStatus(STATUS_QUEUED);
             logger.debug("Updating job status on server");
             queue.updateJob(job.getId(), job);
         } catch (final IOException e) {
@@ -178,10 +204,10 @@ public class NMPIQueueManager implements Runnable {
     }
 
     /**
-     * Appends log messages to the log
+     * Appends log messages to the log.
      *
      * @param id
-     *            The id of the job
+     *            The ID of the job
      * @param logToAppend
      *            The messages to append
      */
@@ -196,19 +222,25 @@ public class NMPIQueueManager implements Runnable {
         queue.updateLog(id, existingLog);
     }
 
+    /**
+     * Mark a job as running.
+     *
+     * @param id
+     *            The ID of the job.
+     */
     public void setJobRunning(final int id) {
         logger.debug("Job " + id + " is running");
         final Job job = getJob(id);
-        job.setStatus("running");
+        job.setStatus(STATUS_RUNNING);
         logger.debug("Updating job status on server");
         queue.updateJob(id, job);
     }
 
     /**
-     * Marks a job as finished successfully
+     * Marks a job as finished successfully.
      *
      * @param id
-     *            The id of the job
+     *            The ID of the job
      * @param logToAppend
      *            Any additional log messages to append to the existing log
      *            (null if none)
@@ -229,7 +261,7 @@ public class NMPIQueueManager implements Runnable {
         }
 
         final Job job = getJob(id);
-        job.setStatus("finished");
+        job.setStatus(STATUS_FINISHED);
         job.setOutputData(outputs);
         job.setTimestampCompletion(new DateTime(UTC));
         job.setResourceUsage(resourceUsage);
@@ -240,10 +272,10 @@ public class NMPIQueueManager implements Runnable {
     }
 
     /**
-     * Marks a job as finished with an error
+     * Marks a job as finished with an error.
      *
      * @param id
-     *            The id of the job
+     *            The ID of the job
      * @param logToAppend
      *            Any additional log messages to append to the existing log
      *            (null if none)
@@ -274,7 +306,7 @@ public class NMPIQueueManager implements Runnable {
         appendJobLog(id, logMessage.toString());
 
         final Job job = getJob(id);
-        job.setStatus("error");
+        job.setStatus(STATUS_ERROR);
         job.setTimestampCompletion(new DateTime(UTC));
         job.setOutputData(outputs);
         job.setResourceUsage(resourceUsage);
@@ -285,7 +317,7 @@ public class NMPIQueueManager implements Runnable {
     }
 
     /**
-     * Close the manager
+     * Close the manager.
      */
     public void close() {
         done = true;

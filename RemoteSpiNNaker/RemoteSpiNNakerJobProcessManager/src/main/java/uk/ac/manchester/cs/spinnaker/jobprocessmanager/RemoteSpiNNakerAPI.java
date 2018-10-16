@@ -19,7 +19,7 @@ import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import uk.ac.manchester.cs.spinnaker.job.JobManagerInterface;
 
 /**
- * A class to hold APIs.
+ * Manufactures communication proxies for the main service web site.
  */
 public abstract class RemoteSpiNNakerAPI {
 

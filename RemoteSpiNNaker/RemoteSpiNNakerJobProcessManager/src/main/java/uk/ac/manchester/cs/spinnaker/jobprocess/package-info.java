@@ -1,4 +1,4 @@
 /**
- * Contains the actual job process.
+ * The handles for running jobs.
  */
 package uk.ac.manchester.cs.spinnaker.jobprocess;

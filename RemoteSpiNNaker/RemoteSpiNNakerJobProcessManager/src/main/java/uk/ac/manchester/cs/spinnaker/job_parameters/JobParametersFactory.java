@@ -44,13 +44,17 @@ public abstract class JobParametersFactory {
                 new DirectPyNNJobParametersFactory()};
 
     /**
-     * Get the job parameters for a job by searching through factories.
+     * Get the parameters from a job.
      *
-     * @param job The job to get the parameters for
-     * @param workingDirectory The working directory to start the job in
-     * @param errors A Map to fill in with errors
-     * @return The parameters created, or null if not possible (in which case
-     *         errors is filled in)
+     * @param job
+     *            The job that these will be parameters for.
+     * @param workingDirectory
+     *            The working directory for the job.
+     * @param errors
+     *            What errors were found in the process of getting the
+     *            parameters.
+     * @return The parameters, or <tt>null</tt> if the parameters can't be
+     *         generated.
      */
     public static JobParameters getJobParameters(final Job job,
             final File workingDirectory,

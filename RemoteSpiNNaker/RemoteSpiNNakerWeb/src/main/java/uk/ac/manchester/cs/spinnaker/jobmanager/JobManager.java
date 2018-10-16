@@ -41,6 +41,7 @@ import uk.ac.manchester.cs.spinnaker.job.RemoteStackTrace;
 import uk.ac.manchester.cs.spinnaker.job.RemoteStackTraceElement;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.DataItem;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
+import uk.ac.manchester.cs.spinnaker.machine.ChipCoordinates;
 import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
 import uk.ac.manchester.cs.spinnaker.machinemanager.MachineManager;
 import uk.ac.manchester.cs.spinnaker.nmpi.NMPIQueueListener;
@@ -80,7 +81,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     private static final double SCALE_UP_THRESHOLD = 0.1;
 
     /**
-     * The JAR file containing the process manager.
+     * The name of the JAR containing the job process manager implementation.
      */
     public static final String JOB_PROCESS_MANAGER_JAR =
             "RemoteSpiNNakerJobProcessManager.jar";
@@ -132,11 +133,6 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
             new HashMap<>();
 
     /**
-     * The queue of jobs to be run.
-     */
-    private final BlockingQueue<Job> jobsToRun = new LinkedBlockingQueue<>();
-
-    /**
      * Executor ID -> Executor.
      */
     private final Map<String, JobExecuter> jobExecuters = new HashMap<>();
@@ -164,8 +160,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     /**
      * Job ID -> Job Provenance data.
      */
-    private final Map<Integer, ObjectNode> jobProvenance =
-            new HashMap<>();
+    private final Map<Integer, ObjectNode> jobProvenance = new HashMap<>();
 
     /**
      * Thread group for the executor.
@@ -182,10 +177,10 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     }
 
     /**
-     * Start the job manager.
+     * Start the manager's worker threads.
      */
     @PostConstruct
-    void startManager() {
+    private void startManager() {
         threadGroup = new ThreadGroup("NMPI");
         // Start the queue manager
         queueManager.addListener(this);
@@ -208,13 +203,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
             }
         }
 
-        // Add the job to the set of jobs to be run
-        synchronized (jobExecuters) {
-            jobsToRun.offer(job);
-
-            // Start an executer for the job
-            launchExecuter();
-        }
+        // Start an executer for the job
+        launchExecuter(job);
     }
 
     /**
@@ -223,10 +213,15 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
      *
      * @throws IOException If there is an error starting the job
      */
-    private void launchExecuter() throws IOException {
+    private void launchExecuter(Job job) throws IOException {
         final JobExecuter executer =
                 jobExecuterFactory.createJobExecuter(this, baseUrl);
-        jobExecuters.put(executer.getExecuterId(), executer);
+        synchronized (jobExecuters) {
+            String executerId = executer.getExecuterId();
+            jobExecuters.put(executerId, executer);
+            executorJobId.put(executerId, job);
+            jobExecuters.notifyAll();
+        }
         executer.startExecuter();
     }
 
@@ -235,17 +230,23 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
      */
     @Override
     public Job getNextJob(final String executerId) {
-        try {
-            requireNonNull(executerId);
-            final Job job = jobsToRun.take();
-            executorJobId.put(executerId, job);
-            logger.info(
-                    "Executer " + executerId + " is running " + job.getId());
-            queueManager.setJobRunning(job.getId());
-            return job;
-        } catch (final InterruptedException e) {
-            return null;
+        requireNonNull(executerId);
+        Job job = null;
+        synchronized (jobExecuters) {
+            job = executorJobId.get(executerId);
+            while (job == null) {
+                try {
+                    jobExecuters.wait();
+                } catch (InterruptedException e) {
+
+                    // Ignore
+                }
+                job = executorJobId.get(executerId);
+            }
         }
+        logger.info("Executer " + executerId + " is running " + job.getId());
+        queueManager.setJobRunning(job.getId());
+        return job;
     }
 
     /**
@@ -315,7 +316,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         final SpinnakerMachine machine =
                 allocateMachineForJob(id, nBoardsToRequest);
         logger.info("Running " + id + " on " + machine.getMachineName());
-        final long resourceUsage = (long) ((runTime / 1000.0) * quotaNCores);
+        final long resourceUsage =
+                (long) ((runTime / MILLISECONDS_PER_SECOND) * quotaNCores);
         logger.info("Resource usage " + resourceUsage);
         synchronized (jobResourceUsage) {
             jobResourceUsage.put(id, resourceUsage);
@@ -325,6 +327,72 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
                 machine.getMachineName());
 
         return machine;
+    }
+
+    /**
+     * Searches the list for the machine with the given name.
+     *
+     * @param machines
+     *            The list of machines (or <tt>null</tt>).
+     * @param machineName
+     *            The name of the machine to find.
+     * @return The index in the list, or <tt>-1</tt> if the machine isn't
+     *         present. (The <tt>null</tt> machine list never contains any
+     *         machines.)
+     */
+    private static int findMachineIndex(List<SpinnakerMachine> machines,
+            String machineName) {
+        if (machines == null) {
+            return -1;
+        }
+        SpinnakerMachine machine = null;
+        for (int i = 0; i < machines.size(); i++) {
+            machine = machines.get(i);
+            if (machine.getMachineName() == machineName) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /** Enough with the machine already! */
+    @Override
+    public void releaseMachine(int id, String machineName) {
+        synchronized (allocatedMachines) {
+            List<SpinnakerMachine> machines = allocatedMachines.get(id);
+            int index = findMachineIndex(machines, machineName);
+            if (index != -1) {
+                SpinnakerMachine machine = machines.remove(index);
+                machineManager.releaseMachine(machine);
+            }
+        }
+    }
+
+    /** Control a machine's power switch. */
+    @Override
+    public void setMachinePower(int id, String machineName, boolean powerOn) {
+        synchronized (allocatedMachines) {
+            List<SpinnakerMachine> machines = allocatedMachines.get(id);
+            int index = findMachineIndex(machines, machineName);
+            if (index != -1) {
+                machineManager.setMachinePower(machines.get(index), powerOn);
+            }
+        }
+    }
+
+    /** Find a chip in a machine. */
+    @Override
+    public ChipCoordinates getChipCoordinates(int id, String machineName,
+            int chipX, int chipY) {
+        synchronized (allocatedMachines) {
+            final List<SpinnakerMachine> machines = allocatedMachines.get(id);
+            int index = findMachineIndex(machines, machineName);
+            if (index != -1) {
+                return machineManager.getChipCoordinates(machines.get(index),
+                        chipX, chipY);
+            }
+        }
+        return null;
     }
 
     /**
@@ -403,10 +471,12 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     }
 
     /**
-     * Wait until a machine has changed state.
+     * Wait for something to happen to any of a list of machines.
      *
-     * @param waitTime The time to wait for the change
-     * @param machines The machines to watch
+     * @param waitTime
+     *            How long to wait
+     * @param machines
+     *            What to wait for events from.
      */
     private void waitForAnyMachineStateChange(final int waitTime,
             final List<SpinnakerMachine> machines) {
@@ -494,8 +564,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
             outputItems.addAll(outputManager.addOutputs(projectId, id,
                     new File(baseFile), outputFiles));
         }
-        if (jobOutputTempFiles.containsKey(id)) {
-            final File directory = jobOutputTempFiles.get(id);
+        final File directory = jobOutputTempFiles.remove(id);
+        if (directory != null) {
             outputItems.addAll(outputManager.addOutputs(projectId, id,
                     directory, listFiles(directory, null, true)));
         }
@@ -535,9 +605,9 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
                 // error as a non-object can't contain values
                 } else {
                     add = false;
-                    logger.warn(
-                        "Could not add provenance item " + path + " to job "
-                        + id + ": Node " + item + " is not an object");
+                    logger.warn("Could not add provenance item " + path
+                            + " to job " + id + ": Node " + item
+                            + " is not an object");
                     break;
                 }
             }
@@ -684,63 +754,56 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     }
 
     /**
-     * Note that an executor has exited (could be an error).
+     * Mark the executor as having exited.
      *
-     * @param executorId The ID of the executor that has exited.
-     * @param logToAppend Any additional log message to append.
+     * @param executorId
+     *            The ID of the executor in question
+     * @param logToAppend
+     *            The log messages
      */
     public void setExecutorExited(final String executorId,
             final String logToAppend) {
-        final Job job = executorJobId.remove(requireNonNull(executorId));
+        Job job = null;
         synchronized (jobExecuters) {
+            job = executorJobId.remove(requireNonNull(executorId));
             jobExecuters.remove(executorId);
         }
         if (job != null) {
             final int id = job.getId();
-            logger.debug("Job " + id + " has exited");
+            logger.debug(
+                "Executer " + executorId + " for Job " + id + " has exited");
 
-            if (releaseAllocatedMachines(id)) {
+            String status = job.getStatus();
+            if (status == NMPIQueueManager.STATUS_QUEUED
+                    || status == NMPIQueueManager.STATUS_RUNNING) {
                 logger.debug("Job " + id + " has not exited cleanly");
+                releaseAllocatedMachines(id);
+                final long resourceUsage = getResourceUsage(id);
+                final ObjectNode prov = getProvenance(id);
                 try {
-                    final long resourceUsage = getResourceUsage(id);
-                    final ObjectNode prov = getProvenance(id);
                     final String projectId =
-                            new File(job.getCollabId()).getName();
+                        new File(job.getCollabId()).getName();
                     queueManager.setJobError(id, logToAppend,
                             getOutputFiles(projectId, id, null, null),
                             new Exception("Job did not finish cleanly"),
                             resourceUsage, prov);
                 } catch (final IOException e) {
                     logger.error("Error creating URLs while updating job", e);
+                    queueManager.setJobError(id, logToAppend,
+                            new ArrayList<DataItem>(),
+                            new Exception("Job did not finish cleanly"),
+                            resourceUsage, prov);
                 }
             }
         } else {
             logger.error(
-                    "An executer has exited.  This could indicate an error!");
+                    "An executer " + executorId + " has exited without a job. "
+                            + "This could indicate an error!");
             logger.error(logToAppend);
 
             if (restartJobExecuterOnFailure) {
-                restartExecuters();
+                logger.warn("Restarting of executers is currently disabled");
             }
-        }
-    }
-
-    /**
-     * Restart exited executors.
-     */
-    private void restartExecuters() {
-        try {
-            int jobSize;
-            synchronized (jobsToRun) {
-                jobSize = jobsToRun.size();
-            }
-            synchronized (jobExecuters) {
-                while (jobSize > jobExecuters.size()) {
-                    launchExecuter();
-                }
-            }
-        } catch (final IOException e) {
-            logger.error("Could not launch a new executer", e);
         }
     }
 

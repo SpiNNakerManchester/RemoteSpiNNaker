@@ -1,14 +1,14 @@
 package uk.ac.manchester.cs.spinnaker.machinemanager.commands;
 
 /**
- * Command to get the state of a job.
+ * Request the state of a job.
  */
 public class GetJobStateCommand extends Command<Integer> {
-
     /**
-     * Create the command.
+     * Create a request to get the state of a job.
      *
-     * @param jobId The ID of the job
+     * @param jobId
+     *            The job to get the state of.
      */
     public GetJobStateCommand(final int jobId) {
         super("get_job_state");

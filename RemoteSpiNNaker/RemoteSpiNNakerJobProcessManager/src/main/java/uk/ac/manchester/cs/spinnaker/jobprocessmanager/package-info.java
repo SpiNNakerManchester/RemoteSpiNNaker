@@ -1,4 +1,4 @@
 /**
- * Contains the manager of job processes.
+ * The main job process manager code.
  */
 package uk.ac.manchester.cs.spinnaker.jobprocessmanager;

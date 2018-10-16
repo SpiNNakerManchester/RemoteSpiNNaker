@@ -6,7 +6,7 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlValue;
 
 /**
- * An item of provenance data.
+ * The POJO representation of a provenance data item.
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 public class ProvenanceDataItem {

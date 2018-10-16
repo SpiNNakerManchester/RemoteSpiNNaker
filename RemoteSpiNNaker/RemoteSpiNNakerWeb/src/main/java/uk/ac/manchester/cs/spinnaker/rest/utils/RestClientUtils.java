@@ -49,27 +49,60 @@ import org.slf4j.Logger;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
+/**
+ * Manufactures clients for talking to other machines. This class does wicked
+ * things, but it is because users keep insisting on getting their security
+ * wrong. How difficult is it to just use LetsEncrypt? Apparently very because
+ * users instead stand up impossible-to-trust self-signed certs! The
+ * infrastructure required to allow this to work securely requires a lot of
+ * interface changes (they'd have to supply the server's public certificate
+ * chain as part of the job submission) and that's just awkward.
+ *
+ * @author Donal Fellows
+ */
 public abstract class RestClientUtils {
-	private RestClientUtils() {} // No instances, please, we're British!
+    private RestClientUtils() {
+    } // No instances, please, we're British!
+
+    /**
+     * The security protocol that is requested for a secure connection.
+     */
+    public static final String SECURE_PROTOCOL = "TLS";
+    /**
+     * Default port for HTTPS.
+     */
+    private static final int HTTPS_PORT = 443;
+
     private static Logger log = getLogger(RestClientUtils.class);
 
+    /**
+     * Manufacture a client.
+     *
+     * @param url
+     *            What this client talks to.
+     * @param credentials
+     *            What this client will authenticate with.
+     * @param authScheme
+     *            The authentication scheme.
+     * @return the client
+     */
     protected static ResteasyClient createRestClient(final URL url,
             final Credentials credentials, final AuthScheme authScheme) {
         try {
             final SchemeRegistry schemeRegistry = getSchemeRegistry();
-            final HttpContext localContext =
-                    getConnectionContext(url, credentials, authScheme);
+            final HttpContext localContext = getConnectionContext(url,
+                    credentials, authScheme);
 
             // Set up the connection
-            final ClientConnectionManager cm =
-                    new BasicClientConnectionManager(schemeRegistry);
+            final ClientConnectionManager cm = new BasicClientConnectionManager(
+                    schemeRegistry);
             final DefaultHttpClient httpClient = new DefaultHttpClient(cm);
-            final ApacheHttpClient4Engine engine =
-                    new ApacheHttpClient4Engine(httpClient, localContext);
+            final ApacheHttpClient4Engine engine = new ApacheHttpClient4Engine(
+                    httpClient, localContext);
 
             // Create and return a client
-            final ResteasyClient client =
-                    new ResteasyClientBuilder().httpEngine(engine).build();
+            final ResteasyClient client = new ResteasyClientBuilder()
+                    .httpEngine(engine).build();
             client.register(new ErrorCaptureResponseFilter());
             return client;
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
@@ -79,61 +112,76 @@ public abstract class RestClientUtils {
         }
     }
 
-    /** Set up authentication */
+    /**
+     * Set up a connection context.
+     *
+     * @param url
+     *            Where will the connection be made to?
+     * @param credentals
+     *            What credentials will be used to connect?
+     * @param authScheme
+     *            The authentication scheme to use.
+     * @return the configured context.
+     */
     private static HttpContext getConnectionContext(final URL url,
             final Credentials credentials, final AuthScheme authScheme) {
         int port = url.getPort();
         if (port == -1) {
             port = url.getDefaultPort();
         }
-        final HttpHost targetHost =
-                new HttpHost(url.getHost(), port, url.getProtocol());
+        HttpHost targetHost = new HttpHost(url.getHost(), port,
+                url.getProtocol());
 
-        final CredentialsProvider credsProvider =
-                new BasicCredentialsProvider();
+        CredentialsProvider credsProvider = new BasicCredentialsProvider();
         credsProvider.setCredentials(
                 new AuthScope(targetHost.getHostName(), targetHost.getPort()),
                 credentials);
 
-        final AuthCache authCache = new BasicAuthCache();
+        AuthCache authCache = new BasicAuthCache();
         authCache.put(targetHost, authScheme);
 
-        final HttpContext localContext = new BasicHttpContext();
+        HttpContext localContext = new BasicHttpContext();
         localContext.setAttribute(AUTH_CACHE, authCache);
         localContext.setAttribute(CREDS_PROVIDER, credsProvider);
         return localContext;
     }
 
-    private static boolean checkTrusted(final X509Certificate[] certs) {
+    /**
+     * Hey, we trust everything!
+     *
+     * @param certs A certificate chain.
+     * @return Whether the certificate is trusted. It is! Always!
+     */
+    private static boolean checkTrusted(X509Certificate[] certs) {
         return true;
     }
+
+    /**
+     * What issuers do we trust? None really, but we claim we do.
+     *
+     * @return The issuer certificate to trust. Or <tt>null</tt>.
+     */
     private static X509Certificate getTrustedCert() {
         return null;
     }
-    /**
-     * The security protocol that is requested for a secure connection.
-     */
-    public static final String SECURE_PROTOCOL = "TLS";
 
     /**
-     * Set up HTTPS to ignore certificate errors
+     * A trust manager that believes everything it is told. This is how not to
+     * write a trust manager.
      *
-     * @deprecated This method is doing bad things.
+     * @see #getSchemeRegistry()
      */
-    @Deprecated
-    private static SchemeRegistry getSchemeRegistry()
-            throws NoSuchAlgorithmException, KeyManagementException {
-        final SSLContext sslContext = SSLContext.getInstance(SECURE_PROTOCOL);
-        sslContext.init(null, new TrustManager[]{new X509TrustManager() {
+    private static TrustManager getGullableTrustManager() {
+        return new X509TrustManager() {
             @Override
-            public void checkClientTrusted(final X509Certificate[] certs,
-                    final String authType) throws CertificateException {
+            public void checkClientTrusted(X509Certificate[] certs,
+                    String authType) throws CertificateException {
                 // Does Nothing; we aren't deploying client-side certs
             }
 
             @Override
-            public void checkServerTrusted(final X509Certificate[] certs,
-                    final String authType) throws CertificateException {
+            public void checkServerTrusted(X509Certificate[] certs,
+                    String authType) throws CertificateException {
                 if (!checkTrusted(certs)) {
                     throw new CertificateException("untrusted server");
                 }
@@ -141,21 +189,37 @@ public abstract class RestClientUtils {
 
             @Override
             public X509Certificate[] getAcceptedIssuers() {
-                final X509Certificate cert = getTrustedCert();
+                X509Certificate cert = getTrustedCert();
                 if (cert == null) {
                     return null;
                 }
-                return new X509Certificate[]{cert};
+                return new X509Certificate[] {
+                        cert };
             }
-        }}, new SecureRandom());
-        final SchemeRegistry schemeRegistry = new SchemeRegistry();
-        schemeRegistry.register(new Scheme("https", 443,
+        };
+    }
+
+    /**
+     * Set up HTTPS to ignore certificate errors. This method is doing wicked
+     * things as it is using the gullable trust manager.
+     * <p>
+     * <i>Be aware that this method is doing very bad things; a trust-all trust
+     * manager is <b>entirely</b> doing it wrong, but the reality of academic
+     * security is that it is the only sane option.</i>
+     */
+    private static SchemeRegistry getSchemeRegistry()
+            throws NoSuchAlgorithmException, KeyManagementException {
+        SSLContext sslContext = SSLContext.getInstance(SECURE_PROTOCOL);
+        sslContext.init(null, new TrustManager[] {
+                getGullableTrustManager() }, new SecureRandom());
+        SchemeRegistry schemeRegistry = new SchemeRegistry();
+        schemeRegistry.register(new Scheme("https", HTTPS_PORT,
                 new SSLSocketFactory(sslContext, ALLOW_ALL_HOSTNAME_VERIFIER)));
         return schemeRegistry;
     }
 
     /**
-     * Create a REST client proxy for a class to the given URL
+     * Create a REST client proxy for a class to the given URL.
      *
      * @param <T>
      *            The type of interface to proxy
@@ -174,8 +238,8 @@ public abstract class RestClientUtils {
     public static <T> T createClient(final URL url,
             final Credentials credentials, final AuthScheme authScheme,
             final Class<T> clazz, final Object... providers) {
-        final ResteasyClient client =
-                createRestClient(url, credentials, authScheme);
+        final ResteasyClient client = createRestClient(url, credentials,
+                authScheme);
         for (final Object provider : providers) {
             client.register(provider);
         }
@@ -234,8 +298,8 @@ public abstract class RestClientUtils {
                 new UsernamePasswordCredentials(username, apiKey),
                 new ConnectionIndependentScheme("ApiKey") {
                     @Override
-                    protected Header
-                            authenticate(final Credentials credentials) {
+                    protected Header authenticate(
+                            final Credentials credentials) {
                         return new BasicHeader(getAuthHeaderName(),
                                 "ApiKey " + username + ":" + apiKey);
                     }
@@ -262,15 +326,18 @@ public abstract class RestClientUtils {
         return createClient(url, new UsernamePasswordCredentials("", token),
                 new ConnectionIndependentScheme("Bearer") {
                     @Override
-                    protected Header
-                            authenticate(final Credentials credentials) {
+                    protected Header authenticate(
+                            final Credentials credentials) {
                         return new BasicHeader(getAuthHeaderName(),
                                 "Bearer " + token);
                     }
                 }, clazz, providers);
     }
 
-    private static abstract class ConnectionIndependentScheme
+    /**
+     * Base for authorisation schemes.
+     */
+    private abstract static class ConnectionIndependentScheme
             extends RFC2617Scheme {
         private final boolean complete = false;
         private final String name;
@@ -295,9 +362,13 @@ public abstract class RestClientUtils {
         }
 
         /**
-         * Produce an authorization header for the given set of
+         * Produce an authorisation header for the given set of
          * {@link Credentials}. The credentials and the connection will have
          * been sanity-checked prior to this call.
+         *
+         * @param credentials
+         *            The credentials to be authenticated.
+         * @return the header
          */
         protected abstract Header authenticate(Credentials credentials);
 

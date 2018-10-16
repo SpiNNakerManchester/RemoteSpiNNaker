@@ -1,4 +1,4 @@
 /**
- * Model objects shared between modules.
+ * Model bits and pieces.
  */
 package uk.ac.manchester.cs.spinnaker.model;

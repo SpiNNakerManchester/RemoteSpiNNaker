@@ -3,7 +3,9 @@ package uk.ac.manchester.cs.spinnaker.job;
 import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
 
 /**
- * The specification of a job to be executed.
+ * The specification for a job. Can be any type of job, though the rest of this
+ * implementation only really supports PyNN jobs running on SpiNNaker hardware
+ * using sPyNNaker.
  */
 public class JobSpecification {
 
@@ -35,12 +37,16 @@ public class JobSpecification {
     }
 
     /**
-     * Creates a new specification.
+     * Create the specification for running a job.
      *
-     * @param machineParam The machine to execute the job on.
-     * @param parametersParam The parameters of the job.
-     * @param idParam The ID of the job.
-     * @param urlParam The URL of the job.
+     * @param machineParam
+     *            The machine to run the job on.
+     * @param parametersParam
+     *            The parameters to the job.
+     * @param idParam
+     *            The ID of the job.
+     * @param urlParam
+     *            The URL
      */
     public JobSpecification(final SpinnakerMachine machineParam,
             final JobParameters parametersParam, final int idParam,

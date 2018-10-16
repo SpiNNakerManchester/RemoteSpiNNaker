@@ -14,16 +14,17 @@ public class RemoteStackTrace {
     private List<RemoteStackTraceElement> elements = new ArrayList<>();
 
     /**
-     * Constructor for serialisation.
+     * Create a basic remote stack trace without stack elements.
      */
     public RemoteStackTrace() {
         // Does Nothing
     }
 
     /**
-     * Create a remote stack trace from a throwable.
+     * Create a basic remote stack trace from an exception.
      *
-     * @param throwable A throwable from which to construct the trace.
+     * @param throwable
+     *            The exception to make the stack trace from.
      */
     public RemoteStackTrace(final Throwable throwable) {
         for (final StackTraceElement element : throwable.getStackTrace()) {
@@ -32,9 +33,10 @@ public class RemoteStackTrace {
     }
 
     /**
-     * Create a remote stack trace using elements.
+     * Create a basic remote stack trace from a list of elements.
      *
-     * @param elementsParam The elements that make up the trace.
+     * @param elementsParam
+     *            The elements to make the stack trace from.
      */
     public RemoteStackTrace(final List<RemoteStackTraceElement> elementsParam) {
         this.elements = elementsParam;

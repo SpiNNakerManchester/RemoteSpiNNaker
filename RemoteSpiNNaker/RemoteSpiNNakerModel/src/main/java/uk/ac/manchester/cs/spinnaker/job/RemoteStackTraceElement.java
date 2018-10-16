@@ -33,9 +33,11 @@ public class RemoteStackTraceElement {
     }
 
     /**
-     * Create a stack trace element from a normal element.
+     * Create an element of a remote stack trace from a standard stack trace
+     * element.
      *
-     * @param element The non-remote stack trace element to copy
+     * @param element
+     *            The stack trace element to convert.
      */
     public RemoteStackTraceElement(final StackTraceElement element) {
         this.className = element.getClassName();
@@ -117,9 +119,10 @@ public class RemoteStackTraceElement {
     }
 
     /**
-     * Get the StackTraceElement this represents.
+     * Convert this remote stack trace element to a standard Java stack trace
+     * element.
      *
-     * @return The stack trace element
+     * @return The created stack trace element.
      */
     public StackTraceElement toSTE() {
         return new StackTraceElement(getClassName(), getMethodName(),

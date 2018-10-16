@@ -1,14 +1,14 @@
 package uk.ac.manchester.cs.spinnaker.machinemanager.commands;
 
 /**
- * Command to request machine information.
+ * Request to get machine information relating to a job.
  */
 public class GetJobMachineInfoCommand extends Command<Integer> {
-
     /**
-     * Create the command.
+     * Create a request to get information about a job's allocated machine.
      *
-     * @param jobId The ID of the job to get the machine information of.
+     * @param jobId
+     *            The job to ask about.
      */
     public GetJobMachineInfoCommand(final int jobId) {
         super("get_job_machine_info");

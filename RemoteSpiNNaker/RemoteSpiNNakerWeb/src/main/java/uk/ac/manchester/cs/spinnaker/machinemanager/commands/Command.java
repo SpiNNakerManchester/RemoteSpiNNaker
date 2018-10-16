@@ -6,9 +6,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A command to be sent to spalloc.
+ * A serialisable request to spalloc.
  *
- * @param <A> The command arguments type
+ * @param <A>
+ *            The type of arguments.
  */
 public abstract class Command<A> {
 
@@ -25,21 +26,25 @@ public abstract class Command<A> {
     /**
      * The KW Args to be passed to the command.
      */
-    private final Map<String, String> kwargs = new HashMap<>();
+    private final Map<String, Object> kwargs = new HashMap<>();
 
     /**
-     * Add a KW Args argument.
+     * Add to the keyword arguments part.
      *
-     * @param key The keyword
-     * @param value The value
+     * @param key
+     *            The keyword
+     * @param value
+     *            The argument value; will be converted to a string
      */
     protected final void addKwArg(final String key, final Object value) {
-        kwargs.put(key, value.toString());
+        kwargs.put(key, value);
     }
 
     /**
-     * Add an Arg argument.
-     * @param values The values of the argument
+     * Add to the positional arguments part.
+     *
+     * @param values
+     *            The arguments to add.
      */
     @SafeVarargs
     protected final void addArg(final A... values) {
@@ -51,7 +56,8 @@ public abstract class Command<A> {
     /**
      * Create a command.
      *
-     * @param commandParam The command name
+     * @param commandParam
+     *            The command token.
      */
     public Command(final String commandParam) {
         this.command = commandParam;
@@ -80,7 +86,7 @@ public abstract class Command<A> {
      *
      * @return The command keyword arguments
      */
-    public Map<String, String> getKwargs() {
+    public Map<String, Object> getKwargs() {
         return kwargs;
     }
 }

@@ -6,6 +6,9 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
+/**
+ * A response that is the result of listing the machines.
+ */
 @JsonFormat(shape = ARRAY)
 public class ListMachinesResponse {
 

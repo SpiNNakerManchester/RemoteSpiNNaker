@@ -31,7 +31,7 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 
 /**
- * A local executor of jobs.
+ * An executer that runs its subprocesses on the local machine.
  */
 public class LocalJobExecuterFactory implements JobExecuterFactory {
 
@@ -102,12 +102,13 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
     }
 
     /**
-     * Start the executor.
+     * Initialise the system state.
      *
-     * @throws IOException If the local executor couldn't be found.
+     * @throws IOException
+     *             if things go wrong.
      */
     @PostConstruct
-    void installJobExecuter() throws IOException {
+    private void installJobExecuter() throws IOException {
         // Find the JobManager resource
         final InputStream jobManagerStream =
                 getClass().getResourceAsStream("/" + JOB_PROCESS_MANAGER_ZIP);
@@ -169,7 +170,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
     }
 
     /**
-     * Runs a job locally.
+     * The executer thread.
      */
     class Executer implements JobExecuter, Runnable {
 
@@ -211,9 +212,12 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         /**
          * Create a JobExecuter.
          *
-         * @param jobManagerParam The Job Manager to report to.
-         * @param argumentsParam The command line arguments for the executor.
-         * @param idParam The id of the executer
+         * @param jobManagerParam
+         *            The job manager that wanted an executer made.
+         * @param argumentsParam
+         *            The arguments to use
+         * @param idParam
+         *            The id of the executer
          * @throws IOException
          *             If there is an error creating the log file
          */
@@ -368,7 +372,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
     }
 
     /**
-     * A pipe between the job process output and a writer.
+     * The pipe copier.
      */
     class JobOutputPipe extends Thread implements AutoCloseable {
 
@@ -388,10 +392,13 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         private volatile boolean done;
 
         /**
-         * Creates a pipe.
+         * Connect the input to the output.
          *
-         * @param input Input stream to read from
-         * @param output Output writer to write to
+         * @param input
+         *            Where things are coming from.
+         * @param output
+         *            Where things are going to. This class will close this when
+         *            it is no longer required.
          */
         JobOutputPipe(final InputStream input, final PrintWriter output) {
             super(threadGroup, "JobOutputPipe");
@@ -403,22 +410,25 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
 
         @Override
         public void run() {
-            while (!done) {
-                String line;
-                try {
-                    line = reader.readLine();
-                } catch (final IOException e) {
-                    break;
+            try {
+                while (!done) {
+                    String line;
+                    try {
+                        line = reader.readLine();
+                    } catch (final IOException e) {
+                        break;
+                    }
+                    if (line == null) {
+                        break;
+                    }
+                    if (!line.isEmpty()) {
+                        log.debug(line);
+                        writer.println(line);
+                    }
                 }
-                if (line == null) {
-                    break;
-                }
-                if (!line.isEmpty()) {
-                    log.debug(line);
-                    writer.println(line);
-                }
+            } finally {
+                writer.close();
             }
-            writer.close();
         }
 
         @Override

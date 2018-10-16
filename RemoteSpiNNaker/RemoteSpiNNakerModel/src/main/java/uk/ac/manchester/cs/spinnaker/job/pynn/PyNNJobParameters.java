@@ -34,11 +34,14 @@ public class PyNNJobParameters implements JobParameters {
     }
 
     /**
-     * Create a normal parameters object.
+     * Create a description of the job parameters for a PyNN job.
      *
-     * @param workingDirectoryParam The directory in which to execute the job
-     * @param scriptParam The script to execute
-     * @param hardwareConfigurationParam The hardware configuration
+     * @param workingDirectoryParam
+     *            The working directory to use.
+     * @param scriptParam
+     *            The script to run.
+     * @param hardwareConfigurationParam
+     *            The hardware configuration desired.
      */
     public PyNNJobParameters(final String workingDirectoryParam,
             final String scriptParam,
