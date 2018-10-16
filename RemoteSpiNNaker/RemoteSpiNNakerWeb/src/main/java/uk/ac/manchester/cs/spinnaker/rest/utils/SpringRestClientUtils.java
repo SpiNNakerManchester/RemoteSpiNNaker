@@ -29,14 +29,25 @@ public abstract class SpringRestClientUtils {
      */
     public static <T> T createOIDCClient(URL url, Class<T> clazz) {
         try {
-            ClientAuthenticationToken clientAuth = (ClientAuthenticationToken)
-                    getContext().getAuthentication();
-            OidcProfile oidcProfile = (OidcProfile)
-                    clientAuth.getUserProfile();
+            OidcProfile oidcProfile = (OidcProfile) getAuth().getUserProfile();
             return createBearerClient(url, oidcProfile.getIdTokenString(),
                     clazz);
         } catch (ClassCastException e) {
             throw new RuntimeException("Current Authentication is not OIDC");
         }
+    }
+
+    /**
+     * Gets the current authentication token from the Spring security context.
+     *
+     * @return The current authentication token.
+     * @throws ClassCastException
+     *             If an unexpected type of authentication token is present,
+     *             which indicates that we shouldn't be authenticating using
+     *             this.
+     */
+    private static ClientAuthenticationToken getAuth()
+            throws ClassCastException {
+        return (ClientAuthenticationToken) getContext().getAuthentication();
     }
 }

@@ -32,7 +32,7 @@ public class Job implements QueueNextResponse {
     @JsonSerialize(using = DateTimeSerialiser.class)
     private DateTime timestampSubmission;
     private ObjectNode provenance;
-    private Map<String, Object> others = new HashMap<String, Object>();
+    private Map<String, Object> others = new HashMap<>();
 
     public String getCode() {
         return code;

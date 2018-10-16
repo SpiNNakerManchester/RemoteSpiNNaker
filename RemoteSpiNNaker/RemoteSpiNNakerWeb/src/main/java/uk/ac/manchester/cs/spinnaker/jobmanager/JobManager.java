@@ -256,6 +256,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         return -1;
     }
 
+    /** Enough with the machine already! */
     @Override
     public void releaseMachine(int id, String machineName) {
         synchronized (allocatedMachines) {
@@ -268,6 +269,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         }
     }
 
+    /** Control a machine's power switch. */
     @Override
     public void setMachinePower(int id, String machineName, boolean powerOn) {
         synchronized (allocatedMachines) {
@@ -279,6 +281,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         }
     }
 
+    /** Find a chip in a machine. */
     @Override
     public ChipCoordinates getChipCoordinates(int id, String machineName,
             int chipX, int chipY) {
@@ -350,6 +353,14 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         return new JobMachineAllocated(true);
     }
 
+    /**
+     * Wait for something to happen to any of a list of machines.
+     *
+     * @param waitTime
+     *            How long to wait
+     * @param machines
+     *            What to wait for events from.
+     */
     private void waitForAnyMachineStateChange(final int waitTime,
             final List<SpinnakerMachine> machines) {
         final BlockingQueue<Object> stateChangeSync =

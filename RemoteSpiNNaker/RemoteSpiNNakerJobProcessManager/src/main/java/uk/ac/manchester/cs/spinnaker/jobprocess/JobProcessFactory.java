@@ -14,10 +14,24 @@ import uk.ac.manchester.cs.spinnaker.job.JobParameters;
 public class JobProcessFactory {
     private final ThreadGroup threadGroup;
 
+    /**
+     * Create a factory.
+     *
+     * @param threadGroup
+     *            The thread group for the factory. All threads created by the
+     *            factory will be within this group.
+     */
     public JobProcessFactory(final ThreadGroup threadGroup) {
         this.threadGroup = threadGroup;
     }
 
+    /**
+     * Create a factory.
+     *
+     * @param threadGroupName
+     *            The name of the thread group for the factory. All threads
+     *            created by the factory will be within this group.
+     */
     public JobProcessFactory(final String threadGroupName) {
         this(new ThreadGroup(threadGroupName));
     }

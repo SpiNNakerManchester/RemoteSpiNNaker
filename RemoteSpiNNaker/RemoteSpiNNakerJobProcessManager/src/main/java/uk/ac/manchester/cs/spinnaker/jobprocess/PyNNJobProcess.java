@@ -51,6 +51,8 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
     private static final String SECTION = "Machine";
     private static final String SUBPROCESS_RUNNER = "python";
     private static final int FINALIZATION_DELAY = 1000;
+    private static final int MIN_SIGNAL_OFFSET = 128;
+    private static final int BUFFER_SIZE = 8 * 1024;
     private static final Set<String> IGNORED_EXTENSIONS = new HashSet<>();
     private static final Set<String> IGNORED_DIRECTORIES = new HashSet<>();
     private static final Pattern ARGUMENT_FINDER =
@@ -166,9 +168,14 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         }
     }
 
-    private static final int MIN_SIGNAL_OFFSET = 128;
-
-    /** How to actually run a subprocess. */
+    /**
+     * How to actually run a subprocess.
+     *
+     * @param parameters
+     *            The parameters to the subprocess.
+     * @param logWriter
+     *            Where to send log messages.
+     */
     private int runSubprocess(final PyNNJobParameters parameters,
             final LogWriter logWriter)
             throws IOException, InterruptedException {
@@ -198,6 +205,18 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         }
     }
 
+    /**
+     * Enter some provenance into the provenance map.
+     *
+     * @param items
+     *            The items to insert.
+     * @param path
+     *            Where to insert these items relative to the current node, as a
+     *            string.
+     * @param pathList
+     *            Where to insert these items relative to the current node, as a
+     *            list.
+     */
     private void putProvenanceInMap(final ProvenanceDataItems items,
             final String path, final LinkedList<String> pathList) {
 
@@ -226,6 +245,14 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         pathList.removeLast();
     }
 
+    /**
+     * Add the provenance contained in the files in the given directory.
+     *
+     * @param provenanceDirectory
+     *            Where to look for XML files.
+     * @throws JAXBException
+     *             If things go wrong in deserialisation.
+     */
     private void addProvenance(final File provenanceDirectory)
             throws IOException, JAXBException {
 
@@ -247,8 +274,20 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         }
     }
 
-    private static final int BUFFER_SIZE = 8 * 1024;
-
+    /**
+     * Used for creating a ZIP of the provenance.
+     *
+     * @param reportsZip
+     *            Open handle to the ZIP being created.
+     * @param directory
+     *            Where to get provenance data from.
+     * @param path
+     *            The path within the ZIP.
+     * @throws IOException
+     *             If anything goes wrong with I/O.
+     * @throws JAXBException
+     *             If anything goes wrong with deserialisation of the XML.
+     */
     private void zipProvenance(final ZipOutputStream reportsZip,
             final File directory, final String path)
             throws IOException, JAXBException {
@@ -267,17 +306,27 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
                 final ZipEntry entry =
                         new ZipEntry(path + "/" + file.getName());
                 reportsZip.putNextEntry(entry);
-                final FileInputStream in = new FileInputStream(file);
-                int bytesRead = in.read(buffer);
-                while (bytesRead >= 0) {
-                    reportsZip.write(buffer, 0, bytesRead);
-                    bytesRead = in.read(buffer);
+                try (final FileInputStream in = new FileInputStream(file)) {
+                    int bytesRead = in.read(buffer);
+                    while (bytesRead >= 0) {
+                        reportsZip.write(buffer, 0, bytesRead);
+                        bytesRead = in.read(buffer);
+                    }
                 }
-                in.close();
             }
         }
     }
 
+    /**
+     * Gather the provenance information from the job's reports directory.
+     *
+     * @param workingDirectory
+     *            The job's working directory.
+     * @throws IOException
+     *             If anything goes wrong with I/O.
+     * @throws JAXBException
+     *             If anything goes wrong with deserialisation of XML.
+     */
     private void gatherProvenance(final File workingDirectory)
             throws IOException, JAXBException {
 
@@ -286,14 +335,13 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         if (reportsFolder.isDirectory()) {
 
             // Create a zip file of the reports
-            final ZipOutputStream reportsZip =
+            try (final ZipOutputStream reportsZip =
                     new ZipOutputStream(new FileOutputStream(
-                            new File(workingDirectory, "reports.zip")));
-
-            // Gather items into the reports zip, keeping an eye out for
-            // the "provenance data" folder
-            zipProvenance(reportsZip, reportsFolder, "reports");
-            reportsZip.close();
+                            new File(workingDirectory, "reports.zip")))) {
+                // Gather items into the reports zip, keeping an eye out for
+                // the "provenance data" folder
+                zipProvenance(reportsZip, reportsFolder, "reports");
+            }
         }
     }
 

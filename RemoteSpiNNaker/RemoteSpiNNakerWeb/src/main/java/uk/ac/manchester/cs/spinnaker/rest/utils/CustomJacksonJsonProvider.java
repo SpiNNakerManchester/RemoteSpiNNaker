@@ -35,6 +35,16 @@ public class CustomJacksonJsonProvider extends JacksonJsonProvider {
     private final SimpleModule module = new SimpleModule();
     private final JodaModule jodaModule = new JodaModule();
 
+    /**
+     * Add a deserialiser for a specific type.
+     *
+     * @param <T>
+     *            The type that will be deserialised.
+     * @param type
+     *            The type.
+     * @param deserialiser
+     *            The deserialiser.
+     */
     public <T> void addDeserialiser(final Class<T> type,
             final StdDeserializer<T> deserialiser) {
         module.addDeserializer(type, deserialiser);

@@ -67,6 +67,9 @@ import uk.ac.manchester.cs.spinnaker.utils.ThreadUtils;
 public class SpallocMachineManagerImpl implements MachineManager, Runnable {
     private static final String MACHINE_VERSION = "5";
     private static final String DEFAULT_TAG = "default";
+    private static final int PERIOD = 5;
+    private static final int MACHINE_WIDTH_FACTOR = 12;
+    private static final int MACHINE_HEIGHT_FACTOR = 12;
 
     /**
      * Used for callbacks about machines.
@@ -102,6 +105,9 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
     private volatile boolean done = false;
     private final MachineNotificationReceiver callback = null;
 
+    /**
+     * Deserialiser for spalloc responses.
+     */
     @SuppressWarnings("serial")
     private static class ResponseBasedDeserializer
             extends PropertyBasedDeserialiser<Response> {
@@ -130,7 +136,6 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
      * Thread pool.
      */
     ScheduledExecutorService scheduler;
-    private static final int PERIOD = 5;
 
     /**
      * Launch this manager's threads.
@@ -355,6 +360,14 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
             }
         }
 
+        /**
+         * Get the list of IDs of changed jobs from the next notification in the
+         * notification queue.
+         *
+         * @return list of IDs
+         * @throws InterruptedException
+         *             if interrupted
+         */
         public List<Integer> getJobsChanged() throws InterruptedException {
             return notifications.take().getJobsChanged();
         }
@@ -572,9 +585,6 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
             return machineState.get(job.id);
         }
     }
-
-    private static final int MACHINE_WIDTH_FACTOR = 12;
-    private static final int MACHINE_HEIGHT_FACTOR = 12;
 
     @Override
     public List<SpinnakerMachine> getMachines() {

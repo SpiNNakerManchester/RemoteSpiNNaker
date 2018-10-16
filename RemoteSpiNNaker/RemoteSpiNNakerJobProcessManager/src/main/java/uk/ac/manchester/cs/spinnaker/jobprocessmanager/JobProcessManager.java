@@ -49,7 +49,7 @@ import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
  */
 public class JobProcessManager {
     private static final int UPDATE_INTERVAL = 500;
-
+    private static final int DEFAULT = -1;
     /** The factory for converting parameters into processes. */
     private static final JobProcessFactory JOB_PROCESS_FACTORY =
             new JobProcessFactory("JobProcess");
@@ -83,7 +83,7 @@ public class JobProcessManager {
                     toWrite = takeCache();
                 }
             }
-            if (toWrite != null) {
+            if (toWrite != null && !toWrite.isEmpty()) {
                 log("Sending cached data to job manager");
                 jobManager.appendLog(job.getId(), toWrite);
             }
@@ -271,8 +271,6 @@ public class JobProcessManager {
         exit(0);
     }
 
-    private static final int DEFAULT = -1;
-
     private Machine getMachine() {
         // (get a 3 board machine just now)
         if (requestMachine) {
@@ -387,10 +385,24 @@ class Machine {
     /** The service URL. */
     String url;
 
+    /**
+     * Create a machine known by object.
+     *
+     * @param machine
+     *            The machine object.
+     */
     Machine(final SpinnakerMachine machine) {
         this.machine = machine;
     }
 
+    /**
+     * Create a machine known by service job name.
+     *
+     * @param baseUrl
+     *            The base URL for the machine.
+     * @param id
+     *            The ID for the job.
+     */
     Machine(final String baseUrl, final int id) {
         this.url = format("%sjob/%d/machine", baseUrl, id);
     }
@@ -410,14 +422,30 @@ class Machine {
 abstract class JobManagerLogWriter implements LogWriter {
     private final StringBuilder cached = new StringBuilder();
 
+    /**
+     * Does the log have anything in it?
+     *
+     * @return Whether the log cache is non-empty.
+     */
     protected boolean isPopulated() {
         return cached.length() > 0;
     }
 
+    /**
+     * Get the current contents of the log cache.
+     *
+     * @return Copy of the log contents.
+     */
     public synchronized String getLog() {
         return cached.toString();
     }
 
+    /**
+     * Add a message to the cached log.
+     *
+     * @param value
+     *            The string to add.
+     */
     final void appendCache(String msg) {
         cached.append(msg);
     }
@@ -435,6 +463,9 @@ abstract class JobManagerLogWriter implements LogWriter {
         }
     }
 
+    /**
+     * Stop any background activity associated with the log.
+     */
     void stop() {
     }
 }

@@ -64,6 +64,15 @@ public abstract class RestClientUtils {
     private RestClientUtils() {
     } // No instances, please, we're British!
 
+    /**
+     * The security protocol that is requested for a secure connection.
+     */
+    public static final String SECURE_PROTOCOL = "TLS";
+    /**
+     * Default port for HTTPS.
+     */
+    private static final int HTTPS_PORT = 443;
+
     private static Logger log = getLogger(RestClientUtils.class);
 
     /**
@@ -103,7 +112,17 @@ public abstract class RestClientUtils {
         }
     }
 
-    /** Set up authentication. */
+    /**
+     * Set up a connection context.
+     *
+     * @param url
+     *            Where will the connection be made to?
+     * @param credentals
+     *            What credentials will be used to connect?
+     * @param authScheme
+     *            The authentication scheme to use.
+     * @return the configured context.
+     */
     private static HttpContext getConnectionContext(final URL url,
             final Credentials credentials, final AuthScheme authScheme) {
         int port = url.getPort();
@@ -127,22 +146,30 @@ public abstract class RestClientUtils {
         return localContext;
     }
 
+    /**
+     * Hey, we trust everything!
+     *
+     * @param certs A certificate chain.
+     * @return Whether the certificate is trusted. It is! Always!
+     */
     private static boolean checkTrusted(X509Certificate[] certs) {
         return true;
     }
 
+    /**
+     * What issuers do we trust? None really, but we claim we do.
+     *
+     * @return The issuer certificate to trust. Or <tt>null</tt>.
+     */
     private static X509Certificate getTrustedCert() {
         return null;
     }
 
     /**
-     * The security protocol that is requested for a secure connection.
-     */
-    public static final String SECURE_PROTOCOL = "TLS";
-
-    /**
      * A trust manager that believes everything it is told. This is how not to
      * write a trust manager.
+     *
+     * @see #getSchemeRegistry()
      */
     private static TrustManager getGullableTrustManager() {
         return new X509TrustManager() {
@@ -175,6 +202,10 @@ public abstract class RestClientUtils {
     /**
      * Set up HTTPS to ignore certificate errors. This method is doing wicked
      * things as it is using the gullable trust manager.
+     * <p>
+     * <i>Be aware that this method is doing very bad things; a trust-all trust
+     * manager is <b>entirely</b> doing it wrong, but the reality of academic
+     * security is that it is the only sane option.</i>
      */
     private static SchemeRegistry getSchemeRegistry()
             throws NoSuchAlgorithmException, KeyManagementException {
@@ -186,8 +217,6 @@ public abstract class RestClientUtils {
                 new SSLSocketFactory(sslContext, ALLOW_ALL_HOSTNAME_VERIFIER)));
         return schemeRegistry;
     }
-
-    private static final int HTTPS_PORT = 443;
 
     /**
      * Create a REST client proxy for a class to the given URL.
@@ -305,6 +334,9 @@ public abstract class RestClientUtils {
                 }, clazz, providers);
     }
 
+    /**
+     * Base for authorisation schemes.
+     */
     private abstract static class ConnectionIndependentScheme
             extends RFC2617Scheme {
         private final boolean complete = false;
@@ -330,9 +362,13 @@ public abstract class RestClientUtils {
         }
 
         /**
-         * Produce an authorization header for the given set of
+         * Produce an authorisation header for the given set of
          * {@link Credentials}. The credentials and the connection will have
          * been sanity-checked prior to this call.
+         *
+         * @param credentials
+         *            The credentials to be authenticated.
+         * @return the header
          */
         protected abstract Header authenticate(Credentials credentials);
 
