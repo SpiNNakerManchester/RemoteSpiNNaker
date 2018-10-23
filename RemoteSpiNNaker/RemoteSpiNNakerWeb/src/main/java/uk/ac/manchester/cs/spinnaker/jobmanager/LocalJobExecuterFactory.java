@@ -143,9 +143,6 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         }
     }
 
-    /**
-     * Create a new local execution.
-     */
     @Override
     public JobExecuter createJobExecuter(final JobManager manager,
             final URL baseUrl) throws IOException {
@@ -240,12 +237,6 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
             new Thread(threadGroup, this, "Executer (" + id + ")").start();
         }
 
-        /**
-         * Runs the external job.
-         *
-         * @throws IOException
-         *             If there is an error starting the job
-         */
         @Override
         public void run() {
             try (JobOutputPipe pipe = startSubprocess(constructArguments())) {

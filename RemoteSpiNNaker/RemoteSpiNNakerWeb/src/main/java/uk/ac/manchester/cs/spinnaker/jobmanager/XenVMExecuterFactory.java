@@ -125,9 +125,6 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
         this.threadGroup = new ThreadGroup("XenVM");
     }
 
-    /**
-     * Create a job executor for a job.
-     */
     @Override
     public JobExecuter createJobExecuter(final JobManager manager,
             final URL baseUrl) throws IOException {
@@ -381,8 +378,8 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
          * @throws XmlRpcException
          *             something went wrong
          */
-        void destroy(final VBD vm) throws XenAPIException, XmlRpcException {
-            vm.destroy(conn);
+        void destroy(final VBD vbd) throws XenAPIException, XmlRpcException {
+            vbd.destroy(conn);
         }
 
         /**
@@ -395,8 +392,8 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
          * @throws XmlRpcException
          *             something went wrong
          */
-        void destroy(final VDI vm) throws XenAPIException, XmlRpcException {
-            vm.destroy(conn);
+        void destroy(final VDI vdi) throws XenAPIException, XmlRpcException {
+            vdi.destroy(conn);
         }
 
         /**

@@ -4,6 +4,10 @@ package uk.ac.manchester.cs.spinnaker.utils;
  * Utilities for working with threads.
  */
 public abstract class ThreadUtils {
+
+    /**
+     * Avoid creation.
+     */
     private ThreadUtils() {
     }
 

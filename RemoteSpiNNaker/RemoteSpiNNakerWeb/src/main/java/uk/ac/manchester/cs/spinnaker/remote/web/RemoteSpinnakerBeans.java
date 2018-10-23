@@ -79,21 +79,39 @@ public class RemoteSpinnakerBeans {
         return factory;
     }
 
+    /**
+     * The context of the application.
+     */
     @Autowired
     private ApplicationContext ctx;
 
+    /**
+     * Determine if machines are to be spalloc allocated.
+     */
     @Value("${spalloc.enabled}")
     private boolean useSpalloc;
 
+    /**
+     * Determine if local jobs or Xen VMs are to be used.
+     */
     @Value("${xen.server.enabled}")
     private boolean useXenVms;
 
+    /**
+     * The URL of the server.
+     */
     @Value("${baseserver.url}${cxf.path}${cxf.rest.path}/")
     private URL baseServerUrl;
 
+    /**
+     * The REST path of the server.
+     */
     @Value("${cxf.rest.path}")
     private String restPath;
 
+    /**
+     * The OIDC redirect URL to return to when authenticated.
+     */
     @Value("${baseserver.url}${callback.path}")
     private String oidcRedirectUri;
 
@@ -107,6 +125,7 @@ public class RemoteSpinnakerBeans {
          *
          * @param auth
          *            The handle to the authentication system.
+         * @throws Exception if something goes wrong
          */
         // @Autowired
         public void configureGlobal(final AuthenticationManagerBuilder auth)
@@ -115,9 +134,10 @@ public class RemoteSpinnakerBeans {
         }
 
         /**
-         * The collabratory security service.
+         * The collaboratory security service.
          *
          * @return bean
+         * @throws MalformedURLException if something goes wrong
          */
         // @Bean
         public CollabSecurityService collabSecurityService()
@@ -139,6 +159,9 @@ public class RemoteSpinnakerBeans {
          * The HBP bearer authentication client.
          *
          * @return bean
+         * @throws ParseException If something goes wrong
+         * @throws MalformedURLException If something goes wrong
+         * @throws IOException If something goes wrong
          */
         // @Bean
         public Client<?, ?> hbpBearerClient()
@@ -150,6 +173,9 @@ public class RemoteSpinnakerBeans {
          * The list of various authentication clients to try to use.
          *
          * @return bean
+         * @throws ParseException If something goes wrong
+         * @throws MalformedURLException If something goes wrong
+         * @throws IOException If something goes wrong
          */
         // @Bean
         public Clients clients()
@@ -162,6 +188,9 @@ public class RemoteSpinnakerBeans {
          * The authentication provider.
          *
          * @return bean
+         * @throws ParseException If something goes wrong
+         * @throws MalformedURLException If something goes wrong
+         * @throws IOException If something goes wrong
          */
         // @Bean
         public ClientAuthenticationProvider clientProvider()

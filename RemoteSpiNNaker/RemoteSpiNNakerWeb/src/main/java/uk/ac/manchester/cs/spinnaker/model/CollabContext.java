@@ -1,79 +1,191 @@
 package uk.ac.manchester.cs.spinnaker.model;
 
 /**
- * POJO holding the description of a HBP Collabratory context.
+ * POJO holding the description of a HBP Collaboratory context.
  */
 public class CollabContext {
+
+    /**
+     * The ID of the APP in the collab.
+     */
     private String appId;
+
+    /**
+     * The collab contained within.
+     */
     private Collab collab;
+
+    /**
+     * The context string.
+     */
     private String context;
+
+    /**
+     * The ID of the item.
+     */
     private int id;
+
+    /**
+     * The name of the item.
+     */
     private String name;
+
+    /**
+     * The order of the item within its group.
+     */
     private int orderIndex;
+
+    /**
+     * The parent of the item.
+     */
     private int parent;
+
+    /**
+     * The type of the item.
+     */
     private String type;
 
+    /**
+     * Get the ID of the application.
+     *
+     * @return The ID
+     */
     public String getAppId() {
         return appId;
     }
 
-    public void setAppId(final String appId) {
-        this.appId = appId;
+    /**
+     * Set the ID of the application.
+     *
+     * @param appIdParam The ID to set
+     */
+    public void setAppId(final String appIdParam) {
+        this.appId = appIdParam;
     }
 
+    /**
+     * Get the collab of the application.
+     *
+     * @return The collab.
+     */
     public Collab getCollab() {
         return collab;
     }
 
-    public void setCollab(final Collab collab) {
-        this.collab = collab;
+    /**
+     * Set the collab of the application.
+     *
+     * @param collabParam The collab to set
+     */
+    public void setCollab(final Collab collabParam) {
+        this.collab = collabParam;
     }
 
+    /**
+     * Get the context of the application.
+     *
+     * @return The context
+     */
     public String getContext() {
         return context;
     }
 
-    public void setContext(final String context) {
-        this.context = context;
+    /**
+     * Set the context of the application.
+     *
+     * @param contextParam The context to set
+     */
+    public void setContext(final String contextParam) {
+        this.context = contextParam;
     }
 
+    /**
+     * Get the ID of the context.
+     *
+     * @return The ID
+     */
     public int getId() {
         return id;
     }
 
-    public void setId(final int id) {
-        this.id = id;
+    /**
+     * Set the ID of the context.
+     *
+     * @param idParam The ID
+     */
+    public void setId(final int idParam) {
+        this.id = idParam;
     }
 
+    /**
+     * Get the name of the context.
+     *
+     * @return The name
+     */
     public String getName() {
         return name;
     }
 
-    public void setName(final String name) {
-        this.name = name;
+    /**
+     * Set the name of the context.
+     *
+     * @param nameParam The name to set
+     */
+    public void setName(final String nameParam) {
+        this.name = nameParam;
     }
 
+    /**
+     * Get the index of this item to order.
+     *
+     * @return The index
+     */
     public int getOrderIndex() {
         return orderIndex;
     }
 
-    public void setOrderIndex(final int orderIndex) {
-        this.orderIndex = orderIndex;
+    /**
+     * Set the index of this item in order.
+     *
+     * @param orderIndexParam The index to set
+     */
+    public void setOrderIndex(final int orderIndexParam) {
+        this.orderIndex = orderIndexParam;
     }
 
+    /**
+     * Get the parent of this item.
+     *
+     * @return The parent
+     */
     public int getParent() {
         return parent;
     }
 
-    public void setParent(final int parent) {
-        this.parent = parent;
+    /**
+     * Set the parent of this item.
+     *
+     * @param parentParam The parent to set
+     */
+    public void setParent(final int parentParam) {
+        this.parent = parentParam;
     }
 
+    /**
+     * Get the type of this item.
+     *
+     * @return The type
+     */
     public String getType() {
         return type;
     }
 
-    public void setType(final String type) {
-        this.type = type;
+    /**
+     * Set the type of this item.
+     *
+     * @param typeParam The type to set
+     */
+    public void setType(final String typeParam) {
+        this.type = typeParam;
     }
 }

@@ -18,10 +18,14 @@ import org.slf4j.Logger;
 @Provider
 public class NullExceptionMapper
         implements ExceptionMapper<NullPointerException> {
+
+    /**
+     * Log.
+     */
     private final Logger log = getLogger(getClass());
 
     @Override
-    public Response toResponse(NullPointerException exception) {
+    public Response toResponse(final NullPointerException exception) {
         String msg = exception.getMessage();
         if ((msg == null) || msg.isEmpty()) {
             msg = "bad parameter";

@@ -58,6 +58,7 @@ class GitPyNNJobParametersFactory extends JobParametersFactory {
      * @throws GitAPIException If there is a general problem using Git
      * @throws InvalidRemoteException If there is a problem with the repository
      * @throws TransportException If there is a problem in communication
+     * @throws URISyntaxException If the URI syntax is incorrect
      */
     private JobParameters constructParameters(final Job job,
             final File workingDirectory, final String experimentDescription)

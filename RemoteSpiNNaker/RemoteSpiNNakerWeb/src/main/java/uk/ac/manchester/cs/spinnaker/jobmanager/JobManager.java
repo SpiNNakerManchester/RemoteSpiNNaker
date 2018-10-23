@@ -187,9 +187,6 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         new Thread(threadGroup, queueManager, "QueueManager").start();
     }
 
-    /**
-     * Add a job to be executed.
-     */
     @Override
     public void addJob(final Job job) throws IOException {
         requireNonNull(job);
@@ -211,9 +208,11 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
      * You need to hold the lock on {@link #jobExecuters} when running this
      * method.
      *
+     * @param job The job to execute
+     *
      * @throws IOException If there is an error starting the job
      */
-    private void launchExecuter(Job job) throws IOException {
+    private void launchExecuter(final Job job) throws IOException {
         final JobExecuter executer =
                 jobExecuterFactory.createJobExecuter(this, baseUrl);
         synchronized (jobExecuters) {
@@ -225,9 +224,6 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         executer.startExecuter();
     }
 
-    /**
-     * Get the next job for an executor.
-     */
     @Override
     public Job getNextJob(final String executerId) {
         requireNonNull(executerId);
@@ -249,9 +245,6 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         return job;
     }
 
-    /**
-     * Get the largest machine for a job.
-     */
     @Override
     public SpinnakerMachine getLargestJobMachine(final int id,
             final double runTime) {
@@ -267,9 +260,6 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         return largest;
     }
 
-    /**
-     * Get the machine for a job.
-     */
     @Override
     public SpinnakerMachine getJobMachine(final int id, final int nCores,
             final int nChips, final int nBoards, final double runTime) {
@@ -340,8 +330,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
      *         present. (The <tt>null</tt> machine list never contains any
      *         machines.)
      */
-    private static int findMachineIndex(List<SpinnakerMachine> machines,
-            String machineName) {
+    private static int findMachineIndex(final List<SpinnakerMachine> machines,
+            final String machineName) {
         if (machines == null) {
             return -1;
         }
@@ -355,9 +345,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         return -1;
     }
 
-    /** Enough with the machine already! */
     @Override
-    public void releaseMachine(int id, String machineName) {
+    public void releaseMachine(final int id, final String machineName) {
         synchronized (allocatedMachines) {
             List<SpinnakerMachine> machines = allocatedMachines.get(id);
             int index = findMachineIndex(machines, machineName);
@@ -368,9 +357,9 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         }
     }
 
-    /** Control a machine's power switch. */
     @Override
-    public void setMachinePower(int id, String machineName, boolean powerOn) {
+    public void setMachinePower(final int id, final String machineName,
+            final boolean powerOn) {
         synchronized (allocatedMachines) {
             List<SpinnakerMachine> machines = allocatedMachines.get(id);
             int index = findMachineIndex(machines, machineName);
@@ -380,10 +369,9 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         }
     }
 
-    /** Find a chip in a machine. */
     @Override
-    public ChipCoordinates getChipCoordinates(int id, String machineName,
-            int chipX, int chipY) {
+    public ChipCoordinates getChipCoordinates(final int id,
+            final String machineName, final int chipX, final int chipY) {
         synchronized (allocatedMachines) {
             final List<SpinnakerMachine> machines = allocatedMachines.get(id);
             int index = findMachineIndex(machines, machineName);
@@ -426,9 +414,6 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         }
     }
 
-    /**
-     * Extend the lease of a machine.
-     */
     @Override
     public void extendJobMachineLease(final int id, final double runTime) {
         // TODO Check quota that the lease can be extended
@@ -442,9 +427,6 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         logger.info("Usage for " + id + " now " + usage);
     }
 
-    /**
-     * Check the lease of a machine.
-     */
     @Override
     public JobMachineAllocated checkMachineLease(final int id,
             final int waitTime) {
@@ -500,9 +482,6 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         }
     }
 
-    /**
-     * Append the job log.
-     */
     @Override
     public void appendLog(final int id, final String logToAppend) {
         logger.debug("Updating log for " + id);
@@ -510,9 +489,6 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         queueManager.appendJobLog(id, requireNonNull(logToAppend));
     }
 
-    /**
-     * Add an output file to the job.
-     */
     @Override
     public void addOutput(final String projectId, final int id,
             final String output, final InputStream input) {
@@ -572,9 +548,6 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         return outputItems;
     }
 
-    /**
-     * Add provenance to a job.
-     */
     @Override
     public void addProvenance(final int id, final List<String> path,
             final String value) {
@@ -649,9 +622,6 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         return resourceUsage;
     }
 
-    /**
-     * Set a job to a finished state.
-     */
     @Override
     public void setJobFinished(final String projectId, final int id,
             final String logToAppend, final String baseDirectory,
@@ -695,9 +665,6 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         }
     }
 
-    /**
-     * Mark a job as failed.
-     */
     @Override
     public void setJobError(final String projectId, final int id,
             final String error, final String logToAppend,
@@ -807,9 +774,6 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         }
     }
 
-    /**
-     * Get the Job Process Manager zip.
-     */
     @Override
     public Response getJobProcessManager() {
         final InputStream jobManagerStream =
