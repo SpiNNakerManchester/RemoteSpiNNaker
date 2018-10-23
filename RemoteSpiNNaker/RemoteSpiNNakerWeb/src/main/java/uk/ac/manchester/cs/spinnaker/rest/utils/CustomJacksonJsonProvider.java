@@ -24,19 +24,48 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
+/**
+ * Extended JSON serialisation handler.
+ */
 @Provider
 @Consumes(WILDCARD)
 @Produces(WILDCARD)
 public class CustomJacksonJsonProvider extends JacksonJsonProvider {
+    /**
+     * Mapper objects of this provider.
+     */
     private final Set<ObjectMapper> registeredMappers = new HashSet<>();
+
+    /**
+     * The module of the provider.
+     */
     private final SimpleModule module = new SimpleModule();
+
+    /**
+     * The date-time module of the provider.
+     */
     private final JodaModule jodaModule = new JodaModule();
 
+    /**
+     * Add a deserialiser for a specific type.
+     *
+     * @param <T>
+     *            The type that will be deserialised.
+     * @param type
+     *            The type.
+     * @param deserialiser
+     *            The deserialiser.
+     */
     public <T> void addDeserialiser(final Class<T> type,
             final StdDeserializer<T> deserialiser) {
         module.addDeserializer(type, deserialiser);
     }
 
+    /**
+     * Register a new mapper.
+     * @param type The class of the mapper
+     * @param mediaType The media type to handle
+     */
     private void registerMapper(final Class<?> type,
             final MediaType mediaType) {
         final ObjectMapper mapper = locateMapper(type, mediaType);

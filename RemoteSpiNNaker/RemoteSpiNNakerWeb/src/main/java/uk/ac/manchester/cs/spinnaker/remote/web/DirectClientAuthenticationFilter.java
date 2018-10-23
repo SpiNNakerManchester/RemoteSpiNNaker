@@ -30,26 +30,73 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+/**
+ * Authentication filter that supports HBP authentication mechanisms.
+ */
 public class DirectClientAuthenticationFilter extends OncePerRequestFilter {
+    /**
+     * The header that indicates authentication is required.
+     */
     private static final String MUST_AUTH_HEADER = "WWW-Authenticate";
+
+    /**
+     * The payload of the header that indicates Bearer authentication is
+     * required.
+     */
     private static final String MUST_AUTH_PAYLOAD = "Bearer realm=\"%s\"";
+
+    /**
+     * The default authentication realm. "<tt>SpiNNaker</tt>"
+     */
     public static final String DEFAULT_REALM = "SpiNNaker";
+
+    /**
+     * Logging.
+     */
     private final Logger logger = getLogger(getClass());
 
+    /**
+     * The client used to perform authentication.
+     */
     private Client<?, ?> client;
+
+    /**
+     * The name of the realm authenticated to.
+     */
     private final String realmName = DEFAULT_REALM;
+
+    /**
+     * The entry point of authentication to return to.
+     */
     private AuthenticationEntryPoint authenticationEntryPoint;
+
+    /**
+     * The source of the details.
+     */
     private final WebAuthenticationDetailsSource detailsSource;
+
+    /**
+     * The authentication manager.
+     */
     private final AuthenticationManager authenticationManager;
 
+    /**
+     * Make an instance of the filter.
+     *
+     * @param authenticationManagerParam
+     *            The authentication manager that takes the decisions.
+     */
     public DirectClientAuthenticationFilter(
-            final AuthenticationManager authenticationManager) {
-        this.authenticationManager = requireNonNull(authenticationManager);
+            final AuthenticationManager authenticationManagerParam) {
+        this.authenticationManager = requireNonNull(authenticationManagerParam);
         detailsSource = new WebAuthenticationDetailsSource();
     }
 
+    /**
+     * Ensure that this bean will behave sanely in service.
+     */
     @PostConstruct
-    void checkForSanity() {
+    private void checkForSanity() {
         requireNonNull(client);
         if (authenticationEntryPoint == null) {
             authenticationEntryPoint = new AuthenticationEntryPoint() {
@@ -64,6 +111,12 @@ public class DirectClientAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
+    /**
+     * Start the authentication process.
+     * @param response The response to fill in
+     * @param authException The exception to get the error message from.
+     * @throws IOException If there is a problem
+     */
     private void commenceBearerAuth(final HttpServletResponse response,
             final AuthenticationException authException) throws IOException {
         response.addHeader(MUST_AUTH_HEADER,
@@ -99,6 +152,14 @@ public class DirectClientAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+    /**
+     * Authenticate the given credentials.
+     * @param request The request to authenticate.
+     * @param response The response to pass back.
+     * @param credentials The credentials being authenticated with.
+     * @throws IOException If there is an issue
+     * @throws ServletException If there is an issue
+     */
     private void authenticateCredentials(final HttpServletRequest request,
             final HttpServletResponse response, final Credentials credentials)
             throws IOException, ServletException {
@@ -118,16 +179,28 @@ public class DirectClientAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
+    /**
+     * Get the client used.
+     * @return The client
+     */
     public Client<?, ?> getClient() {
         return client;
     }
 
-    public void setClient(final Client<?, ?> client) {
-        this.client = client;
+    /**
+     * Set the client.
+     * @param clientParam The client to set
+     */
+    public void setClient(final Client<?, ?> clientParam) {
+        this.client = clientParam;
     }
 
+    /**
+     * Set the authentication entry point.
+     * @param authenticationEntryPointParam The entry point to set.
+     */
     public void setAuthenticationEntryPoint(
-            final AuthenticationEntryPoint authenticationEntryPoint) {
-        this.authenticationEntryPoint = authenticationEntryPoint;
+            final AuthenticationEntryPoint authenticationEntryPointParam) {
+        this.authenticationEntryPoint = authenticationEntryPointParam;
     }
 }

@@ -18,16 +18,38 @@ import javax.ws.rs.ext.Provider;
 import org.apache.commons.io.output.WriterOutputStream;
 import org.slf4j.Logger;
 
+/**
+ * Better logging of errors.
+ */
 // Only public because of the annotation
 @Provider
 public class ErrorCaptureResponseFilter implements ClientResponseFilter {
+
+    /**
+     * The JSON provider of the filter.
+     */
     private final CustomJacksonJsonProvider provider =
             new CustomJacksonJsonProvider();
-    private static final Logger log =
-            getLogger(ErrorCaptureResponseFilter.class);
-    public volatile boolean writeToLog = true;
 
-    private static final String INDENT = "    ";// 4 spaces
+    /**
+     * Logging.
+     */
+    private static final Logger LOG =
+            getLogger(ErrorCaptureResponseFilter.class);
+
+    /**
+     * True if the log should be written.
+     */
+    private volatile boolean writeToLog = true;
+
+    /**
+     * Level 1 indent.
+     */
+    private static final String INDENT = "    "; // 4 spaces
+
+    /**
+     * Level 2 intent.
+     */
     private static final String IND2 = INDENT + INDENT;
 
     @Override
@@ -38,27 +60,32 @@ public class ErrorCaptureResponseFilter implements ClientResponseFilter {
         }
         final Family family = responseContext.getStatusInfo().getFamily();
         if ((family == CLIENT_ERROR) || (family == SERVER_ERROR)) {
-            log.trace("Error when sending request:");
-            log.trace(INDENT + "Headers:");
+            LOG.trace("Error when sending request:");
+            LOG.trace(INDENT + "Headers:");
             final MultivaluedMap<String, String> headers =
                     requestContext.getStringHeaders();
             for (final String headerName : headers.keySet()) {
                 for (final String headerValue : headers.get(headerName)) {
-                    log.trace(IND2 + headerName + ": " + headerValue);
+                    LOG.trace(IND2 + headerName + ": " + headerValue);
                 }
             }
 
-            log.trace(INDENT + "Entity:");
-            log.trace(IND2 + requestContext.getEntity());
+            LOG.trace(INDENT + "Entity:");
+            LOG.trace(IND2 + requestContext.getEntity());
 
             final String json = getRequestAsJSON(requestContext);
             if (json != null) {
-                log.trace(INDENT + "JSON version:");
-                log.trace(IND2 + json);
+                LOG.trace(INDENT + "JSON version:");
+                LOG.trace(IND2 + json);
             }
         }
     }
 
+    /**
+     * Convert a request to a JSON object.
+     * @param requestContext The context of the request
+     * @return A JSON String
+     */
     private String getRequestAsJSON(final ClientRequestContext requestContext) {
         try {
             final StringWriter jsonWriter = new StringWriter();
@@ -73,7 +100,7 @@ public class ErrorCaptureResponseFilter implements ClientResponseFilter {
             }
             return jsonWriter.toString();
         } catch (final Exception e) {
-            log.trace("problem when converting request to JSON", e);
+            LOG.trace("problem when converting request to JSON", e);
             return null;
         }
     }

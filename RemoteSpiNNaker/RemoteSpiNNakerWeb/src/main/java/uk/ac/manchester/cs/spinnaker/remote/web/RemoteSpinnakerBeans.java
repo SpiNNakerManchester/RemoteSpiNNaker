@@ -6,8 +6,6 @@ import static java.util.Collections.singleton;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
 
 import org.apache.cxf.bus.spring.SpringBus;
 import org.apache.cxf.endpoint.Server;
@@ -43,17 +41,30 @@ import uk.ac.manchester.cs.spinnaker.output.OutputManagerImpl;
 import uk.ac.manchester.cs.spinnaker.rest.OutputManager;
 import uk.ac.manchester.cs.spinnaker.rest.utils.NullExceptionMapper;
 
+/**
+ * Builds the Spring beans in the application.
+ */
 @Configuration
 // @EnableGlobalMethodSecurity(prePostEnabled=true, proxyTargetClass=true)
 // @EnableWebSecurity
 @Import(JaxRsConfig.class)
 public class RemoteSpinnakerBeans {
+    /**
+     * Configures using properties.
+     *
+     * @return bean
+     */
     @Bean
     public static PropertySourcesPlaceholderConfigurer
             propertySourcesPlaceholderConfigurer() {
         return new PropertySourcesPlaceholderConfigurer();
     }
 
+    /**
+     * Parsing of Spinnaker machine descriptions.
+     *
+     * @return bean
+     */
     @Bean
     public static ConversionServiceFactoryBean conversionService() {
         final ConversionServiceFactoryBean factory =
@@ -68,49 +79,104 @@ public class RemoteSpinnakerBeans {
         return factory;
     }
 
+    /**
+     * The context of the application.
+     */
     @Autowired
     private ApplicationContext ctx;
 
+    /**
+     * Determine if machines are to be spalloc allocated.
+     */
     @Value("${spalloc.enabled}")
     private boolean useSpalloc;
 
+    /**
+     * Determine if local jobs or Xen VMs are to be used.
+     */
     @Value("${xen.server.enabled}")
     private boolean useXenVms;
 
+    /**
+     * The URL of the server.
+     */
     @Value("${baseserver.url}${cxf.path}${cxf.rest.path}/")
     private URL baseServerUrl;
 
+    /**
+     * The REST path of the server.
+     */
     @Value("${cxf.rest.path}")
     private String restPath;
 
+    /**
+     * The OIDC redirect URL to return to when authenticated.
+     */
     @Value("${baseserver.url}${callback.path}")
     private String oidcRedirectUri;
 
+    /**
+     * Configuration that connects to external HBP services.
+     */
     // TODO unused
     class HbpServices {
+        /**
+         * Set up configuration of authentication.
+         *
+         * @param auth
+         *            The handle to the authentication system.
+         * @throws Exception if something goes wrong
+         */
         // @Autowired
         public void configureGlobal(final AuthenticationManagerBuilder auth)
                 throws Exception {
             auth.authenticationProvider(clientProvider());
         }
 
+        /**
+         * The collaboratory security service.
+         *
+         * @return bean
+         * @throws MalformedURLException if something goes wrong
+         */
         // @Bean
         public CollabSecurityService collabSecurityService()
                 throws MalformedURLException {
             return new CollabSecurityService();
         }
 
+        /**
+         * The HBP basic authentication client.
+         *
+         * @return bean
+         */
         // @Bean
         public Client<?, ?> hbpAuthenticationClient() {
             return new BasicOidcClient();
         }
 
+        /**
+         * The HBP bearer authentication client.
+         *
+         * @return bean
+         * @throws ParseException If something goes wrong
+         * @throws MalformedURLException If something goes wrong
+         * @throws IOException If something goes wrong
+         */
         // @Bean
         public Client<?, ?> hbpBearerClient()
                 throws ParseException, MalformedURLException, IOException {
             return new BearerOidcClient();
         }
 
+        /**
+         * The list of various authentication clients to try to use.
+         *
+         * @return bean
+         * @throws ParseException If something goes wrong
+         * @throws MalformedURLException If something goes wrong
+         * @throws IOException If something goes wrong
+         */
         // @Bean
         public Clients clients()
                 throws ParseException, MalformedURLException, IOException {
@@ -118,6 +184,14 @@ public class RemoteSpinnakerBeans {
                     hbpBearerClient());
         }
 
+        /**
+         * The authentication provider.
+         *
+         * @return bean
+         * @throws ParseException If something goes wrong
+         * @throws MalformedURLException If something goes wrong
+         * @throws IOException If something goes wrong
+         */
         // @Bean
         public ClientAuthenticationProvider clientProvider()
                 throws ParseException, MalformedURLException, IOException {
@@ -196,6 +270,11 @@ public class RemoteSpinnakerBeans {
     // }
     // }
 
+    /**
+     * The machine manager; direct or via spalloc.
+     *
+     * @return bean
+     */
     @Bean
     public MachineManager machineManager() {
         if (useSpalloc) {
@@ -204,35 +283,58 @@ public class RemoteSpinnakerBeans {
         return new FixedMachineManagerImpl();
     }
 
+    /**
+     * The queue manager.
+     *
+     * @return bean
+     */
     @Bean
-    public NMPIQueueManager queueManager()
-            throws NoSuchAlgorithmException, KeyManagementException {
+    public NMPIQueueManager queueManager() {
         return new NMPIQueueManager();
     }
 
+    /**
+     * The executer factory; local or inside Xen VMs.
+     *
+     * @return bean
+     */
     @Bean
-    public JobExecuterFactory jobExecuterFactory() throws IOException {
+    public JobExecuterFactory jobExecuterFactory() {
         if (!useXenVms) {
             return new LocalJobExecuterFactory();
         }
         return new XenVMExecuterFactory();
     }
 
+    /**
+     * The output manager.
+     *
+     * @return bean
+     */
     @Bean
     public OutputManager outputManager() {
         // Pass this, as it is non-trivial constructed value
         return new OutputManagerImpl(baseServerUrl);
     }
 
+    /**
+     * The job manager.
+     *
+     * @return bean
+     */
     @Bean
     public JobManager jobManager() {
         // Pass this, as it is non-trivial constructed value
         return new JobManager(baseServerUrl);
     }
 
+    /**
+     * The JAX-RS interface.
+     *
+     * @return bean
+     */
     @Bean
-    public Server jaxRsServer() throws KeyManagementException,
-            NoSuchAlgorithmException, IOException {
+    public Server jaxRsServer() {
         final JAXRSServerFactoryBean factory = new JAXRSServerFactoryBean();
         factory.setAddress(restPath);
         factory.setBus(ctx.getBean(SpringBus.class));

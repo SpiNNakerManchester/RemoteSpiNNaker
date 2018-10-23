@@ -22,6 +22,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 public class PropertyBasedDeserialiser<T> extends StdDeserializer<T> {
     private static final long serialVersionUID = 1L;
 
+    /**
+     * The registry of known elements.
+     */
     private final Map<String, Class<? extends T>> registry = new HashMap<>();
 
     /**

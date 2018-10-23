@@ -4,14 +4,14 @@ import java.io.IOException;
 import java.net.URL;
 
 /**
- * A factory for creating job executers
+ * A factory for creating job executers.
  *
  * @see LocalJobExecuterFactory
  * @see XenVMExecuterFactory
  */
 public interface JobExecuterFactory {
     /**
-     * Creates a new JobExecuter
+     * Creates a new {@link JobExecuter}.
      *
      * @param manager
      *            The manager requesting the creation

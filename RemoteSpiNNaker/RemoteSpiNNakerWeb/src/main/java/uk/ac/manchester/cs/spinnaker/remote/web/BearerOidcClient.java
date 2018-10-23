@@ -9,6 +9,7 @@ import static org.pac4j.core.context.HttpConstants.DEFAULT_READ_TIMEOUT;
 import static org.pac4j.core.exception.RequiresHttpAction.unauthorized;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 
 import javax.annotation.PostConstruct;
@@ -35,17 +36,39 @@ import com.nimbusds.openid.connect.sdk.UserInfoSuccessResponse;
 import com.nimbusds.openid.connect.sdk.claims.UserInfo;
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata;
 
-public class BearerOidcClient
-        extends
-            DirectClient<BearerOidcClient.BearerCredentials, OidcProfile> {
+/**
+ * HBP token bearer authentication client.
+ */
+public class BearerOidcClient extends
+        DirectClient<BearerOidcClient.BearerCredentials, OidcProfile> {
+
+    /**
+     * Prefix of the bearer authentication.
+     */
     private static final String BEARER_PREFIX = "Bearer ";
 
+    /**
+     * The OIDC discovery URL.
+     */
     @Value("${oidc.discovery.uri}")
     private URL discoveryURI;
+
+    /**
+     * The name of the OIDC realm.
+     */
     @Value("${oidc.realm:}")
     private String realmName;
+
+    /**
+     * The OIDC provider.
+     */
     private OIDCProviderMetadata oidcProvider;
 
+    /**
+     * Get (and cache if building) the metadata for the OpenID Connect provider.
+     *
+     * @return The OIDC metadata.
+     */
     @PostConstruct
     private OIDCProviderMetadata getOIDCProvider() {
         try {
@@ -61,12 +84,21 @@ public class BearerOidcClient
         return oidcProvider;
     }
 
+    /**
+     * Create a new basic client.
+     */
     public BearerOidcClient() {
     }
 
-    private BearerOidcClient(final URL discoveryURI, final String realmName) {
-        this.discoveryURI = discoveryURI;
-        this.realmName = realmName;
+    /**
+     * Create an OIDC client.
+     * @param discoveryURIParam The URI of the OIDC discovery service
+     * @param realmNameParam The OIDC realm
+     */
+    private BearerOidcClient(
+            final URL discoveryURIParam, final String realmNameParam) {
+        this.discoveryURI = discoveryURIParam;
+        this.realmName = realmNameParam;
         /*
          * Try to make the read immediately; otherwise we'll postpone until it's
          * needed.
@@ -77,6 +109,18 @@ public class BearerOidcClient
     @Override
     protected void internalInit(final WebContext webContext) {
         // Does Nothing
+    }
+
+    /**
+     * Get the URI of the user information end-point.
+     * @return The URI of the end-point
+     */
+    private URI getUserInfoEndpoint() {
+        OIDCProviderMetadata o = getOIDCProvider();
+        if (o == null) {
+            return null;
+        }
+        return o.getUserInfoEndpointURI();
     }
 
     @Override
@@ -97,7 +141,7 @@ public class BearerOidcClient
         }
         try {
             final BearerAccessToken token = new BearerAccessToken(accessToken);
-            if (getOIDCProvider().getUserInfoEndpointURI() == null) {
+            if (getUserInfoEndpoint() == null) {
                 logger.error("No User Info Endpoint!");
                 return null;
             }
@@ -108,12 +152,22 @@ public class BearerOidcClient
         }
     }
 
+    /**
+     * Convert the given token into credentials for authentication.
+     * @param context The context of the request
+     * @param accessToken The access token to authenticate with.
+     * @param token The token to authenticate with.
+     * @return The credentials to authenticate with.
+     * @throws IOException if something goes wrong
+     * @throws ParseException If something goes wrong
+     * @throws RequiresHttpAction If something goes wrong
+     */
     private BearerCredentials convertTokenToCredentials(
             final WebContext context, final String accessToken,
             final BearerAccessToken token)
             throws IOException, ParseException, RequiresHttpAction {
         final UserInfoRequest userInfoRequest = new UserInfoRequest(
-                getOIDCProvider().getUserInfoEndpointURI(), token);
+                getUserInfoEndpoint(), token);
         final HTTPRequest userInfoHttpRequest = userInfoRequest.toHTTPRequest();
         userInfoHttpRequest.setConnectTimeout(DEFAULT_CONNECT_TIMEOUT);
         userInfoHttpRequest.setReadTimeout(DEFAULT_READ_TIMEOUT);
@@ -141,6 +195,15 @@ public class BearerOidcClient
         return new BearerCredentials(accessToken, profile);
     }
 
+    /**
+     * Get the user profile from the credentials.
+     *
+     * @param credentials
+     *            The credentials
+     * @param context
+     *            The web context
+     * @return the profile, or <tt>null</tt> if there isn't one.
+     */
     @Override
     protected OidcProfile retrieveUserProfile(
             final BearerCredentials credentials, final WebContext context) {
@@ -161,22 +224,48 @@ public class BearerOidcClient
         return HEADER_BASED;
     }
 
+    /**
+     * OIDC bearer credentials. Consists of an access token and a profile.
+     */
     static class BearerCredentials extends Credentials {
         private static final long serialVersionUID = 5585200812175851776L;
 
+        /**
+         * The access token.
+         */
         private String accessToken;
+
+        /**
+         * The profile authenticated against.
+         */
         private OidcProfile profile;
 
-        public BearerCredentials(final String accessToken,
-                final OidcProfile profile) {
-            this.accessToken = accessToken;
-            this.profile = profile;
+        /**
+         * Make the credentials.
+         *
+         * @param accessTokenParam
+         *            The token.
+         * @param profileParam
+         *            The profile.
+         */
+        BearerCredentials(final String accessTokenParam,
+                final OidcProfile profileParam) {
+            this.accessToken = accessTokenParam;
+            this.profile = profileParam;
         }
 
+        /**
+         * Get the access token.
+         * @return The access token
+         */
         public String getAccessToken() {
             return accessToken;
         }
 
+        /**
+         * Get the profile.
+         * @return The profile
+         */
         public OidcProfile getProfile() {
             return profile;
         }

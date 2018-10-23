@@ -20,7 +20,10 @@ import org.springframework.web.context.ContextLoaderListener;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 import org.springframework.web.filter.DelegatingFilterProxy;
 
-/* Instead of web.xml; application entry point */
+/**
+ * Main web-app entry point. Launches the rest of the application and replaces
+ * web.xml.
+ */
 public class WebApplicationConfig implements WebApplicationInitializer {
     /**
      * The name of the <i>system property</i> that describes where to load
@@ -28,8 +31,19 @@ public class WebApplicationConfig implements WebApplicationInitializer {
      */
     public static final String LOCATION_PROPERTY =
             "remotespinnaker.properties.location";
+    /**
+     * The name of the filter chain.
+     */
     private static final String FILTER_NAME = "springSecurityFilterChain";
+
+    /**
+     * Whether to add the filter or not.
+     */
     private static final boolean ADD_FILTER = false;
+
+    /**
+     * Whether to add the servlet or not.
+     */
     private static final boolean ADD_SERVLET = true;
 
     @Override
@@ -51,6 +65,11 @@ public class WebApplicationConfig implements WebApplicationInitializer {
         }
     }
 
+    /**
+     * Get the context load listener.
+     * @param properties The properties of the listener
+     * @return The listener
+     */
     private ContextLoaderListener
             getContextLoaderListener(final PropertySource<?> properties) {
         final AnnotationConfigWebApplicationContext annotationConfig =
@@ -61,18 +80,32 @@ public class WebApplicationConfig implements WebApplicationInitializer {
         return new ContextLoaderListener(annotationConfig);
     }
 
+    /**
+     * Add a servlet.
+     * @param container The servlet context
+     * @param properties The properties of the servlet
+     */
     private void addServlet(final ServletContext container,
             final PropertySource<?> properties) {
         container.addServlet("cxf", CXFServlet.class)
                 .addMapping(properties.getProperty("cxf.path") + "/*");
     }
 
+    /**
+     * Add a filter chain.
+     * @param container The context of the chain.
+     */
     private void addFilterChain(final ServletContext container) {
         container.addFilter(FILTER_NAME, new DelegatingFilterProxy(FILTER_NAME))
                 .addMappingForUrlPatterns(EnumSet.of(REQUEST, ERROR, ASYNC),
                         false, "/*");
     }
 
+    /**
+     * Get the source of the properties.
+     * @return The property source
+     * @throws IOException If something goes wrong
+     */
     private PropertySource<?> getPropertySource() throws IOException {
         final File source = new File(getProperty(LOCATION_PROPERTY));
         return new ResourcePropertySource(source.toURI().toString());

@@ -7,20 +7,39 @@ import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Value;
 
+import uk.ac.manchester.cs.spinnaker.machine.ChipCoordinates;
 import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
 
 /**
- * A manager of SpiNNaker machines
+ * A manager of directly-connected SpiNNaker machines.
  */
 public class FixedMachineManagerImpl implements MachineManager {
     /**
-     * The queue of available machines
+     * The queue of available machines.
      */
     private final Set<SpinnakerMachine> machinesAvailable = new HashSet<>();
+
+    /**
+     * The set of machine allocated.
+     */
     private final Set<SpinnakerMachine> machinesAllocated = new HashSet<>();
+
+    /**
+     * Lock to avoid concurrent modification in different threads.
+     */
     private final Object lock = new Object();
+
+    /**
+     * True when the manager is finished.
+     */
     private boolean done = false;
 
+    /**
+     * Sets the initial set of machines that are available.
+     *
+     * @param machines
+     *            the collection of machines to use
+     */
     @Value("${machines}")
     void setInitialMachines(final List<SpinnakerMachine> machines) {
         machinesAvailable.addAll(machines);
@@ -36,14 +55,6 @@ public class FixedMachineManagerImpl implements MachineManager {
         return machines;
     }
 
-    /**
-     * Gets the next machine available, or waits if no machine is available
-     *
-     * @param nBoards
-     *            The number of boards to request
-     * @return The next machine available, or <tt>null</tt> if the manager is
-     *         closed before a machine becomes available
-     */
     @Override
     public SpinnakerMachine getNextAvailableMachine(final int nBoards) {
         try {
@@ -66,6 +77,12 @@ public class FixedMachineManagerImpl implements MachineManager {
         return null;
     }
 
+    /**
+     * Get a machine with at least the given number of boards.
+     *
+     * @param nBoards The number of boards required.
+     * @return A machine big enough, or null of none.
+     */
     private SpinnakerMachine getLargeEnoughMachine(final int nBoards) {
         for (final SpinnakerMachine nextMachine : machinesAvailable) {
             if (nextMachine.getnBoards() >= nBoards) {
@@ -75,12 +92,6 @@ public class FixedMachineManagerImpl implements MachineManager {
         return null;
     }
 
-    /**
-     * Releases a machine that was previously in use
-     *
-     * @param machine
-     *            The machine to release
-     */
     @Override
     public void releaseMachine(final SpinnakerMachine machine) {
         synchronized (lock) {
@@ -90,9 +101,6 @@ public class FixedMachineManagerImpl implements MachineManager {
         }
     }
 
-    /**
-     * Closes the manager
-     */
     @Override
     public void close() {
         synchronized (lock) {
@@ -120,5 +128,17 @@ public class FixedMachineManagerImpl implements MachineManager {
             }
             return machinesAvailable.contains(machine) != isAvailable;
         }
+    }
+
+    @Override
+    public void setMachinePower(
+            final SpinnakerMachine machine, final boolean powerOn) {
+        // Does Nothing in this implementation
+    }
+
+    @Override
+    public ChipCoordinates getChipCoordinates(final SpinnakerMachine machine,
+            final int x, final int y) {
+        return new ChipCoordinates(0, 0, 0);
     }
 }

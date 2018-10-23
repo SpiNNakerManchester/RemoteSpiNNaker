@@ -7,7 +7,7 @@ import uk.ac.manchester.cs.spinnaker.job.JobParameters;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
 
 /**
- * A factory that produces job parameters
+ * A factory that produces job parameters.
  */
 public abstract class JobParametersFactory {
     /**
@@ -43,6 +43,19 @@ public abstract class JobParametersFactory {
                 new ZipPyNNJobParametersFactory(),
                 new DirectPyNNJobParametersFactory()};
 
+    /**
+     * Get the parameters from a job.
+     *
+     * @param job
+     *            The job that these will be parameters for.
+     * @param workingDirectory
+     *            The working directory for the job.
+     * @param errors
+     *            What errors were found in the process of getting the
+     *            parameters.
+     * @return The parameters, or <tt>null</tt> if the parameters can't be
+     *         generated.
+     */
     public static JobParameters getJobParameters(final Job job,
             final File workingDirectory,
             final Map<String, JobParametersFactoryException> errors) {

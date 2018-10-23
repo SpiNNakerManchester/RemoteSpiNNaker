@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
@@ -37,22 +38,66 @@ import uk.ac.manchester.cs.spinnaker.job.nmpi.DataItem;
 import uk.ac.manchester.cs.spinnaker.rest.OutputManager;
 import uk.ac.manchester.cs.spinnaker.rest.UnicoreFileClient;
 
+/**
+ * Service for managing Job output files.
+ */
 //TODO needs security; Role = OutputHandler
 public class OutputManagerImpl implements OutputManager {
+
+    /**
+     * Indicates that a file has been removed.
+     */
     private static final String PURGED_FILE = ".purged_";
 
+    /**
+     * The directory to store files in.
+     */
     @Value("${results.directory}")
     private File resultsDirectory;
+
+    /**
+     * The URL of the server.
+     */
     private final URL baseServerUrl;
+
+    /**
+     * The amount of time results should be kept, in milliseconds.
+     */
     private long timeToKeepResults;
+
+    /**
+     * Map of locks for files.
+     */
     private final Map<File, JobLock.Token> synchronizers = new HashMap<>();
+
+    /**
+     * The logger.
+     */
     private final Logger logger = getLogger(getClass());
 
+    /**
+     * A class to lock a job.
+     */
     private class JobLock implements AutoCloseable {
+
+        /**
+         * A lock token.
+         */
         private class Token {
+
+            /**
+             * True if the token is locked.
+             */
             private boolean locked = true;
+
+            /**
+             * True if the token is waiting for a lock.
+             */
             private boolean waiting = false;
 
+            /**
+             * Wait until the token is unlocked.
+             */
             private synchronized void waitForUnlock() {
                 waiting = true;
 
@@ -70,6 +115,10 @@ public class OutputManagerImpl implements OutputManager {
                 waiting = false;
             }
 
+            /**
+             * Unlock the token.
+             * @return True if the token is waiting again.
+             */
             private synchronized boolean unlock() {
                 locked = false;
                 notifyAll();
@@ -77,18 +126,26 @@ public class OutputManagerImpl implements OutputManager {
             }
         }
 
+        /**
+         * The directory being locked by this token.
+         */
         private File dir;
-        JobLock(final File dir) {
-            this.dir = dir;
+
+        /**
+         * Create a new lock for a directory.
+         * @param dirParam The directory to lock
+         */
+        JobLock(final File dirParam) {
+            this.dir = dirParam;
 
             Token lock;
             synchronized (synchronizers) {
-                if (!synchronizers.containsKey(dir)) {
+                if (!synchronizers.containsKey(dirParam)) {
                     // Constructed pre-locked
-                    synchronizers.put(dir, new Token());
+                    synchronizers.put(dirParam, new Token());
                     return;
                 }
-                lock = synchronizers.get(dir);
+                lock = synchronizers.get(dirParam);
             }
 
             lock.waitForUnlock();
@@ -105,18 +162,37 @@ public class OutputManagerImpl implements OutputManager {
         }
     }
 
-    public OutputManagerImpl(final URL baseServerUrl) {
-        this.baseServerUrl = baseServerUrl;
+    /**
+     * Instantiate the output manager.
+     *
+     * @param baseServerUrlParam
+     *            The base URL of the overall service, used when generating
+     *            internal URLs.
+     */
+    public OutputManagerImpl(final URL baseServerUrlParam) {
+        this.baseServerUrl = baseServerUrlParam;
     }
 
+    /**
+     * Set the number of days after a job has finished to keep results.
+     * @param nDaysToKeepResults The number of days to keep the results
+     */
     @Value("${results.purge.days}")
     void setPurgeTimeout(final long nDaysToKeepResults) {
         timeToKeepResults = MILLISECONDS.convert(nDaysToKeepResults, DAYS);
     }
 
+    /**
+     * Periodic execution engine.
+     */
+    private final ScheduledExecutorService scheduler = newScheduledThreadPool(
+            1);
+
+    /**
+     * Arrange for old output to be purged once per day.
+     */
     @PostConstruct
-    void initPurgeScheduler() {
-        final ScheduledExecutorService scheduler = newScheduledThreadPool(1);
+    private void initPurgeScheduler() {
         scheduler.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
@@ -125,6 +201,19 @@ public class OutputManagerImpl implements OutputManager {
         }, 0, 1, DAYS);
     }
 
+    /**
+     * Stop the scheduler running jobs.
+     */
+    @PreDestroy
+    private void stopPurgeScheduler() {
+        scheduler.shutdown();
+    }
+
+    /**
+     * Get the project directory for a given project.
+     * @param projectId The id of the project
+     * @return The directory of the project
+     */
     private File getProjectDirectory(final String projectId) {
         if ((projectId == null) || projectId.isEmpty()
                 || projectId.endsWith("/")) {
@@ -179,6 +268,15 @@ public class OutputManagerImpl implements OutputManager {
         }
     }
 
+    /**
+     * Get a file as a response to a query.
+     * @param idDirectory The directory of the project
+     * @param filename The name of the file to be stored
+     * @param download
+     *     True if the content type should be set to guarantee that the file
+     *     is downloaded, False to attempt to guess the content type
+     * @return The response
+     */
     private Response getResultFile(final File idDirectory,
             final String filename, final boolean download) {
         final File resultFile = new File(idDirectory, filename);
@@ -217,6 +315,11 @@ public class OutputManagerImpl implements OutputManager {
         }
     }
 
+    /**
+     * Get the file that marks a directory as purged.
+     * @param directory The directory to find the file in
+     * @return The purge marker file
+     */
     private File getPurgeFile(final File directory) {
         return new File(resultsDirectory, PURGED_FILE + directory.getName());
     }
@@ -241,6 +344,14 @@ public class OutputManagerImpl implements OutputManager {
         return getResultFile(idDirectory, filename, download);
     }
 
+    /**
+     * Upload files in recursive subdirectories to UniCore.
+     * @param directory The directory to start from
+     * @param fileManager The UniCore client
+     * @param storageId The id of the UniCore storage
+     * @param filePath The path in the UniCore storage to upload to
+     * @throws IOException If something goes wrong
+     */
     private void recursivelyUploadFiles(final File directory,
             final UnicoreFileClient fileManager, final String storageId,
             final String filePath) throws IOException {
@@ -306,6 +417,10 @@ public class OutputManagerImpl implements OutputManager {
         return Response.ok().entity("ok").build();
     }
 
+    /**
+     * Recursively remove a directory.
+     * @param directory The directory to remove
+     */
     private void removeDirectory(final File directory) {
         for (final File file : directory.listFiles()) {
             if (file.isDirectory()) {
@@ -317,6 +432,9 @@ public class OutputManagerImpl implements OutputManager {
         directory.delete();
     }
 
+    /**
+     * Remove files that are deemed to have expired.
+     */
     private void removeOldFiles() {
         final long startTime = currentTimeMillis();
         for (final File projectDirectory : resultsDirectory.listFiles()) {
@@ -330,6 +448,12 @@ public class OutputManagerImpl implements OutputManager {
         }
     }
 
+    /**
+     * Remove project contents that are deemed to have expired.
+     * @param startTime The current time being considered
+     * @param projectDirectory The directory containing the project files
+     * @return True if every job in the project has been removed
+     */
     private boolean removeOldProjectDirectoryContents(final long startTime,
             final File projectDirectory) {
         boolean allJobsRemoved = true;

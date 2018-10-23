@@ -79,6 +79,4 @@ public class JobSetupParameters {
             final Map<String, List<String>> thePythonSetupDirs) {
         this.pythonSetupDirs = thePythonSetupDirs;
     }
-
-
 }

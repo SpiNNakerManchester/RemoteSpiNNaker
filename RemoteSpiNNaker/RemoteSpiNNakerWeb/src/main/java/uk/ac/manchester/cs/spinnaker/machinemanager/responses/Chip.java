@@ -5,25 +5,56 @@ import static com.fasterxml.jackson.annotation.JsonFormat.Shape.ARRAY;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/**
+ * Describes a chip by its X,Y location.
+ */
 @JsonPropertyOrder({"x", "y"})
 @JsonFormat(shape = ARRAY)
 public class Chip {
+
+    /**
+     * The x-coordinate of the chip.
+     */
     private int x;
+
+    /**
+     * The y-coordinate of the chip.
+     */
     private int y;
 
+    /**
+     * Get the x-coordinate of the chip.
+     *
+     * @return The x-coordinate of the chip
+     */
     public int getX() {
         return x;
     }
 
-    public void setX(final int x) {
-        this.x = x;
+    /**
+     * Set the x-coordinate of the chip.
+     *
+     * @param xParam The x-coordinate of the chip
+     */
+    public void setX(final int xParam) {
+        this.x = xParam;
     }
 
+    /**
+     * Get the y-coordinate of the chip.
+     *
+     * @return The y-coordinate of the chip
+     */
     public int getY() {
         return y;
     }
 
-    public void setY(final int y) {
-        this.y = y;
+    /**
+     * Set the y-coordinate of the chip.
+     *
+     * @param yParam The y-coordinate of the chip
+     */
+    public void setY(final int yParam) {
+        this.y = yParam;
     }
 }
