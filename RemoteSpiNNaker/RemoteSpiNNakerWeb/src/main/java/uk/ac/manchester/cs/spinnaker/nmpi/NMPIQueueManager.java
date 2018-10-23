@@ -9,7 +9,6 @@ import static uk.ac.manchester.cs.spinnaker.utils.ThreadUtils.sleep;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -74,6 +73,9 @@ public class NMPIQueueManager implements Runnable {
     private final Map<Integer, Job> jobCache = new HashMap<>();
     /** The log of the job so far. */
     private final Map<Integer, NMPILog> jobLog = new HashMap<>();
+    /**
+     * Logger.
+     */
     private final Logger logger = getLogger(getClass());
 
     /** The hardware identifier for the queue. */
@@ -95,6 +97,9 @@ public class NMPIQueueManager implements Runnable {
     @Value("${nmpi.passwordIsApiKey}")
     private boolean nmpiPasswordIsApiKey;
 
+    /**
+     * Initialise the client.
+     */
     @PostConstruct
     private void initAPIClient() {
         final CustomJacksonJsonProvider provider =
@@ -170,8 +175,12 @@ public class NMPIQueueManager implements Runnable {
         }
     }
 
-    private void processResponse(final QueueNextResponse response)
-            throws MalformedURLException {
+    /**
+     * Process the response from the service.
+     *
+     * @param response The response to process
+     */
+    private void processResponse(final QueueNextResponse response) {
         if (response instanceof QueueEmpty) {
             sleep(EMPTY_QUEUE_SLEEP_MS);
         } else if (response instanceof Job) {
@@ -181,7 +190,12 @@ public class NMPIQueueManager implements Runnable {
         }
     }
 
-    private void processResponse(final Job job) throws MalformedURLException {
+    /**
+     * Process the response of a Job.
+     *
+     * @param job The job to process
+     */
+    private void processResponse(final Job job) {
         synchronized (jobCache) {
             jobCache.put(job.getId(), job);
         }

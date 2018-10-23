@@ -164,6 +164,7 @@ public interface JobManagerInterface {
      *            The virtual X coordinate of the chip.
      * @param chipY
      *            The virtual Y coordinate of the chip.
+     * @return The coordinates of the chip
      */
     @GET
     @Path("{id}/machine/chipCoordinates")

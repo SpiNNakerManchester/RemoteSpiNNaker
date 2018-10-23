@@ -13,18 +13,34 @@ import uk.ac.manchester.cs.spinnaker.model.CollabPermissions;
 import uk.ac.manchester.cs.spinnaker.rest.CollabRestService;
 
 /**
- * The client for the HBP Collabratory security service.
+ * The client for the HBP Collaboratory security service.
  */
 public class CollabSecurityService {
+    /**
+     * Logging.
+     */
     private final Logger logger = LoggerFactory.getLogger(getClass());
+
+    /**
+     * The URL of the collab web service.
+     */
     @Value("${collab.service.uri}")
     private URL collabServiceUrl;
 
+    /**
+     * Create an instance of the service.
+     * @return The instance created
+     */
     private CollabRestService getServiceInstance() {
         // Do not factor out; depends on thread context
         return createOIDCClient(collabServiceUrl, CollabRestService.class);
     }
 
+    /**
+     * Get the permissions within the collab of the given id.
+     * @param id The id to get the permissions of
+     * @return The permissions granted or not
+     */
     private CollabPermissions getPermissions(final int id) {
         return requireNonNull(getServiceInstance().getCollabPermissions(id));
     }

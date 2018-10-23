@@ -27,9 +27,21 @@ import org.jboss.resteasy.util.ParameterParser;
  * Utilities for downloading a file.
  */
 public abstract class FileDownloader {
+
+    /**
+     * Stops instantiation.
+     */
     private FileDownloader() {
+
+        // Does Nothing
     }
 
+    /**
+     * Get the filename from the content disposition header.
+     *
+     * @param contentDisposition The header
+     * @return The filename
+     */
     private static String getFileName(final String contentDisposition) {
         if (contentDisposition != null) {
             final String cdl = contentDisposition.toLowerCase();
@@ -46,6 +58,14 @@ public abstract class FileDownloader {
         return null;
     }
 
+    /**
+     * Create an authenticated connection.
+     *
+     * @param url The URL to connect to
+     * @param userInfo The authentication to use, as username:password
+     * @throws IOException if an I/O error occurs
+     * @return The created connection
+     */
     private static URLConnection createConnectionWithAuth(final URL url,
             final String userInfo) throws IOException {
         URLConnection urlConnection =
@@ -72,12 +92,12 @@ public abstract class FileDownloader {
      * Downloads a file from a URL.
      *
      * @param url
-     *            The url to download the file from
+     *            The URL to download the file from
      * @param workingDirectory
      *            The directory to output the file to
      * @param defaultFilename
      *            The name of the file to use if none can be worked out from the
-     *            url or headers, or <tt>null</tt> to use a generated name
+     *            URL or headers, or <tt>null</tt> to use a generated name
      * @return The file downloaded
      * @throws IOException
      *          If anything goes wrong.
@@ -132,7 +152,7 @@ public abstract class FileDownloader {
      *             If anything goes wrong.
      */
     private static void initVeryTrustingSSLContext(
-            HttpsURLConnection connection) throws IOException {
+            final HttpsURLConnection connection) throws IOException {
         // Set up to trust everyone
         try {
             SSLContext sc = SSLContext.getInstance("SSL");
@@ -143,13 +163,13 @@ public abstract class FileDownloader {
                 }
 
                 @Override
-                public void checkClientTrusted(X509Certificate[] certs,
-                        String authType) {
+                public void checkClientTrusted(final X509Certificate[] certs,
+                        final String authType) {
                 }
 
                 @Override
-                public void checkServerTrusted(X509Certificate[] certs,
-                        String authType) {
+                public void checkServerTrusted(final X509Certificate[] certs,
+                        final String authType) {
                 }
             };
             sc.init(null, new TrustManager[] {tm}, new SecureRandom());
@@ -157,7 +177,8 @@ public abstract class FileDownloader {
             connection.setSSLSocketFactory(sc.getSocketFactory());
             connection.setHostnameVerifier(new HostnameVerifier() {
                 @Override
-                public boolean verify(String hostname, SSLSession session) {
+                public boolean verify(
+                        final String hostname, final SSLSession session) {
                     return true;
                 }
             });
@@ -166,6 +187,17 @@ public abstract class FileDownloader {
         }
     }
 
+    /**
+     * Get the file to write to.
+     *
+     * @param url The URL of the file
+     * @param workingDirectory The directory to put the file in
+     * @param defaultFilename The default file name if nothing else can be used
+     * @param urlConnection The connection where the file has been downloaded
+     *     from
+     * @return The file to write to.
+     * @throws IOException If the file cannot be created
+     */
     private static File getTargetFile(final URL url,
             final File workingDirectory, final String defaultFilename,
             final URLConnection urlConnection) throws IOException {
@@ -188,12 +220,12 @@ public abstract class FileDownloader {
      * Downloads a file from a URL.
      *
      * @param url
-     *            The url to download the file from
+     *            The URL to download the file from
      * @param workingDirectory
      *            The directory to output the file to
      * @param defaultFilename
      *            The name of the file to use if none can be worked out from the
-     *            url or headers, or <tt>null</tt> to use a generated name
+     *            URL or headers, or <tt>null</tt> to use a generated name
      * @return The file downloaded
      * @throws IOException
      *          If anything goes wrong.

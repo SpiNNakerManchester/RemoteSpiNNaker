@@ -27,7 +27,7 @@ public abstract class SpringRestClientUtils {
      *             if there is no bearer token in the current connection's
      *             security context.
      */
-    public static <T> T createOIDCClient(URL url, Class<T> clazz) {
+    public static <T> T createOIDCClient(final URL url, final Class<T> clazz) {
         try {
             OidcProfile oidcProfile = (OidcProfile) getAuth().getUserProfile();
             return createBearerClient(url, oidcProfile.getIdTokenString(),

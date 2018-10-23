@@ -39,15 +39,29 @@ import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata;
 /**
  * HBP token bearer authentication client.
  */
-public class BearerOidcClient
-        extends
-            DirectClient<BearerOidcClient.BearerCredentials, OidcProfile> {
+public class BearerOidcClient extends
+        DirectClient<BearerOidcClient.BearerCredentials, OidcProfile> {
+
+    /**
+     * Prefix of the bearer authentication.
+     */
     private static final String BEARER_PREFIX = "Bearer ";
 
+    /**
+     * The OIDC discovery URL.
+     */
     @Value("${oidc.discovery.uri}")
     private URL discoveryURI;
+
+    /**
+     * The name of the OIDC realm.
+     */
     @Value("${oidc.realm:}")
     private String realmName;
+
+    /**
+     * The OIDC provider.
+     */
     private OIDCProviderMetadata oidcProvider;
 
     /**
@@ -70,12 +84,21 @@ public class BearerOidcClient
         return oidcProvider;
     }
 
+    /**
+     * Create a new basic client.
+     */
     public BearerOidcClient() {
     }
 
-    private BearerOidcClient(final URL discoveryURI, final String realmName) {
-        this.discoveryURI = discoveryURI;
-        this.realmName = realmName;
+    /**
+     * Create an OIDC client.
+     * @param discoveryURIParam The URI of the OIDC discovery service
+     * @param realmNameParam The OIDC realm
+     */
+    private BearerOidcClient(
+            final URL discoveryURIParam, final String realmNameParam) {
+        this.discoveryURI = discoveryURIParam;
+        this.realmName = realmNameParam;
         /*
          * Try to make the read immediately; otherwise we'll postpone until it's
          * needed.
@@ -88,6 +111,10 @@ public class BearerOidcClient
         // Does Nothing
     }
 
+    /**
+     * Get the URI of the user information end-point.
+     * @return The URI of the end-point
+     */
     private URI getUserInfoEndpoint() {
         OIDCProviderMetadata o = getOIDCProvider();
         if (o == null) {
@@ -125,6 +152,16 @@ public class BearerOidcClient
         }
     }
 
+    /**
+     * Convert the given token into credentials for authentication.
+     * @param context The context of the request
+     * @param accessToken The access token to authenticate with.
+     * @param token The token to authenticate with.
+     * @return The credentials to authenticate with.
+     * @throws IOException if something goes wrong
+     * @throws ParseException If something goes wrong
+     * @throws RequiresHttpAction If something goes wrong
+     */
     private BearerCredentials convertTokenToCredentials(
             final WebContext context, final String accessToken,
             final BearerAccessToken token)
@@ -193,26 +230,42 @@ public class BearerOidcClient
     static class BearerCredentials extends Credentials {
         private static final long serialVersionUID = 5585200812175851776L;
 
+        /**
+         * The access token.
+         */
         private String accessToken;
+
+        /**
+         * The profile authenticated against.
+         */
         private OidcProfile profile;
 
         /**
          * Make the credentials.
          *
-         * @param accessToken
+         * @param accessTokenParam
          *            The token.
-         * @param profile
+         * @param profileParam
          *            The profile.
          */
-        BearerCredentials(String accessToken, OidcProfile profile) {
-            this.accessToken = accessToken;
-            this.profile = profile;
+        BearerCredentials(final String accessTokenParam,
+                final OidcProfile profileParam) {
+            this.accessToken = accessTokenParam;
+            this.profile = profileParam;
         }
 
+        /**
+         * Get the access token.
+         * @return The access token
+         */
         public String getAccessToken() {
             return accessToken;
         }
 
+        /**
+         * Get the profile.
+         * @return The profile
+         */
         public OidcProfile getProfile() {
             return profile;
         }

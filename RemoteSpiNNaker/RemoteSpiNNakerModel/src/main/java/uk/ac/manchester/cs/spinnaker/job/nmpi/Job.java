@@ -15,143 +15,360 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * A NMPI job.
  */
 public class Job implements QueueNextResponse {
+
+    /**
+     * Code to be executed.
+     */
     private String code;
+
+    /**
+     * The hardware configuration.
+     */
     private Map<String, Object> hardwareConfig;
+
+    /**
+     * The hardware platform.
+     */
     private String hardwarePlatform;
+
+    /**
+     * The ID of the job.
+     */
     private Integer id;
+
+    /**
+     * URLs of input data.
+     */
     private List<DataItem> inputData;
+
+    /**
+     * URLs of output data.
+     */
     private List<DataItem> outputData;
+
+    /**
+     * The ID of the collaboratory in which the job is created.
+     */
     private String collabId;
+
+    /**
+     * The URI of the resources of this job.
+     */
     private String resourceUri;
+
+    /**
+     * The status of the job.
+     */
     private String status;
+
+    /**
+     * The command used to execute the job.
+     */
     private String command;
+
+    /**
+     * The ID of the user which created the job.
+     */
     private String userId;
+
+    /**
+     * A count of how much resource has been used by the job.
+     */
     private long resourceUsage;
+
+    /**
+     * The timestamp at which the job was completed.
+     */
     @JsonSerialize(using = DateTimeSerialiser.class)
     private DateTime timestampCompletion;
+
+    /**
+     * The timestamp at which the job was submitted.
+     */
     @JsonSerialize(using = DateTimeSerialiser.class)
     private DateTime timestampSubmission;
+
+    /**
+     * The provenance information of the job.
+     */
     private ObjectNode provenance;
+
+    /**
+     * Additional fields that are not supported, but don't cause errors.
+     */
     private Map<String, Object> others = new HashMap<>();
 
+    /**
+     * Get the code.
+     *
+     * @return the code
+     */
     public String getCode() {
         return code;
     }
 
-    public void setCode(final String code) {
-        this.code = code;
+    /**
+     * Sets the code.
+     *
+     * @param codeParam the code to set
+     */
+    public void setCode(final String codeParam) {
+        this.code = codeParam;
     }
 
+    /**
+     * Get the hardwareConfig.
+     *
+     * @return the hardwareConfig
+     */
     public Map<String, Object> getHardwareConfig() {
         return hardwareConfig;
     }
 
-    public void setHardwareConfig(final Map<String, Object> hardwareConfig) {
-        this.hardwareConfig = hardwareConfig;
+    /**
+     * Sets the hardwareConfig.
+     *
+     * @param hardwareConfigParam the hardwareConfig to set
+     */
+    public void setHardwareConfig(
+            final Map<String, Object> hardwareConfigParam) {
+        this.hardwareConfig = hardwareConfigParam;
     }
 
+    /**
+     * Get the hardwarePlatform.
+     *
+     * @return the hardwarePlatform
+     */
     public String getHardwarePlatform() {
         return hardwarePlatform;
     }
 
-    public void setHardwarePlatform(final String hardwarePlatform) {
-        this.hardwarePlatform = hardwarePlatform;
+    /**
+     * Sets the hardwarePlatform.
+     *
+     * @param hardwarePlatformParam the hardwarePlatform to set
+     */
+    public void setHardwarePlatform(final String hardwarePlatformParam) {
+        this.hardwarePlatform = hardwarePlatformParam;
     }
 
+    /**
+     * Get the id.
+     *
+     * @return the id
+     */
     public Integer getId() {
         return id;
     }
 
-    public void setId(final Integer id) {
-        this.id = id;
+    /**
+     * Sets the id.
+     *
+     * @param idParam the id to set
+     */
+    public void setId(final Integer idParam) {
+        this.id = idParam;
     }
 
+    /**
+     * Get the inputData.
+     *
+     * @return the inputData
+     */
     public List<DataItem> getInputData() {
         return inputData;
     }
 
-    public void setInputData(final List<DataItem> inputData) {
-        this.inputData = inputData;
+    /**
+     * Sets the inputData.
+     *
+     * @param inputDataParam the inputData to set
+     */
+    public void setInputData(final List<DataItem> inputDataParam) {
+        this.inputData = inputDataParam;
     }
 
+    /**
+     * Get the outputData.
+     *
+     * @return the outputData
+     */
     public List<DataItem> getOutputData() {
         return outputData;
     }
 
-    public void setOutputData(final List<DataItem> outputData) {
-        this.outputData = outputData;
+    /**
+     * Sets the outputData.
+     *
+     * @param outputDataParam the outputData to set
+     */
+    public void setOutputData(final List<DataItem> outputDataParam) {
+        this.outputData = outputDataParam;
     }
 
+    /**
+     * Get the collabId.
+     *
+     * @return the collabId
+     */
     public String getCollabId() {
         return collabId;
     }
 
-    public void setCollabId(final String collabId) {
-        this.collabId = collabId;
+    /**
+     * Sets the collabId.
+     *
+     * @param collabIdParam the collabId to set
+     */
+    public void setCollabId(final String collabIdParam) {
+        this.collabId = collabIdParam;
     }
 
+    /**
+     * Get the resourceUri.
+     *
+     * @return the resourceUri
+     */
     public String getResourceUri() {
         return resourceUri;
     }
 
-    public void setResourceUri(final String resourceUri) {
-        this.resourceUri = resourceUri;
+    /**
+     * Sets the resourceUri.
+     *
+     * @param resourceUriParam the resourceUri to set
+     */
+    public void setResourceUri(final String resourceUriParam) {
+        this.resourceUri = resourceUriParam;
     }
 
+    /**
+     * Get the status.
+     *
+     * @return the status
+     */
     public String getStatus() {
         return status;
     }
 
-    public void setStatus(final String status) {
-        this.status = status;
+    /**
+     * Sets the status.
+     *
+     * @param statusParam the status to set
+     */
+    public void setStatus(final String statusParam) {
+        this.status = statusParam;
     }
 
-    public DateTime getTimestampCompletion() {
-        return timestampCompletion;
-    }
-
-    public void setTimestampCompletion(final DateTime timestampCompletion) {
-        this.timestampCompletion = timestampCompletion;
-    }
-
-    public DateTime getTimestampSubmission() {
-        return timestampSubmission;
-    }
-
-    public void setTimestampSubmission(final DateTime timestampSubmission) {
-        this.timestampSubmission = timestampSubmission;
-    }
-
+    /**
+     * Get the command.
+     *
+     * @return the command
+     */
     public String getCommand() {
         return command;
     }
 
-    public void setCommand(final String command) {
-        this.command = command;
+    /**
+     * Sets the command.
+     *
+     * @param commandParam the command to set
+     */
+    public void setCommand(final String commandParam) {
+        this.command = commandParam;
     }
 
+    /**
+     * Get the userId.
+     *
+     * @return the userId
+     */
     public String getUserId() {
         return userId;
     }
 
-    public void setUserId(final String userId) {
-        this.userId = userId;
+    /**
+     * Sets the userId.
+     *
+     * @param userIdParam the userId to set
+     */
+    public void setUserId(final String userIdParam) {
+        this.userId = userIdParam;
     }
 
+    /**
+     * Get the resourceUsage.
+     *
+     * @return the resourceUsage
+     */
     public long getResourceUsage() {
         return resourceUsage;
     }
 
-    public void setResourceUsage(final long resourceUsage) {
-        this.resourceUsage = resourceUsage;
+    /**
+     * Sets the resourceUsage.
+     *
+     * @param resourceUsageParam the resourceUsage to set
+     */
+    public void setResourceUsage(final long resourceUsageParam) {
+        this.resourceUsage = resourceUsageParam;
     }
 
+    /**
+     * Get the timestampCompletion.
+     *
+     * @return the timestampCompletion
+     */
+    public DateTime getTimestampCompletion() {
+        return timestampCompletion;
+    }
+
+    /**
+     * Sets the timestampCompletion.
+     *
+     * @param timestampCompletionParam the timestampCompletion to set
+     */
+    public void setTimestampCompletion(
+            final DateTime timestampCompletionParam) {
+        this.timestampCompletion = timestampCompletionParam;
+    }
+
+    /**
+     * Get the timestampSubmission.
+     *
+     * @return the timestampSubmission
+     */
+    public DateTime getTimestampSubmission() {
+        return timestampSubmission;
+    }
+
+    /**
+     * Sets the timestampSubmission.
+     *
+     * @param timestampSubmissionParam the timestampSubmission to set
+     */
+    public void setTimestampSubmission(
+            final DateTime timestampSubmissionParam) {
+        this.timestampSubmission = timestampSubmissionParam;
+    }
+
+    /**
+     * Get the provenance.
+     *
+     * @return the provenance
+     */
     public ObjectNode getProvenance() {
         return provenance;
     }
 
-    public void setProvenance(final ObjectNode provenance) {
-        this.provenance = provenance;
+    /**
+     * Sets the provenance.
+     *
+     * @param provenanceParam the provenance to set
+     */
+    public void setProvenance(final ObjectNode provenanceParam) {
+        this.provenance = provenanceParam;
     }
 
     /**
@@ -168,6 +385,11 @@ public class Job implements QueueNextResponse {
         others.put(name, value);
     }
 
+    /**
+     * Get any other parameters that have been saved.
+     *
+     * @return The parameters
+     */
     @JsonAnyGetter
     public Map<String, Object> getOthers() {
         return others;

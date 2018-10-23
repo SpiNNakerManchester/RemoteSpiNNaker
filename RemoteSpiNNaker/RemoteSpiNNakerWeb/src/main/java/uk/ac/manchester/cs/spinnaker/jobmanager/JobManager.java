@@ -54,39 +54,126 @@ import uk.ac.manchester.cs.spinnaker.rest.OutputManager;
  */
 // TODO needs security; Role = JobEngine
 public class JobManager implements NMPIQueueListener, JobManagerInterface {
+
+    /**
+     * Assumed number of chips on a board.
+     */
     private static final double CHIPS_PER_BOARD = 48.0;
+
+    /**
+     * Assumed number of cores usable per chip.
+     */
     private static final double CORES_PER_CHIP = 15.0;
+
+    /**
+     * Default number of boards to request.
+     */
+    private static final int DEFAULT_N_BOARDS = 3;
+
+    /**
+     * Number of milliseconds per second.
+     */
+    private static final double MILLISECONDS_PER_SECOND = 1000.0;
+
+    /**
+     * Threshold before the number of boards is scaled up.
+     */
+    private static final double SCALE_UP_THRESHOLD = 0.1;
+
     /**
      * The name of the JAR containing the job process manager implementation.
      */
     public static final String JOB_PROCESS_MANAGER_JAR =
             "RemoteSpiNNakerJobProcessManager.jar";
 
+    /**
+     * The machine manager.
+     */
     @Autowired
     private MachineManager machineManager;
+
+    /**
+     * The NMPI queue manager.
+     */
     @Autowired
     private NMPIQueueManager queueManager;
+
+    /**
+     * The output manager.
+     */
     @Autowired
     private OutputManager outputManager;
+
+    /**
+     * The base URL of the REST service.
+     */
     private final URL baseUrl;
+
+    /**
+     * The Job Execution factory.
+     */
     @Autowired
     private JobExecuterFactory jobExecuterFactory;
+
+    /**
+     * True if jobs should be restarted on failure.
+     */
     @Value("${restartJobExecutorOnFailure}")
     private boolean restartJobExecuterOnFailure;
 
+    /**
+     * Logging.
+     */
     private final Logger logger = getLogger(getClass());
+
+    /**
+     * Job ID -> Machine allocated.
+     */
     private final Map<Integer, List<SpinnakerMachine>> allocatedMachines =
             new HashMap<>();
+
+    /**
+     * Executor ID -> Executor.
+     */
     private final Map<String, JobExecuter> jobExecuters = new HashMap<>();
+
+    /**
+     * Executor ID -> Job ID.
+     */
     private final Map<String, Job> executorJobId = new HashMap<>();
+
+    /**
+     * Job ID -> Directory of temporary output files.
+     */
     private final Map<Integer, File> jobOutputTempFiles = new HashMap<>();
+
+    /**
+     * Job ID -> number of cores needed by job.
+     */
     private final Map<Integer, Long> jobNCores = new HashMap<>();
+
+    /**
+     * Job ID -> Job resource usage (in core-hours).
+     */
     private final Map<Integer, Long> jobResourceUsage = new HashMap<>();
+
+    /**
+     * Job ID -> Job Provenance data.
+     */
     private final Map<Integer, ObjectNode> jobProvenance = new HashMap<>();
+
+    /**
+     * Thread group for the executor.
+     */
     private ThreadGroup threadGroup;
 
-    public JobManager(final URL baseUrl) {
-        this.baseUrl = requireNonNull(baseUrl);
+    /**
+     * Create a job manager.
+     *
+     * @param baseUrlParam The URL of the REST service of the manager.
+     */
+    public JobManager(final URL baseUrlParam) {
+        this.baseUrl = requireNonNull(baseUrlParam);
     }
 
     /**
@@ -120,8 +207,12 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     /**
      * You need to hold the lock on {@link #jobExecuters} when running this
      * method.
+     *
+     * @param job The job to execute
+     *
+     * @throws IOException If there is an error starting the job
      */
-    private void launchExecuter(Job job) throws IOException {
+    private void launchExecuter(final Job job) throws IOException {
         final JobExecuter executer =
                 jobExecuterFactory.createJobExecuter(this, baseUrl);
         synchronized (jobExecuters) {
@@ -169,17 +260,14 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         return largest;
     }
 
-    private static final double MS_PER_S = 1000.0;
-    private static final double SLOP_FACTOR = 0.1;
-    private static final int DEFAULT_BOARDS = 3;
-
     @Override
     public SpinnakerMachine getJobMachine(final int id, final int nCores,
             final int nChips, final int nBoards, final double runTime) {
         // TODO Check quota
 
         logger.info("Request for " + nCores + " cores or " + nChips
-                + " chips or " + nBoards + " boards for " + (runTime / MS_PER_S)
+                + " chips or " + nBoards + " boards for "
+                + (runTime / MILLISECONDS_PER_SECOND)
                 + " seconds");
 
         int nBoardsToRequest = nBoards;
@@ -187,9 +275,9 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
 
         // If nothing specified, use 3 boards
         if ((nBoards <= 0) && (nChips <= 0) && (nCores <= 0)) {
-            nBoardsToRequest = DEFAULT_BOARDS;
-            quotaNCores = (long) (DEFAULT_BOARDS * CORES_PER_CHIP
-                    * CHIPS_PER_BOARD);
+            nBoardsToRequest = DEFAULT_N_BOARDS;
+            quotaNCores = (long) (
+                DEFAULT_N_BOARDS * CORES_PER_CHIP * CHIPS_PER_BOARD);
         }
 
         // If boards not specified, use cores or chips
@@ -205,7 +293,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
 
             double nBoardsExact = nChips / CHIPS_PER_BOARD;
 
-            if ((ceil(nBoardsExact) - nBoardsExact) < SLOP_FACTOR) {
+            if ((ceil(nBoardsExact) - nBoardsExact) < SCALE_UP_THRESHOLD) {
                 nBoardsExact += 1.0;
             }
             if (nBoardsExact < 1.0) {
@@ -218,7 +306,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         final SpinnakerMachine machine =
                 allocateMachineForJob(id, nBoardsToRequest);
         logger.info("Running " + id + " on " + machine.getMachineName());
-        final long resourceUsage = (long) ((runTime / MS_PER_S) * quotaNCores);
+        final long resourceUsage =
+                (long) ((runTime / MILLISECONDS_PER_SECOND) * quotaNCores);
         logger.info("Resource usage " + resourceUsage);
         synchronized (jobResourceUsage) {
             jobResourceUsage.put(id, resourceUsage);
@@ -241,8 +330,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
      *         present. (The <tt>null</tt> machine list never contains any
      *         machines.)
      */
-    private static int findMachineIndex(List<SpinnakerMachine> machines,
-            String machineName) {
+    private static int findMachineIndex(final List<SpinnakerMachine> machines,
+            final String machineName) {
         if (machines == null) {
             return -1;
         }
@@ -256,9 +345,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         return -1;
     }
 
-    /** Enough with the machine already! */
     @Override
-    public void releaseMachine(int id, String machineName) {
+    public void releaseMachine(final int id, final String machineName) {
         synchronized (allocatedMachines) {
             List<SpinnakerMachine> machines = allocatedMachines.get(id);
             int index = findMachineIndex(machines, machineName);
@@ -269,9 +357,9 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         }
     }
 
-    /** Control a machine's power switch. */
     @Override
-    public void setMachinePower(int id, String machineName, boolean powerOn) {
+    public void setMachinePower(final int id, final String machineName,
+            final boolean powerOn) {
         synchronized (allocatedMachines) {
             List<SpinnakerMachine> machines = allocatedMachines.get(id);
             int index = findMachineIndex(machines, machineName);
@@ -281,10 +369,9 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         }
     }
 
-    /** Find a chip in a machine. */
     @Override
-    public ChipCoordinates getChipCoordinates(int id, String machineName,
-            int chipX, int chipY) {
+    public ChipCoordinates getChipCoordinates(final int id,
+            final String machineName, final int chipX, final int chipY) {
         synchronized (allocatedMachines) {
             final List<SpinnakerMachine> machines = allocatedMachines.get(id);
             int index = findMachineIndex(machines, machineName);
@@ -296,7 +383,13 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         return null;
     }
 
-    /** Get a machine to run the job on. */
+    /**
+     * Get a machine to run the job on.
+     *
+     * @param id The ID of the job
+     * @param nBoardsToRequest The number of boards to request
+     * @return The machine allocated
+     */
     private SpinnakerMachine allocateMachineForJob(final int id,
             final int nBoardsToRequest) {
         final SpinnakerMachine machine =
@@ -310,6 +403,11 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         return machine;
     }
 
+    /**
+     * Get the list of machines currently allocated to a job.
+     * @param id The id of the job.
+     * @return The list of machines for the job.
+     */
     private List<SpinnakerMachine> getMachineForJob(final int id) {
         synchronized (allocatedMachines) {
             return allocatedMachines.get(id);
@@ -322,7 +420,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
 
         long usage;
         synchronized (jobResourceUsage) {
-            usage = (long) (jobNCores.get(id) * (runTime / MS_PER_S));
+            usage = (long) (jobNCores.get(id)
+                    * (runTime / MILLISECONDS_PER_SECOND));
             jobResourceUsage.put(id, usage);
         }
         logger.info("Usage for " + id + " now " + usage);
@@ -419,6 +518,16 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         }
     }
 
+    /**
+     * Get the output data items for a job from a list of outputs.
+     *
+     * @param projectId The ID of the project of the job
+     * @param id The ID of the job
+     * @param baseFile The base file location for the files
+     * @param outputs The output files
+     * @return The list of data items.
+     * @throws IOException If there was an error dealing with a file.
+     */
     private List<DataItem> getOutputFiles(final String projectId, final int id,
             final String baseFile, final List<String> outputs)
             throws IOException {
@@ -483,12 +592,24 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         }
     }
 
+    /**
+     * Get the provenance for a job.
+     *
+     * @param id The ID of the job
+     * @return The provenance as a JSON data item
+     */
     private ObjectNode getProvenance(final int id) {
         synchronized (jobProvenance) {
             return jobProvenance.remove(id);
         }
     }
 
+    /**
+     * Get the resources used by a job.
+     *
+     * @param id The ID of a job
+     * @return The resources used by a job
+     */
     private long getResourceUsage(final int id) {
         long resourceUsage = 0;
         synchronized (jobResourceUsage) {
@@ -525,7 +646,12 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         }
     }
 
-    /** @return <tt>true</tt> if there were machines removed by this. */
+    /**
+     * Release the machines allocated to a job.
+     *
+     * @param id The ID of the job
+     * @return <tt>true</tt> if there were machines removed by this. n
+     */
     private boolean releaseAllocatedMachines(final int id) {
         synchronized (allocatedMachines) {
             final List<SpinnakerMachine> machines =
@@ -569,9 +695,19 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         }
     }
 
+    /**
+     * An empty stack trace element.
+     */
     private static final StackTraceElement[] STE_TMPL =
             new StackTraceElement[0];
 
+    /**
+     * Convert a remote exception to a local one.
+     *
+     * @param error The error message.
+     * @param stackTrace The stack trace.
+     * @return The exception.
+     */
     private Exception reconstructRemoteException(final String error,
             final RemoteStackTrace stackTrace) {
         final ArrayList<StackTraceElement> elements = new ArrayList<>();

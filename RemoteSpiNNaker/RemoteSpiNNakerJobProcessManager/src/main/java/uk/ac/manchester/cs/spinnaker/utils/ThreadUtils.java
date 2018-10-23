@@ -4,6 +4,10 @@ package uk.ac.manchester.cs.spinnaker.utils;
  * Utilities for working with threads.
  */
 public abstract class ThreadUtils {
+
+    /**
+     * Avoid instantiation.
+     */
     private ThreadUtils() {
     }
 
@@ -16,10 +20,10 @@ public abstract class ThreadUtils {
      *      Question: When does Java's Thread.sleep throw
      *      InterruptedException?</a>
      */
-    public static void sleep(long delay) {
+    public static void sleep(final long delay) {
         try {
             Thread.sleep(delay);
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
         }
     }

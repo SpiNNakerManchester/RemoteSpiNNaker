@@ -14,7 +14,6 @@ import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -48,9 +47,20 @@ import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
  * command line, and it assumes input is passed via {@link System#in}.
  */
 public class JobProcessManager {
+
+    /**
+     * The interval at which the log is updated.
+     */
     private static final int UPDATE_INTERVAL = 500;
+
+    /**
+     * Default parameters for getting a machine.
+     */
     private static final int DEFAULT = -1;
-    /** The factory for converting parameters into processes. */
+
+    /**
+     * The factory for converting parameters into processes.
+     */
     private static final JobProcessFactory JOB_PROCESS_FACTORY =
             new JobProcessFactory("JobProcess");
     static {
@@ -62,6 +72,10 @@ public class JobProcessManager {
      * A log writer that uploads to the server.
      */
     class UploadingJobManagerLogWriter extends JobManagerLogWriter {
+
+        /**
+         * The timer for the interval.
+         */
         private final Timer sendTimer;
 
         /**
@@ -76,6 +90,9 @@ public class JobProcessManager {
             });
         }
 
+        /**
+         * Send the log now if changed.
+         */
         private void sendLog() {
             String toWrite = null;
             synchronized (this) {
@@ -104,50 +121,92 @@ public class JobProcessManager {
         }
     }
 
+    /**
+     * The URL of the Job Manager server.
+     */
     private final String serverUrl;
+
+    /**
+     * True if the working directory should be cleaned on exit.
+     */
     private final boolean deleteOnExit;
+
+    /**
+     * True if the process is running on the same machine as the server.
+     */
     private final boolean isLocal;
+
+    /**
+     * The ID of the execution.
+     */
     private final String executerId;
+
+    /**
+     * True if the output should be uploaded as it is produced.
+     */
     private final boolean liveUploadOutput;
+
+    /**
+     * True if a machine should be requested for the job.
+     */
     private final boolean requestMachine;
+
+    /**
+     * The authorisation token of this job on the server.
+     */
     private final String authToken;
 
+    /**
+     * The connection to the Job Manager.
+     */
     private JobManagerInterface jobManager;
+
+    /**
+     * The writer of the log.
+     */
     private JobManagerLogWriter logWriter;
+
+    /**
+     * The job being executed.
+     */
     private Job job;
+
+    /**
+     * The ID of the project in which the job exists.
+     */
     private String projectId;
 
     /**
      * Create an object that manages the running of a single job.
      *
-     * @param serverUrl
+     * @param serverUrlParam
      *            The URL to the server, used for writing back results.
-     * @param deleteOnExit
+     * @param deleteOnExitParam
      *            Whether to delete the job's resources on termination.
-     * @param isLocal
+     * @param isLocalParam
      *            Whether the job is local.
-     * @param executerId
+     * @param executerIdParam
      *            The ID of the executer.
-     * @param liveUploadOutput
+     * @param liveUploadOutputParam
      *            Whether to do live upload of output data.
-     * @param requestMachine
+     * @param requestMachineParam
      *            Whether to request a machine.
-     * @param authToken
+     * @param authTokenParam
      *            The authorisation token for the server.
      */
-    public JobProcessManager(final String serverUrl, final boolean deleteOnExit,
-            final boolean isLocal, final String executerId,
-            final boolean liveUploadOutput, final boolean requestMachine,
-            final String authToken) {
-        this.serverUrl =
-                requireNonNull(serverUrl, "--serverUrl must be specified");
-        this.executerId =
-                requireNonNull(executerId, "--executerId must be specified");
-        this.deleteOnExit = deleteOnExit;
-        this.isLocal = isLocal;
-        this.liveUploadOutput = liveUploadOutput;
-        this.requestMachine = requestMachine;
-        this.authToken = authToken;
+    public JobProcessManager(final String serverUrlParam,
+            final boolean deleteOnExitParam, final boolean isLocalParam,
+            final String executerIdParam, final boolean liveUploadOutputParam,
+            final boolean requestMachineParam, final String authTokenParam) {
+        this.serverUrl = requireNonNull(
+                serverUrlParam, "--serverUrl must be specified");
+        this.executerId = requireNonNull(
+                executerIdParam, "--executerId must be specified");
+        this.deleteOnExit = deleteOnExitParam;
+        this.isLocal = isLocalParam;
+        this.liveUploadOutput = liveUploadOutputParam;
+        this.requestMachine = requestMachineParam;
+        this.authToken = authTokenParam;
     }
 
     /**
@@ -178,7 +237,7 @@ public class JobProcessManager {
             // Execute the process
             log("Running job " + job.getId() + " on " + machine + " using "
                     + parameters.getClass() + " reporting to " + serverUrl);
-            process.execute(machine.url, machine.machine, parameters,
+            process.execute(machine.getURL(), machine.getMachine(), parameters,
                     logWriter);
             logWriter.stop();
 
@@ -190,6 +249,11 @@ public class JobProcessManager {
         }
     }
 
+    /**
+     * Report a job failure.
+     *
+     * @param error The error of the failure.
+     */
     private void reportFailure(final Throwable error) {
         if ((jobManager == null) || (job == null)) {
             log(error);
@@ -271,6 +335,11 @@ public class JobProcessManager {
         exit(0);
     }
 
+    /**
+     * Get a machine for use in the job.
+     *
+     * @return a machine
+     */
     private Machine getMachine() {
         // (get a 3 board machine just now)
         if (requestMachine) {
@@ -318,6 +387,11 @@ public class JobProcessManager {
         return parameters;
     }
 
+    /**
+     * Get the log writer.
+     *
+     * @return The log writer
+     */
     private JobManagerLogWriter getLogWriter() {
         if (!liveUploadOutput) {
             return new SimpleJobManagerLogWriter();
@@ -325,9 +399,17 @@ public class JobProcessManager {
         return new UploadingJobManagerLogWriter();
     }
 
+    /**
+     * Process the outcome of the job execution.
+     *
+     * @param workingDirectory The directory where the job was run
+     * @param process The process of the job
+     * @param log The log message of the job
+     * @throws IOException If there is an error reading or writing files
+     */
     private void processOutcome(final File workingDirectory,
             final JobProcess<?> process, final String log)
-            throws IOException, FileNotFoundException {
+            throws IOException {
         final Status status = process.getStatus();
         log("Process has finished with status " + status);
 
@@ -381,18 +463,18 @@ public class JobProcessManager {
  */
 class Machine {
     /** The machine. Knows its service URL. */
-    SpinnakerMachine machine;
+    private SpinnakerMachine machine;
     /** The service URL. */
-    String url;
+    private String url;
 
     /**
      * Create a machine known by object.
      *
-     * @param machine
+     * @param machineParam
      *            The machine object.
      */
-    Machine(final SpinnakerMachine machine) {
-        this.machine = machine;
+    Machine(final SpinnakerMachine machineParam) {
+        this.machine = machineParam;
     }
 
     /**
@@ -405,6 +487,24 @@ class Machine {
      */
     Machine(final String baseUrl, final int id) {
         this.url = format("%sjob/%d/machine", baseUrl, id);
+    }
+
+    /**
+     * Get the machine.
+     *
+     * @return the machine
+     */
+    SpinnakerMachine getMachine() {
+        return machine;
+    }
+
+    /**
+     * Get the URL.
+     *
+     * @return the URL
+     */
+    String getURL() {
+        return url;
     }
 
     @Override
@@ -420,15 +520,35 @@ class Machine {
  * How to write to the log.
  */
 abstract class JobManagerLogWriter implements LogWriter {
+
+    /**
+     * Create a machine known by object.
+     *
+     * @param machine
+     *            The machine object.
+     */
+    /**
+     * The cached message.
+     */
     private final StringBuilder cached = new StringBuilder();
+
 
     /**
      * Does the log have anything in it?
      *
      * @return Whether the log cache is non-empty.
      */
-    protected boolean isPopulated() {
+    protected synchronized boolean isPopulated() {
         return cached.length() > 0;
+    }
+
+    /**
+     * Adds a message to the cache.
+     *
+     * @param message The message to add
+     */
+    protected synchronized void appendCache(final String message) {
+        cached.append(message);
     }
 
     /**
@@ -441,21 +561,11 @@ abstract class JobManagerLogWriter implements LogWriter {
     }
 
     /**
-     * Add a message to the cached log.
-     *
-     * @param value
-     *            The string to add.
-     */
-    final void appendCache(String msg) {
-        cached.append(msg);
-    }
-
-    /**
      * Get the current log contents and reset the internal buffer.
      *
      * @return The contents of the log prior to this call.
      */
-    final String takeCache() {
+    public final synchronized String takeCache() {
         try {
             return cached.toString();
         } finally {
@@ -488,12 +598,22 @@ class SimpleJobManagerLogWriter extends JobManagerLogWriter {
  */
 @SuppressWarnings("serial")
 class JobErrorsException extends IOException {
+
+    /**
+     * The error message of the exception.
+     */
     private static final String MAIN_MSG = "The job type was recognised"
             + " by at least one factory, but could not be decoded.  The"
             + " errors are as follows:";
 
+    /**
+     * Builds an error message from a map of errors.
+     *
+     * @param errors The errors to use.
+     * @return An exception containing the errors.
+     */
     private static String
-            buildMessage(Map<String, ? extends Exception> errors) {
+            buildMessage(final Map<String, ? extends Exception> errors) {
         StringWriter buffer = new StringWriter();
         PrintWriter bufferWriter = new PrintWriter(buffer);
         bufferWriter.println(MAIN_MSG);
@@ -506,6 +626,11 @@ class JobErrorsException extends IOException {
         return buffer.toString();
     }
 
+    /**
+     * Creates an exception from a set of errors.
+     *
+     * @param errors The errors to build the exception from
+     */
     JobErrorsException(
             final Map<String, JobParametersFactoryException> errors) {
         super(buildMessage(errors));

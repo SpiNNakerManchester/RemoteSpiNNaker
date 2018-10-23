@@ -12,8 +12,20 @@ import java.util.Map;
  *            The type of arguments.
  */
 public abstract class Command<A> {
+
+    /**
+     * The name of the command.
+     */
     private final String command;
+
+    /**
+     * The arguments to the command.
+     */
     private final List<A> args = new ArrayList<>();
+
+    /**
+     * The KW Args to be passed to the command.
+     */
     private final Map<String, Object> kwargs = new HashMap<>();
 
     /**
@@ -44,21 +56,36 @@ public abstract class Command<A> {
     /**
      * Create a command.
      *
-     * @param command
+     * @param commandParam
      *            The command token.
      */
-    public Command(final String command) {
-        this.command = command;
+    public Command(final String commandParam) {
+        this.command = commandParam;
     }
 
+    /**
+     * Get the command name.
+     *
+     * @return The command name
+     */
     public String getCommand() {
         return command;
     }
 
+    /**
+     * Get the command arguments.
+     *
+     * @return The command arguments.
+     */
     public List<A> getArgs() {
         return args;
     }
 
+    /**
+     * Get the command keyword arguments.
+     *
+     * @return The command keyword arguments
+     */
     public Map<String, Object> getKwargs() {
         return kwargs;
     }

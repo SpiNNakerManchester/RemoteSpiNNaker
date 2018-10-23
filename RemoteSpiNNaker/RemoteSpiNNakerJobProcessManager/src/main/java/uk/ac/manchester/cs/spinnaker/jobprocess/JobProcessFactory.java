@@ -12,17 +12,21 @@ import uk.ac.manchester.cs.spinnaker.job.JobParameters;
  * {@link JobParameters} instance.
  */
 public class JobProcessFactory {
+
+    /**
+     * The thread group of the factory.
+     */
     private final ThreadGroup threadGroup;
 
     /**
      * Create a factory.
      *
-     * @param threadGroup
+     * @param threadGroupParam
      *            The thread group for the factory. All threads created by the
      *            factory will be within this group.
      */
-    public JobProcessFactory(final ThreadGroup threadGroup) {
-        this.threadGroup = threadGroup;
+    public JobProcessFactory(final ThreadGroup threadGroupParam) {
+        this.threadGroup = threadGroupParam;
     }
 
     /**
@@ -61,6 +65,11 @@ public class JobProcessFactory {
         typeMap.put(parameterType, processType);
     }
 
+    /**
+     * Get the types of parameters supported.
+     *
+     * @return A collection of types of parameters
+     */
     public Collection<Class<? extends JobParameters>> getParameterTypes() {
         return typeMap.keySet();
     }
@@ -97,6 +106,13 @@ public class JobProcessFactory {
         return process;
     }
 
+    /**
+     * Set a static field in an object.
+     *
+     * @param clazz The class of the object
+     * @param fieldName The name of the field to set
+     * @param value The value to set the field to
+     */
     @SuppressWarnings("unused")
     private static void setField(final Class<?> clazz, final String fieldName,
             final Object value) {
@@ -110,6 +126,13 @@ public class JobProcessFactory {
         }
     }
 
+    /**
+     * Set a field in an instance.
+     *
+     * @param instance The instance
+     * @param fieldName The name of the field
+     * @param value The value to set
+     */
     private static void setField(final Object instance, final String fieldName,
             final Object value) {
         try {

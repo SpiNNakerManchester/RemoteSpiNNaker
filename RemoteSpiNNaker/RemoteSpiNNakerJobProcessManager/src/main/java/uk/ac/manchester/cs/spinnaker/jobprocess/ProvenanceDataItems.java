@@ -16,25 +16,49 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement(name = "provenance_data_items")
 public class ProvenanceDataItems {
 
+    /**
+     * The name of this level of the hierarchy.
+     */
     @XmlAttribute
     private String name;
 
+    /**
+     * The sub hierarchies.
+     */
     @XmlElement(name = "provenance_data_items")
     private final List<ProvenanceDataItems> provenanceDataItems =
             new ArrayList<>();
 
+    /**
+     * Items at this level of the hierarchy.
+     */
     @XmlElement(name = "provenance_data_item")
     private final List<ProvenanceDataItem> provenanceDataItem =
             new ArrayList<>();
 
+    /**
+     * Get the name of this level of the hierarchy.
+     *
+     * @return The name
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Levels below this level of the hierarchy.
+     *
+     * @return The child levels
+     */
     public List<ProvenanceDataItems> getProvenanceDataItems() {
         return provenanceDataItems;
     }
 
+    /**
+     * Items at this level of the hierarchy.
+     *
+     * @return The items at this level
+     */
     public List<ProvenanceDataItem> getProvenanceDataItem() {
         return provenanceDataItem;
     }

@@ -8,10 +8,47 @@ import java.io.Serializable;
  * Represents a SpiNNaker machine on which jobs can be executed.
  */
 public class SpinnakerMachine
-        implements
-            Serializable,
-            Comparable<SpinnakerMachine> {
+        implements Serializable, Comparable<SpinnakerMachine> {
+
+    /**
+     * Serial version UID.
+     */
     private static final long serialVersionUID = -2247744763327978524L;
+
+    /**
+     * The number of parts that make up a machine description as a string.
+     */
+    private static final int N_PARTS = 6;
+
+    /**
+     * Part of the string that is the name of the machine.
+     */
+    private static final int MACHINE_NAME_PART = 0;
+
+    /**
+     * Part of the string that is the version of the machine.
+     */
+    private static final int VERSION_PART = 1;
+
+    /**
+     * Part of the string that is the width of the machine.
+     */
+    private static final int WIDTH_PART = 2;
+
+    /**
+     * Part of the string that is the height of the machine.
+     */
+    private static final int HEIGHT_PART = 3;
+
+    /**
+     * Part of the string that is the number of boards in the machine.
+     */
+    private static final int N_BOARDS_PART = 4;
+
+    /**
+     * Part of the string that is the BMP details of the machine.
+     */
+    private static final int BMP_DETAILS_PART = 5;
 
     /**
      * The name of the machine.
@@ -50,8 +87,6 @@ public class SpinnakerMachine
         // Does Nothing
     }
 
-    private static final int EXPECTED_NUM_PARTS = 6;
-
     /**
      * Creates a new Spinnaker Machine by parsing the name of a machine.
      *
@@ -71,52 +106,66 @@ public class SpinnakerMachine
 
         final String[] parts =
                 value.substring(1, value.length() - 1).split(":");
-        if (parts.length != EXPECTED_NUM_PARTS) {
+        if (parts.length != N_PARTS) {
             throw new IllegalArgumentException(
                     "Wrong number of :-separated arguments - " + parts.length
                             + " found but 6 required");
         }
 
-        int i = 0;
-        return new SpinnakerMachine(parts[i++].trim(), parts[i++].trim(),
-                parseInt(parts[i++].trim()), parseInt(parts[i++].trim()),
-                parseInt(parts[i++].trim()), parts[i++].trim());
+        return new SpinnakerMachine(
+                parts[MACHINE_NAME_PART].trim(), parts[VERSION_PART].trim(),
+                parseInt(parts[WIDTH_PART].trim()),
+                parseInt(parts[HEIGHT_PART].trim()),
+                parseInt(parts[N_BOARDS_PART].trim()),
+                parts[BMP_DETAILS_PART].trim());
     }
 
+    /**
+     * Get a string version of the machine.
+     */
     @Override
     public String toString() {
-        final String nm = (machineName != null ? machineName.trim() : "");
-        final String ver = (version != null ? version.trim() : "");
-        final String bmp = (bmpDetails != null ? bmpDetails.trim() : "");
-        return "(" + nm + ":" + ver + ":" + width + ":" + height + ":" + nBoards
-                + ":" + bmp + ")";
+        String output = null;
+
+        for (Object potential : new Object[]{
+                machineName, version, bmpDetails, width, height, bmpDetails}) {
+            if (potential != null) {
+                if (output == null) {
+                    output = potential.toString();
+                } else {
+                    output += ":" + potential.toString();
+                }
+            }
+        }
+        return output;
     }
 
     /**
      * Creates a new SpiNNaker Machine description.
      *
-     * @param machineName
+     * @param machineNameParam
      *            The name of the machine
-     * @param version
+     * @param versionParam
      *            The version of the machine
-     * @param width
+     * @param widthParam
      *            The width of the machine, in boards
-     * @param height
+     * @param heightParam
      *            The width of the machine, in boards
-     * @param numBoards
+     * @param numBoardsParam
      *            The number of boards in the machine
-     * @param bmpDetails
+     * @param bmpDetailsParam
      *            How to contact the machine's Board Management Processor
      */
-    public SpinnakerMachine(final String machineName, final String version,
-            final int width, final int height, final int numBoards,
-            final String bmpDetails) {
-        this.machineName = machineName;
-        this.version = version;
-        this.width = width;
-        this.height = height;
-        this.nBoards = numBoards;
-        this.bmpDetails = bmpDetails;
+    public SpinnakerMachine(
+            final String machineNameParam, final String versionParam,
+            final int widthParam, final int heightParam,
+            final int numBoardsParam, final String bmpDetailsParam) {
+        this.machineName = machineNameParam;
+        this.version = versionParam;
+        this.width = widthParam;
+        this.height = heightParam;
+        this.nBoards = numBoardsParam;
+        this.bmpDetails = bmpDetailsParam;
     }
 
     /**
@@ -131,11 +180,11 @@ public class SpinnakerMachine
     /**
      * Sets the name of the machine.
      *
-     * @param machineName
+     * @param machineNameParam
      *            The name of the machine
      */
-    public void setMachineName(final String machineName) {
-        this.machineName = machineName;
+    public void setMachineName(final String machineNameParam) {
+        this.machineName = machineNameParam;
     }
 
     /**
@@ -150,11 +199,11 @@ public class SpinnakerMachine
     /**
      * Sets the version of the machine.
      *
-     * @param version
+     * @param versionParam
      *            The version of the machine
      */
-    public void setVersion(final String version) {
-        this.version = version;
+    public void setVersion(final String versionParam) {
+        this.version = versionParam;
     }
 
     /**
@@ -169,11 +218,11 @@ public class SpinnakerMachine
     /**
      * Sets the width of the machine.
      *
-     * @param width
+     * @param widthParam
      *            The width of the machine
      */
-    public void setWidth(final int width) {
-        this.width = width;
+    public void setWidth(final int widthParam) {
+        this.width = widthParam;
     }
 
     /**
@@ -188,11 +237,11 @@ public class SpinnakerMachine
     /**
      * Sets the height of the machine.
      *
-     * @param height
+     * @param heightParam
      *            The height of the machine
      */
-    public void setHeight(final int height) {
-        this.height = height;
+    public void setHeight(final int heightParam) {
+        this.height = heightParam;
     }
 
     /** @return width &times; height */
@@ -212,11 +261,11 @@ public class SpinnakerMachine
     /**
      * Sets the number of boards in the machine.
      *
-     * @param nBoards
+     * @param nBoardsParam
      *            The number of boards in the machine
      */
-    public void setnBoards(final int nBoards) {
-        this.nBoards = nBoards;
+    public void setnBoards(final int nBoardsParam) {
+        this.nBoards = nBoardsParam;
     }
 
     /**
@@ -231,13 +280,16 @@ public class SpinnakerMachine
     /**
      * Sets the BMP details of the machine.
      *
-     * @param bmpDetails
+     * @param bmpDetailsParam
      *            The BMP details of the machine
      */
-    public void setBmpDetails(final String bmpDetails) {
-        this.bmpDetails = bmpDetails;
+    public void setBmpDetails(final String bmpDetailsParam) {
+        this.bmpDetails = bmpDetailsParam;
     }
 
+    /**
+     * Check for equality with another machine.
+     */
     @Override
     public boolean equals(final Object o) {
         if (o instanceof SpinnakerMachine) {
@@ -271,11 +323,18 @@ public class SpinnakerMachine
         }
     }
 
+    /**
+     * Compare to another machine; order by name then by version.
+     */
     @Override
     public int compareTo(final SpinnakerMachine m) {
         int cmp = 0;
         if (machineName == null) {
-            cmp = (m.machineName == null) ? 0 : -1;
+            if (m.machineName == null) {
+                cmp = 0;
+            } else {
+                cmp = -1;
+            }
         } else if (m.machineName == null) {
             cmp = 1;
         } else {
@@ -284,7 +343,11 @@ public class SpinnakerMachine
         if (cmp == 0) {
             // TODO Is this the right way to compare versions? It works...
             if (version == null) {
-                cmp = (m.version == null) ? 0 : -1;
+                if (m.version == null) {
+                    cmp = 0;
+                } else {
+                    cmp = -1;
+                }
             } else if (m.version == null) {
                 cmp = 1;
             } else {
@@ -294,6 +357,9 @@ public class SpinnakerMachine
         return cmp;
     }
 
+    /**
+     * Generate a hash code based on name and version.
+     */
     @Override
     public int hashCode() {
         // TODO Should be consistent with equality tests

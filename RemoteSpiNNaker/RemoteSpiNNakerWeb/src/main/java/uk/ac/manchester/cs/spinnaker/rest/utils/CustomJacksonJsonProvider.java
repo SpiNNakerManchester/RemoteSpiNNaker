@@ -31,8 +31,19 @@ import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 @Consumes(WILDCARD)
 @Produces(WILDCARD)
 public class CustomJacksonJsonProvider extends JacksonJsonProvider {
+    /**
+     * Mapper objects of this provider.
+     */
     private final Set<ObjectMapper> registeredMappers = new HashSet<>();
+
+    /**
+     * The module of the provider.
+     */
     private final SimpleModule module = new SimpleModule();
+
+    /**
+     * The date-time module of the provider.
+     */
     private final JodaModule jodaModule = new JodaModule();
 
     /**
@@ -50,6 +61,11 @@ public class CustomJacksonJsonProvider extends JacksonJsonProvider {
         module.addDeserializer(type, deserialiser);
     }
 
+    /**
+     * Register a new mapper.
+     * @param type The class of the mapper
+     * @param mediaType The media type to handle
+     */
     private void registerMapper(final Class<?> type,
             final MediaType mediaType) {
         final ObjectMapper mapper = locateMapper(type, mediaType);

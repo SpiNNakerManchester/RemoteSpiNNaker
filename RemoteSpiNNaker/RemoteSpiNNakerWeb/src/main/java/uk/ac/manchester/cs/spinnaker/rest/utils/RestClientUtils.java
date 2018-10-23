@@ -53,7 +53,7 @@ import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
  * Manufactures clients for talking to other machines. This class does wicked
  * things, but it is because users keep insisting on getting their security
  * wrong. How difficult is it to just use LetsEncrypt? Apparently very because
- * users instead stand up impossible-to-trust self-signed certs! The
+ * users instead stand up impossible-to-trust self-signed certificates! The
  * infrastructure required to allow this to work securely requires a lot of
  * interface changes (they'd have to supply the server's public certificate
  * chain as part of the job submission) and that's just awkward.
@@ -61,6 +61,10 @@ import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
  * @author Donal Fellows
  */
 public abstract class RestClientUtils {
+
+    /**
+     * Stop instances being created.
+     */
     private RestClientUtils() {
     } // No instances, please, we're British!
 
@@ -73,6 +77,9 @@ public abstract class RestClientUtils {
      */
     private static final int HTTPS_PORT = 443;
 
+    /**
+     * Logging.
+     */
     private static Logger log = getLogger(RestClientUtils.class);
 
     /**
@@ -117,7 +124,7 @@ public abstract class RestClientUtils {
      *
      * @param url
      *            Where will the connection be made to?
-     * @param credentals
+     * @param credentials
      *            What credentials will be used to connect?
      * @param authScheme
      *            The authentication scheme to use.
@@ -152,7 +159,7 @@ public abstract class RestClientUtils {
      * @param certs A certificate chain.
      * @return Whether the certificate is trusted. It is! Always!
      */
-    private static boolean checkTrusted(X509Certificate[] certs) {
+    private static boolean checkTrusted(final X509Certificate[] certs) {
         return true;
     }
 
@@ -168,20 +175,20 @@ public abstract class RestClientUtils {
     /**
      * A trust manager that believes everything it is told. This is how not to
      * write a trust manager.
-     *
+     * @return the trusty trust manager
      * @see #getSchemeRegistry()
      */
     private static TrustManager getGullableTrustManager() {
         return new X509TrustManager() {
             @Override
-            public void checkClientTrusted(X509Certificate[] certs,
-                    String authType) throws CertificateException {
+            public void checkClientTrusted(final X509Certificate[] certs,
+                    final String authType) throws CertificateException {
                 // Does Nothing; we aren't deploying client-side certs
             }
 
             @Override
-            public void checkServerTrusted(X509Certificate[] certs,
-                    String authType) throws CertificateException {
+            public void checkServerTrusted(final X509Certificate[] certs,
+                    final String authType) throws CertificateException {
                 if (!checkTrusted(certs)) {
                     throw new CertificateException("untrusted server");
                 }
@@ -206,6 +213,10 @@ public abstract class RestClientUtils {
      * <i>Be aware that this method is doing very bad things; a trust-all trust
      * manager is <b>entirely</b> doing it wrong, but the reality of academic
      * security is that it is the only sane option.</i>
+     *
+     * @return The scheme registry
+     * @throws NoSuchAlgorithmException If TLS is unsupported
+     * @throws KeyManagementException If something goes wrong
      */
     private static SchemeRegistry getSchemeRegistry()
             throws NoSuchAlgorithmException, KeyManagementException {
@@ -339,11 +350,23 @@ public abstract class RestClientUtils {
      */
     private abstract static class ConnectionIndependentScheme
             extends RFC2617Scheme {
+
+        /**
+         * True when complete.
+         */
         private final boolean complete = false;
+
+        /**
+         * The name of the scheme.
+         */
         private final String name;
 
-        ConnectionIndependentScheme(final String name) {
-            this.name = name;
+        /**
+         * Create a new scheme.
+         * @param nameParam The name of the scheme
+         */
+        ConnectionIndependentScheme(final String nameParam) {
+            this.name = nameParam;
         }
 
         @Override
@@ -375,9 +398,15 @@ public abstract class RestClientUtils {
         /**
          * Give the header that we're supposed to generate, depending on whether
          * we're going by a proxy or not.
+         *
+         * @return the authentication header name
          */
         protected String getAuthHeaderName() {
-            return isProxy() ? PROXY_AUTH_RESP : WWW_AUTH_RESP;
+            if (isProxy()) {
+                return PROXY_AUTH_RESP;
+            } else {
+                return WWW_AUTH_RESP;
+            }
         }
 
         @Override

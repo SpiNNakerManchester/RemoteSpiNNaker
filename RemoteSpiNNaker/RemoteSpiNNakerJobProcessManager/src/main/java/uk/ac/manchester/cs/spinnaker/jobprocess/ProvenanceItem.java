@@ -7,27 +7,44 @@ import java.util.List;
  */
 public class ProvenanceItem {
 
-    private List<String> path;
+    /**
+     * The path of the item.
+     */
+    private final List<String> path;
 
-    private String value;
+    /**
+     * The value if the item.
+     */
+    private final String value;
 
     /**
      * Create a provenance item.
      *
-     * @param path
+     * @param pathParam
      *            The location of the item in the provenance tree.
-     * @param value
+     * @param valueParam
      *            The content of the value.
      */
-    public ProvenanceItem(List<String> path, String value) {
-        this.path = path;
-        this.value = value;
+    public ProvenanceItem(
+            final List<String> pathParam, final String valueParam) {
+        this.path = pathParam;
+        this.value = valueParam;
     }
 
+    /**
+     * Get the path to the item.
+     *
+     * @return The path
+     */
     public List<String> getPath() {
         return path;
     }
 
+    /**
+     * Get the value of the item.
+     *
+     * @return The value
+     */
     public String getValue() {
         return value;
     }
