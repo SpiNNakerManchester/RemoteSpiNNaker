@@ -8,7 +8,6 @@ import java.io.UnsupportedEncodingException;
 
 import uk.ac.manchester.cs.spinnaker.job.JobParameters;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
-import uk.ac.manchester.cs.spinnaker.job.pynn.PyNNHardwareConfiguration;
 import uk.ac.manchester.cs.spinnaker.job.pynn.PyNNJobParameters;
 
 /**
@@ -24,14 +23,14 @@ class DirectPyNNJobParametersFactory extends JobParametersFactory {
 
     @Override
     public JobParameters getJobParameters(final Job job,
-            final File workingDirectory)
+            final File workingDirectory, final String setupScript)
             throws UnsupportedJobException, JobParametersFactoryException {
         if (!job.getCode().contains("import")) {
             throw new UnsupportedJobException();
         }
 
         try {
-            return constructParameters(job, workingDirectory);
+            return constructParameters(job, workingDirectory, setupScript);
         } catch (final IOException e) {
             throw new JobParametersFactoryException("Error storing script", e);
         } catch (final Throwable e) {
@@ -45,12 +44,13 @@ class DirectPyNNJobParametersFactory extends JobParametersFactory {
     *
     * @param job The job to construct parameters for
     * @param workingDirectory The directory where the job should be started
+    * @param setupScript The setup script to run
     * @return The parameters created
     * @throws FileNotFoundException If the file can't be found to write
     * @throws UnsupportedEncodingException If the encoding failed (unlikely)
     */
     private JobParameters constructParameters(final Job job,
-            final File workingDirectory)
+            final File workingDirectory, final String setupScript)
             throws FileNotFoundException, UnsupportedEncodingException {
         final File scriptFile = new File(workingDirectory, DEFAULT_SCRIPT_NAME);
         try (PrintWriter writer = new PrintWriter(scriptFile, ENCODING)) {
@@ -58,7 +58,7 @@ class DirectPyNNJobParametersFactory extends JobParametersFactory {
         }
 
         return new PyNNJobParameters(workingDirectory.getAbsolutePath(),
-                DEFAULT_SCRIPT_NAME + SYSTEM_ARG,
-                new PyNNHardwareConfiguration(job.getHardwareConfig()));
+                setupScript, DEFAULT_SCRIPT_NAME + SYSTEM_ARG,
+                job.getHardwareConfig());
     }
 }

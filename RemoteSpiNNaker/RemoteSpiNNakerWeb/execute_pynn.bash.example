@@ -1,0 +1,43 @@
+# Setup Variables from environment
+$spynnaker_version=${spynnaker_version:-4.0.0}
+$spinnaker_tools_version=${spinnaker_tools_version:-3.1.1}
+
+# Get the support scripts
+git clone https://github.com/SpiNNakerManchester/SupportScripts support
+
+# Install and upgrade libraries
+pip install --upgrade pip setuptools wheel
+pip install --only-binary=numpy,scipy,matplotlib numpy scipy matplotlib
+
+# Get SpiNNaker Tools
+export TRAVIS_BRANCH=$spinnaker_tools_version
+support/gitclone.sh https://github.com/SpiNNakerManchester/spinnaker_tools.git
+
+# Get the rest of the tools
+export TRAVIS_BRANCH=$spynnaker_version
+support/pipinstall.sh git://github.com/SpiNNakerManchester/SpiNNUtils.git
+support/pipinstall.sh git://github.com/SpiNNakerManchester/SpiNNMachine.git
+support/pipinstall.sh git://github.com/SpiNNakerManchester/SpiNNStorageHandlers.git
+support/pipinstall.sh git://github.com/SpiNNakerManchester/SpiNNMan.git
+support/pipinstall.sh git://github.com/SpiNNakerManchester/PACMAN.git
+support/pipinstall.sh git://github.com/SpiNNakerManchester/DataSpecification.git
+support/pipinstall.sh git://github.com/SpiNNakerManchester/spalloc.git
+support/gitclone.sh https://github.com/SpiNNakerManchester/spinn_common.git
+support/gitclone.sh https://github.com/SpiNNakerManchester/SpiNNFrontEndCommon.git
+support/gitclone.sh https://github.com/SpiNNakerManchester/sPyNNaker.git
+support/gitclone.sh https://github.com/SpiNNakerManchester/sPyNNaker8.git
+
+# Build the C Code
+export SPINN_DIRS=${PWD}/spinnaker_tools
+export NEURAL_MODELLING_DIRS=${PWD}/sPyNNaker/neural_modelling
+make -C $SPINN_DIRS
+make -C spinn_common install
+make -C SpiNNFrontEndCommon/c_common
+make -C SpiNNFrontEndCommon/c_common install
+make -C sPyNNaker/neural_modelling
+
+# Install the Python code (now with C binaries)
+cd SpiNNFrontEndCommon && python setup.py install
+cd sPyNNaker && python setup.py install
+cd sPyNNaker8 && python setup.py install
+python -m spynnaker8.setup_pynn

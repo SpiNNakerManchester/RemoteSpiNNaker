@@ -223,7 +223,14 @@ public class JobProcessManager {
             // Create a temporary location for the job
             final File workingDirectory = createTempDir("job", ".tmp", null);
 
-            final JobParameters parameters = getJobParameters(workingDirectory);
+            // Download the setup script
+            final File setupScript = downloadFile(
+                    serverUrl + "/" + JobManagerInterface.SETUP_SCRIPT,
+                    workingDirectory, JobManagerInterface.SETUP_SCRIPT);
+
+
+            final JobParameters parameters = getJobParameters(
+                    workingDirectory, setupScript.getAbsolutePath());
 
             // Create a process to process the request
             log("Creating process from parameters");
@@ -355,18 +362,20 @@ public class JobProcessManager {
      *
      * @param workingDirectory
      *            The working directory for the job, used to write files.
+     * @param setupScript
+     *            The setup script
      * @return Description of the parameters.
      * @throws IOException
      *             If anything goes wrong, such as the parameters being
      *             unreadable or the job being unsupported on the current
      *             architectural configuration.
      */
-    private JobParameters getJobParameters(final File workingDirectory)
-            throws IOException {
+    private JobParameters getJobParameters(final File workingDirectory,
+            final String setupScript) throws IOException {
         final Map<String, JobParametersFactoryException> errors =
                 new HashMap<>();
         final JobParameters parameters = JobParametersFactory
-                .getJobParameters(job, workingDirectory, errors);
+                .getJobParameters(job, workingDirectory, setupScript, errors);
 
         if (parameters == null) {
             if (!errors.isEmpty()) {

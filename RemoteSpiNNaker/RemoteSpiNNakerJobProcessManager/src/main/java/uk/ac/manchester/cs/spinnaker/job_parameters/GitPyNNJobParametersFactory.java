@@ -14,7 +14,6 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
 import uk.ac.manchester.cs.spinnaker.job.JobParameters;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
-import uk.ac.manchester.cs.spinnaker.job.pynn.PyNNHardwareConfiguration;
 import uk.ac.manchester.cs.spinnaker.job.pynn.PyNNJobParameters;
 
 /**
@@ -25,7 +24,7 @@ import uk.ac.manchester.cs.spinnaker.job.pynn.PyNNJobParameters;
 class GitPyNNJobParametersFactory extends JobParametersFactory {
     @Override
     public JobParameters getJobParameters(final Job job,
-            final File workingDirectory)
+            final File workingDirectory, final String setupScript)
             throws UnsupportedJobException, JobParametersFactoryException {
         // Test that there is a URL
         final String jobCodeLocation = job.getCode().trim();
@@ -36,7 +35,8 @@ class GitPyNNJobParametersFactory extends JobParametersFactory {
 
         // Try to get the repository
         try {
-            return constructParameters(job, workingDirectory, jobCodeLocation);
+            return constructParameters(job, workingDirectory, jobCodeLocation,
+                    setupScript);
         } catch (final InvalidRemoteException e) {
             throw new JobParametersFactoryException("Remote is not valid", e);
         } catch (final TransportException e) {
@@ -55,6 +55,7 @@ class GitPyNNJobParametersFactory extends JobParametersFactory {
      * @param job The job to get the parameters of
      * @param workingDirectory The directory where the job should be run
      * @param experimentDescription The git URL
+     * @param setupScript The setup script to run
      * @return The constructed parameters
      * @throws GitAPIException If there is a general problem using Git
      * @throws InvalidRemoteException If there is a problem with the repository
@@ -62,7 +63,8 @@ class GitPyNNJobParametersFactory extends JobParametersFactory {
      * @throws URISyntaxException If the URI syntax is incorrect
      */
     private JobParameters constructParameters(final Job job,
-            final File workingDirectory, final String experimentDescription)
+            final File workingDirectory, final String experimentDescription,
+            final String setupScript)
             throws GitAPIException, InvalidRemoteException, TransportException,
             URISyntaxException {
         final CloneCommand clone = cloneRepository();
@@ -86,7 +88,7 @@ class GitPyNNJobParametersFactory extends JobParametersFactory {
             script = command;
         }
 
-        return new PyNNJobParameters(workingDirectory.getAbsolutePath(), script,
-                new PyNNHardwareConfiguration(job.getHardwareConfig()));
+        return new PyNNJobParameters(workingDirectory.getAbsolutePath(),
+                setupScript, script, job.getHardwareConfig());
     }
 }

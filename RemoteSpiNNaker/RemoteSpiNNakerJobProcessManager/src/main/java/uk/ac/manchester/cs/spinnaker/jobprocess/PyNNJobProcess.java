@@ -4,7 +4,6 @@ import static java.util.Objects.requireNonNull;
 import static org.apache.commons.io.FileUtils.listFiles;
 import static org.apache.commons.io.FilenameUtils.getExtension;
 import static org.apache.commons.io.IOUtils.closeQuietly;
-import static org.eclipse.jgit.api.Git.cloneRepository;
 import static uk.ac.manchester.cs.spinnaker.job.Status.Error;
 import static uk.ac.manchester.cs.spinnaker.job.Status.Finished;
 import static uk.ac.manchester.cs.spinnaker.job.Status.Running;
@@ -21,11 +20,11 @@ import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -40,14 +39,9 @@ import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.io.filefilter.AbstractFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
-import org.eclipse.jgit.api.CloneCommand;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.InvalidRemoteException;
-import org.eclipse.jgit.api.errors.TransportException;
 import org.ini4j.ConfigParser;
 
 import uk.ac.manchester.cs.spinnaker.job.Status;
-import uk.ac.manchester.cs.spinnaker.job.pynn.PyNNHardwareConfiguration;
 import uk.ac.manchester.cs.spinnaker.job.pynn.PyNNJobParameters;
 import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
 import uk.ac.manchester.cs.spinnaker.utils.ThreadUtils;
@@ -81,6 +75,11 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
      * The command to call to run the process.
      */
     private static final String SUBPROCESS_RUNNER = "python";
+
+    /**
+     * The command to call to run the setup process.
+     */
+    private static final String SETUP_RUNNER = "bash";
 
     /**
      * The time to wait for the process to finish.
@@ -117,65 +116,6 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         "router_provenance/total_dropped_packets",
         "router_provenance/total_missed_dropped_packets",
         "router_provenance/total_lost_dropped_packets"};
-
-    private static final String GITHUB =
-        "https://github.com/SpiNNakerManchester/";
-
-    private static final String[] REPOSITORIES = new String[]{
-        GITHUB + "SpiNNUtilities",
-        GITHUB + "SpiNNStorageHandlers",
-        GITHUB + "SpiNNMachine",
-        GITHUB + "DataSpecification",
-        GITHUB + "PACMAN",
-        GITHUB + "SpiNNMan",
-        GITHUB + "SpiNNFrontEndCommon",
-        GITHUB + "sPyNNaker",
-        GITHUB + "spinnaker_tools",
-        GITHUB + "spinn_common"
-    };
-
-    private static final String[] PYNN_7_REPOSITORIES = new String[]{
-        GITHUB + "sPyNNaker7"
-    };
-
-    private static final String[] PYNN_8_REPOSITORIES = new String[]{
-        GITHUB + "sPyNNaker8"
-    };
-
-    private static final String[] GFE_REPOSITORIES = new String[]{
-        GITHUB + "SpiNNakerGraphFrontEnd"
-    };
-
-    private static final String[] MAKE_DIRS = new String[]{
-        "spinnaker_tools",
-        "spinn_common",
-        "SpiNNMan/c_models",
-        "SpiNNFrontEndCommon/c_common",
-        "sPyNNaker/neural_modelling"
-    };
-
-    private static final String[] PYTHON_SETUP_DIRS = new String[]{
-        "SpiNNUtilities",
-        "SpiNNStorageHandlers",
-        "SpiNNMachine",
-        "DataSpecification",
-        "PACMAN",
-        "SpiNNMan",
-        "SpiNNFrontEndCommon",
-        "sPyNNaker"
-    };
-
-    private static final String[] PYNN_7_SETUP_DIRS = new String[]{
-        "sPyNNaker7"
-    };
-
-    private static final String[] PYNN_8_SETUP_DIRS = new String[]{
-        "sPyNNaker8"
-    };
-
-    private static final String[] GFE_SETUP_DIRS = new String[]{
-
-    };
 
     /**
      * The directory where the process is executed.
@@ -247,89 +187,6 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         };
     }
 
-    private void doGitClone(PyNNHardwareConfiguration config)
-            throws InvalidRemoteException, TransportException, GitAPIException {
-        List<String> allRepositories =
-            new ArrayList<>(Arrays.asList(REPOSITORIES));
-        if (config.getPyNNVersion().equals(
-                PyNNHardwareConfiguration.PYNN_0_8)) {
-            allRepositories.addAll(Arrays.asList(PYNN_8_REPOSITORIES));
-        } else if (config.getPyNNVersion().equals(
-                PyNNHardwareConfiguration.PYNN_0_7)) {
-            allRepositories.addAll(Arrays.asList(PYNN_7_REPOSITORIES));
-        } else {
-            throw new RuntimeException(
-                "Unknown " + PyNNHardwareConfiguration.PYNN_VERSION_KEY +
-                ": " + config.getPyNNVersion());
-        }
-        for (String repo : allRepositories) {
-            final CloneCommand clone = cloneRepository();
-            clone.setURI(repo);
-            clone.setDirectory(workingDirectory);
-            clone.setCloneSubmodules(true);
-            clone.setBranch(config.getSoftwareVersion());
-            clone.call();
-        }
-    }
-
-    /**
-     * Read the output and put it in the log.
-     * @param process The process to read
-     * @param logWriter The writer to write to
-     * @throws IOException If something goes wrong
-     */
-    private void readOutputToLog(final Process process,
-            final LogWriter logWriter) throws IOException {
-        BufferedReader reader = new BufferedReader(
-            new InputStreamReader(process.getInputStream()));
-        String line = reader.readLine();
-        while (line != null) {
-            logWriter.append(line);
-            logWriter.append("\n");
-            line = reader.readLine();
-        }
-    }
-
-    private void run(File workingDir, LogWriter logWriter, String... command)
-            throws IOException {
-        ProcessBuilder processBuilder = new ProcessBuilder(
-            command);
-        processBuilder.directory(workingDir);
-        processBuilder.redirectErrorStream(true);
-        Process process = processBuilder.start();
-        try {
-            readOutputToLog(process, logWriter);
-        } finally {
-            process.destroy();
-        }
-    }
-
-    public void doMake(PyNNHardwareConfiguration config, LogWriter logWriter)
-            throws IOException {
-        List<String> makeDirs = new ArrayList<>(Arrays.asList(MAKE_DIRS));
-        makeDirs.addAll(Arrays.asList(config.getMakeDirs()));
-        for (String dir : makeDirs) {
-            File fileDir = new File(workingDirectory, dir);
-            run(workingDirectory, logWriter, "make", "-C",
-                    fileDir.getAbsolutePath());
-            run(workingDirectory, logWriter, "make", "-C",
-                    fileDir.getAbsolutePath(), "install");
-        }
-    }
-
-    public void doPythonSetup(
-            PyNNHardwareConfiguration config, LogWriter logWriter)
-            throws IOException {
-        List<String> setupDirs = new ArrayList<>(
-            Arrays.asList(PYTHON_SETUP_DIRS));
-        setupDirs.addAll(Arrays.asList(config.getPythonSetupDirs()));
-        for (String dir : setupDirs) {
-            File workingDir = new File(workingDirectory, dir);
-            run(workingDir, logWriter, "python", "setup.py", "install",
-                "--user");
-        }
-    }
-
     /**
      * Executes the process.
      */
@@ -340,18 +197,14 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             status = Running;
             workingDirectory = new File(parameters.getWorkingDirectory());
 
-            // Do git clone
-            PyNNHardwareConfiguration config =
-                parameters.getHardwareConfiguration();
-            doGitClone(config);
+            // Run the setup
+            final int setupValue = runSetup(parameters, logWriter);
+            if (setupValue != 0) {
+                throw new Exception("Setup exited with non-zero error code + ("
+                        + setupValue + ")");
+            }
 
-            // Do make
-            doMake(config, logWriter);
-
-            // Do python setup
-            doPythonSetup(config, logWriter);
-
-            // TODO Deal with hardware configuration
+            // Create a spynnaker config file
             final File cfgFile = new File(workingDirectory, "spynnaker.cfg");
 
             // Add the details of the machine
@@ -417,6 +270,48 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
     }
 
     /**
+     * Run the setup process.
+     *
+     * @param parameters
+     *            The parameters to the setup process.
+     * @param logWriter
+     *            Where to send log messages.
+     * @return
+     *            The exit value of the process
+     * @throws IOException
+     *            If there was an error starting the process
+     * @throws InterruptedException
+     *            If the process was interrupted before return
+     */
+    private int runSetup(final PyNNJobParameters parameters,
+            final LogWriter logWriter)
+            throws IOException, InterruptedException {
+        final List<String> command = new ArrayList<>();
+        command.add(SETUP_RUNNER);
+        command.add(parameters.getSetupScript());
+
+        // Build a process
+        final ProcessBuilder builder = new ProcessBuilder(command);
+        builder.directory(workingDirectory);
+        builder.redirectErrorStream(true);
+        for (Entry<String, Object> entry
+                : parameters.getHardwareConfiguration().entrySet()) {
+            builder.environment().put(entry.getKey(),
+                    entry.getValue().toString());
+        }
+        final Process process = builder.start();
+
+        // Run a thread to gather the log
+        try (ReaderLogWriter logger =
+                new ReaderLogWriter(process.getInputStream(), logWriter)) {
+            logger.start();
+
+            // Wait for the process to finish
+            return process.waitFor();
+        }
+    }
+
+    /**
      * How to actually run a subprocess.
      *
      * @param parameters
@@ -437,7 +332,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         command.add(SUBPROCESS_RUNNER);
 
         final Matcher scriptMatcher =
-                ARGUMENT_FINDER.matcher(parameters.getScript());
+                ARGUMENT_FINDER.matcher(parameters.getUserScript());
         while (scriptMatcher.find()) {
             command.add(
                     scriptMatcher.group(1).replace("{system}", "spiNNaker"));
