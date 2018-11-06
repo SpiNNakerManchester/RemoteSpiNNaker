@@ -225,7 +225,8 @@ public class JobProcessManager {
 
             // Download the setup script
             final File setupScript = downloadFile(
-                    serverUrl + "/" + JobManagerInterface.SETUP_SCRIPT,
+                    serverUrl + JobManagerInterface.PATH
+                    + "/" + JobManagerInterface.SETUP_SCRIPT,
                     workingDirectory, JobManagerInterface.SETUP_SCRIPT);
 
 

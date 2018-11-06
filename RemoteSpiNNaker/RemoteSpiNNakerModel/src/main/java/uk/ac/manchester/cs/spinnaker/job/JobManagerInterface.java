@@ -27,8 +27,12 @@ import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
 /**
  * JAX-RS interface to a {@link Job} for the purposes of management.
  */
-@Path("/job")
+@Path(JobManagerInterface.PATH)
 public interface JobManagerInterface {
+
+    /** The path to the interface. **/
+    String PATH = "/job";
+
     /** The media type of ZIP files. */
     String APPLICATION_ZIP = "application/zip";
 
