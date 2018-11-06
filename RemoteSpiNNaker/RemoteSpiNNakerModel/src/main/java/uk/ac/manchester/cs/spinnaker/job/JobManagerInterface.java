@@ -31,7 +31,7 @@ import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
 public interface JobManagerInterface {
 
     /** The path to the interface. **/
-    String PATH = "/job";
+    String PATH = "job";
 
     /** The media type of ZIP files. */
     String APPLICATION_ZIP = "application/zip";

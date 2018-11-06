@@ -224,9 +224,10 @@ public class JobProcessManager {
             final File workingDirectory = createTempDir("job", ".tmp", null);
 
             // Download the setup script
-            final File setupScript = downloadFile(
-                    serverUrl + JobManagerInterface.PATH
-                    + "/" + JobManagerInterface.SETUP_SCRIPT,
+            String downloadUrl = serverUrl + JobManagerInterface.PATH
+                    + "/" + JobManagerInterface.SETUP_SCRIPT;
+            log("Downloading setup script from" + downloadUrl);
+            final File setupScript = downloadFile(downloadUrl,
                     workingDirectory, JobManagerInterface.SETUP_SCRIPT);
 
 
