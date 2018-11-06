@@ -226,7 +226,7 @@ public class JobProcessManager {
             // Download the setup script
             String downloadUrl = serverUrl + JobManagerInterface.PATH
                     + "/" + JobManagerInterface.SETUP_SCRIPT;
-            log("Downloading setup script from" + downloadUrl);
+            log("Downloading setup script from " + downloadUrl);
             final File setupScript = downloadFile(downloadUrl,
                     workingDirectory, JobManagerInterface.SETUP_SCRIPT);
 
@@ -253,6 +253,7 @@ public class JobProcessManager {
             // Get the exit status
             processOutcome(workingDirectory, process, logWriter.getLog());
         } catch (final Exception error) {
+            log(error);
             reportFailure(error);
             exit(1);
         }
