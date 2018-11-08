@@ -13,13 +13,10 @@ pipinstall() {
 gitclone() {
     REPO=$1
     BRANCH=$2
-    TARGET=$3
-    git ls-remote --exit-code $REPO $BRANCH > /dev/null
-    if [ $? -eq 2 ]; then
-        BRANCH="master"
-    fi
-    echo "Cloning $REPO@$BRANCH"
-    git clone --branch $BRANCH $REPO $TARGET > /tmp/last_git.tmp 2>&1
+    PREFIX=$3
+    version=$(python support/find_closest_git_version.py $REPO $BRANCH $PREFIX)
+    echo "Cloning $REPO@$version"
+    git clone --branch $version $REPO > /tmp/last_git.tmp 2>&1
     LAST_ERROR=$?
     if [ $LAST_ERROR -ne 0 ]; then
         cat /tmp/last_git.tmp
@@ -67,8 +64,12 @@ setuppynn() {
     fi
 }
 
+
+# Get support scripts
+git clone https://github.com/SpiNNakerManchester/SupportScripts support
+
 # Get SpiNNMan to determine SCAMP version
-spynnaker_version=${spynnaker_version:-4.0.0}
+spynnaker_version=${spynnaker_version:-4.0.1}
 gitclone https://github.com/SpiNNakerManchester/SpiNNMan.git $spynnaker_version
 
 # Setup Variables from environment
@@ -86,7 +87,7 @@ pipinstall --upgrade pip setuptools wheel
 pipinstall --only-binary=numpy,scipy,matplotlib numpy scipy matplotlib
 
 # Get SpiNNaker Tools
-gitclone https://github.com/SpiNNakerManchester/spinnaker_tools.git $spinnaker_tools_version
+gitclone https://github.com/SpiNNakerManchester/spinnaker_tools.git $spinnaker_tools_version v
 
 # Get the rest of the tools
 gitclone https://github.com/SpiNNakerManchester/SpiNNUtils.git $spynnaker_version
@@ -144,7 +145,7 @@ for to_make in $makes; do
 done
 
 # Run any additional python setups
-python_setups=$(echo extra_python_setups | jq ".[]")
+python_setups=$(echo $extra_python_setups | jq ".[]")
 for python_setup in $python_setups; do
     dosetup $python_setup
 done
