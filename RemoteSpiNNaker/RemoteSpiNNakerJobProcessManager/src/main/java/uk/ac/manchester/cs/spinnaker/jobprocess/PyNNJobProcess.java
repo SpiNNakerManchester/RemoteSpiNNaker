@@ -41,6 +41,8 @@ import org.apache.commons.io.filefilter.AbstractFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.ini4j.ConfigParser;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import uk.ac.manchester.cs.spinnaker.job.Status;
 import uk.ac.manchester.cs.spinnaker.job.pynn.PyNNJobParameters;
 import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
@@ -294,10 +296,17 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         final ProcessBuilder builder = new ProcessBuilder(command);
         builder.directory(workingDirectory);
         builder.redirectErrorStream(true);
+        ObjectMapper mapper = new ObjectMapper();
         for (Entry<String, Object> entry
                 : parameters.getHardwareConfiguration().entrySet()) {
-            builder.environment().put(entry.getKey(),
-                    entry.getValue().toString());
+            String stringValue = null;
+            Object value = entry.getValue();
+            if (value instanceof String) {
+                stringValue = (String) value;
+            } else {
+                stringValue = mapper.writeValueAsString(value);
+            }
+            builder.environment().put(entry.getKey(), stringValue);
         }
         final Process process = builder.start();
 
