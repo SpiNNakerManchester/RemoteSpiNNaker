@@ -39,6 +39,7 @@ import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.BasicClientConnectionManager;
+import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
@@ -76,6 +77,14 @@ public abstract class RestClientUtils {
      * Default port for HTTPS.
      */
     private static final int HTTPS_PORT = 443;
+    /**
+     * The maximum total connections to allow.
+     */
+    private static final int MAX_CONNECTIONS = 2000;
+    /**
+     * The maximum total connections per route.
+     */
+    private static final int MAX_CONNECTIONS_PER_ROUTE = 200;
 
     /**
      * Logging.
@@ -101,8 +110,10 @@ public abstract class RestClientUtils {
                     credentials, authScheme);
 
             // Set up the connection
-            final ClientConnectionManager cm = new BasicClientConnectionManager(
-                    schemeRegistry);
+            final PoolingClientConnectionManager cm =
+                    new PoolingClientConnectionManager(schemeRegistry);
+            cm.setMaxTotal(MAX_CONNECTIONS);
+            cm.setDefaultMaxPerRoute(MAX_CONNECTIONS_PER_ROUTE);
             final DefaultHttpClient httpClient = new DefaultHttpClient(cm);
             final ApacheHttpClient4Engine engine = new ApacheHttpClient4Engine(
                     httpClient, localContext);
