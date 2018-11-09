@@ -127,25 +127,25 @@ dosetup sPyNNaker8
 setuppynn
 
 # Pip install any additional dependencies
-pip_installs=$(echo $extra_pip_installs | jq ".[]")
+pip_installs=$(echo $extra_pip_installs | jq -r ".[]")
 for pip_install in $pip_installs; do
     pipinstall $pip_install
 done
 
 # Clone any additional git repositories
-git_repos=$(echo $extra_git_repositories | jq ".[]")
+git_repos=$(echo $extra_git_repositories | jq -r ".[]")
 for git_repo in $git_repos; do
     git clone $git_repo
 done
 
 # Make any additional C code
-makes=$(echo $extra_makes | jq ".[]")
+makes=$(echo $extra_makes | jq -r ".[]")
 for to_make in $makes; do
     domake $to_make
 done
 
 # Run any additional python setups
-python_setups=$(echo $extra_python_setups | jq ".[]")
+python_setups=$(echo $extra_python_setups | jq -r ".[]")
 for python_setup in $python_setups; do
     dosetup $python_setup
 done
