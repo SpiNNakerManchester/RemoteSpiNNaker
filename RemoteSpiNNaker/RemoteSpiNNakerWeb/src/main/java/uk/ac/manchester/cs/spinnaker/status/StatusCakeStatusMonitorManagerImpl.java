@@ -48,6 +48,7 @@ public class StatusCakeStatusMonitorManagerImpl
 
     @Override
     public void updateStatus(final int runningJobs, final int nBoardsInUse) {
+        System.err.println("Updating to Status Cake");
         statusCake.pushUpdate(primaryKey, testID, nBoardsInUse);
     }
 }
