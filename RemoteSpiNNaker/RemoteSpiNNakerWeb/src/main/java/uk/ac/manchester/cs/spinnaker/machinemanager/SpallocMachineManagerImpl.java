@@ -704,7 +704,8 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
             throws IOException {
         final JobMachineInfo info = job.getMachineInfo();
         return new SpinnakerMachine(info.getConnections().get(0).getHostname(),
-                MACHINE_VERSION, info.getWidth(), info.getHeight(), 1, null);
+                MACHINE_VERSION, info.getWidth(), info.getHeight(),
+                info.getConnections().size(), null);
     }
 
     /**

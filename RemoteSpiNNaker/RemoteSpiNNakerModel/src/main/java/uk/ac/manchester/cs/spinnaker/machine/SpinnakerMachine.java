@@ -148,9 +148,9 @@ public class SpinnakerMachine
      * @param versionParam
      *            The version of the machine
      * @param widthParam
-     *            The width of the machine, in boards
+     *            The width of the machine, in chips
      * @param heightParam
-     *            The width of the machine, in boards
+     *            The width of the machine, in chips
      * @param numBoardsParam
      *            The number of boards in the machine
      * @param bmpDetailsParam
@@ -207,7 +207,7 @@ public class SpinnakerMachine
     }
 
     /**
-     * Gets the width of the machine.
+     * Gets the width of the machine in chips.
      *
      * @return The width of the machine
      */
@@ -216,7 +216,7 @@ public class SpinnakerMachine
     }
 
     /**
-     * Sets the width of the machine.
+     * Sets the width of the machine in chips.
      *
      * @param widthParam
      *            The width of the machine
@@ -226,7 +226,7 @@ public class SpinnakerMachine
     }
 
     /**
-     * Gets the height of the machine.
+     * Gets the height of the machine in chips.
      *
      * @return The height of the machine
      */
@@ -235,7 +235,7 @@ public class SpinnakerMachine
     }
 
     /**
-     * Sets the height of the machine.
+     * Sets the height of the machine in chips.
      *
      * @param heightParam
      *            The height of the machine

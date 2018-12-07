@@ -22,7 +22,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
 import javax.ws.rs.WebApplicationException;
@@ -49,6 +52,7 @@ import uk.ac.manchester.cs.spinnaker.machinemanager.MachineManager;
 import uk.ac.manchester.cs.spinnaker.nmpi.NMPIQueueListener;
 import uk.ac.manchester.cs.spinnaker.nmpi.NMPIQueueManager;
 import uk.ac.manchester.cs.spinnaker.rest.OutputManager;
+import uk.ac.manchester.cs.spinnaker.status.StatusMonitorManager;
 
 /**
  * The manager of jobs; synchronises and manages all the ongoing and future
@@ -83,6 +87,11 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     private static final double SCALE_UP_THRESHOLD = 0.1;
 
     /**
+     * Seconds between status updates.
+     */
+    private static final int STATUS_UPDATE_PERIOD = 10;
+
+    /**
      * The name of the JAR containing the job process manager implementation.
      */
     public static final String JOB_PROCESS_MANAGER_JAR =
@@ -105,6 +114,12 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
      */
     @Autowired
     private OutputManager outputManager;
+
+    /**
+     * The status updater.
+     */
+    @Autowired
+    private StatusMonitorManager statusMonitorManager;
 
     /**
      * The base URL of the REST service.
@@ -193,6 +208,10 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         // Start the queue manager
         queueManager.addListener(this);
         new Thread(threadGroup, queueManager, "QueueManager").start();
+        ScheduledExecutorService scheduler =
+                Executors.newScheduledThreadPool(1);
+        scheduler.scheduleAtFixedRate(new StatusUpdater(),
+                0, STATUS_UPDATE_PERIOD, TimeUnit.SECONDS);
     }
 
     @Override
@@ -799,5 +818,26 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
                 setupScript.getInputStream();
         return Response.ok(setupScriptStream).type(
                 APPLICATION_OCTET_STREAM).build();
+    }
+
+    /**
+     * Updates the status.
+     */
+    private class StatusUpdater implements Runnable {
+
+        @Override
+        public void run() {
+            int nBoardsInUse = 0;
+            synchronized (allocatedMachines) {
+                for (List<SpinnakerMachine> machines
+                        : allocatedMachines.values()) {
+                    for (SpinnakerMachine machine : machines) {
+                        nBoardsInUse += machine.getnBoards();
+                    }
+                }
+            }
+            statusMonitorManager.updateStatus(
+                    jobExecuters.size(), nBoardsInUse);
+        }
     }
 }
