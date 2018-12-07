@@ -1,9 +1,12 @@
 package uk.ac.manchester.cs.spinnaker.status;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import javax.annotation.PostConstruct;
 
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 
 import uk.ac.manchester.cs.spinnaker.rest.StatusCake;
@@ -38,6 +41,11 @@ public class StatusCakeStatusMonitorManagerImpl
     private String testID;
 
     /**
+     * Logging.
+     */
+    private final Logger logger = getLogger(getClass());
+
+    /**
      * Initialise the service.
      */
     @PostConstruct
@@ -48,7 +56,11 @@ public class StatusCakeStatusMonitorManagerImpl
 
     @Override
     public void updateStatus(final int runningJobs, final int nBoardsInUse) {
-        System.err.println("Updating to Status Cake");
-        statusCake.pushUpdate(primaryKey, testID, nBoardsInUse);
+        logger.info("Updating to Status Cake");
+        try {
+            statusCake.pushUpdate(primaryKey, testID, nBoardsInUse);
+        } catch (Throwable e) {
+            logger.error("Error updating to Status Cake", e);
+        }
     }
 }
