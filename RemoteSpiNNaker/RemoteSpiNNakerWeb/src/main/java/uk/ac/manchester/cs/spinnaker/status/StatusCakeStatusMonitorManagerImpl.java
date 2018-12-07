@@ -21,7 +21,7 @@ public class StatusCakeStatusMonitorManagerImpl
     /**
      * The URL of the service.
      */
-    private static final String SERVICE_URL = "http://push.statuscacke.com/";
+    private static final String SERVICE_URL = "http://push.statuscake.com/";
 
     /**
      * The REST API to call.
@@ -56,7 +56,7 @@ public class StatusCakeStatusMonitorManagerImpl
 
     @Override
     public void updateStatus(final int runningJobs, final int nBoardsInUse) {
-        logger.info("Updating to Status Cake");
+        logger.debug("Updating to Status Cake");
         try {
             statusCake.pushUpdate(primaryKey, testID, nBoardsInUse);
         } catch (Throwable e) {
