@@ -21,7 +21,7 @@ public class StatusCakeStatusMonitorManagerImpl
     /**
      * The URL of the service.
      */
-    private static final String SERVICE_URL = "http://push.statuscake.com/";
+    private static final String SERVICE_URL = "https://push.statuscake.com/";
 
     /**
      * The REST API to call.
