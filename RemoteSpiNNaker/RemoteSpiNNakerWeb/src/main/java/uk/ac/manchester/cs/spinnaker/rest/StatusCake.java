@@ -20,7 +20,7 @@ public interface StatusCake {
     @GET
     @Path("")
     void pushUpdate(@QueryParam("PK") String primaryKey,
-            @QueryParam("testID") String testID,
+            @QueryParam("TestID") String testID,
             @QueryParam("time") int time);
 
 }
