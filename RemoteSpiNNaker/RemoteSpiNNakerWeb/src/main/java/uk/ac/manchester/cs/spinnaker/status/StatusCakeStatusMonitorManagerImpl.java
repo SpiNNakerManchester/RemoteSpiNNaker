@@ -2,11 +2,7 @@ package uk.ac.manchester.cs.spinnaker.status;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.IOException;
-
 import javax.annotation.PostConstruct;
-import javax.ws.rs.client.ClientRequestContext;
-import javax.ws.rs.client.ClientRequestFilter;
 
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
