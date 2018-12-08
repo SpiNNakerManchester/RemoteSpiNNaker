@@ -63,6 +63,7 @@ public class StatusCakeStatusMonitorManagerImpl
     @PostConstruct
     private void init() {
         final ResteasyClient client = new ResteasyClientBuilder().build();
+        client.register(new LoggingFilter());
         statusCake = client.target(SERVICE_URL).proxy(StatusCake.class);
     }
 
