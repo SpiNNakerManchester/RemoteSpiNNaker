@@ -2,7 +2,11 @@ package uk.ac.manchester.cs.spinnaker.status;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.IOException;
+
 import javax.annotation.PostConstruct;
+import javax.ws.rs.client.ClientRequestContext;
+import javax.ws.rs.client.ClientRequestFilter;
 
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
@@ -44,6 +48,14 @@ public class StatusCakeStatusMonitorManagerImpl
      * Logging.
      */
     private final Logger logger = getLogger(getClass());
+
+    public class LoggingFilter implements ClientRequestFilter {
+
+        @Override
+        public void filter(ClientRequestContext requestContext) throws IOException {
+            logger.info(requestContext.getUri().toString());
+        }
+    }
 
     /**
      * Initialise the service.
