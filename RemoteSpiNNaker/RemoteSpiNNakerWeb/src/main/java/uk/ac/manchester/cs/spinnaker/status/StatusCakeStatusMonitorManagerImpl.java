@@ -49,21 +49,12 @@ public class StatusCakeStatusMonitorManagerImpl
      */
     private final Logger logger = getLogger(getClass());
 
-    public class LoggingFilter implements ClientRequestFilter {
-
-        @Override
-        public void filter(ClientRequestContext requestContext) throws IOException {
-            logger.info(requestContext.getUri().toString());
-        }
-    }
-
     /**
      * Initialise the service.
      */
     @PostConstruct
     private void init() {
         final ResteasyClient client = new ResteasyClientBuilder().build();
-        client.register(new LoggingFilter());
         statusCake = client.target(SERVICE_URL).proxy(StatusCake.class);
     }
 
