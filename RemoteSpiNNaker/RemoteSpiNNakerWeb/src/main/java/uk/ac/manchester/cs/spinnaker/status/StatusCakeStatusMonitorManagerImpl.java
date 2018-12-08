@@ -35,13 +35,13 @@ public class StatusCakeStatusMonitorManagerImpl
     /**
      * The Primary Key to use for updates.
      */
-    @Value("statusCake.primaryKey")
+    @Value("${statusCake.primaryKey}")
     private String primaryKey;
 
     /**
      * The Test ID to use for updates.
      */
-    @Value("statusCake.testID")
+    @Value("${statusCake.testID}")
     private String testID;
 
     /**
