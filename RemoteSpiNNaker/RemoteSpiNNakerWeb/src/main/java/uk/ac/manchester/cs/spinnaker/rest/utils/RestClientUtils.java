@@ -11,6 +11,7 @@ import java.net.URL;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
@@ -73,6 +74,11 @@ public abstract class RestClientUtils {
     private static final int MAX_CONNECTIONS_PER_ROUTE = 200;
 
     /**
+     * The timeout of socket operation in seconds.
+     */
+    private static final long TIMEOUT = 60;
+
+    /**
      * Logging.
      */
     private static Logger log = getLogger(RestClientUtils.class);
@@ -112,6 +118,8 @@ public abstract class RestClientUtils {
 
             // Create and return a client
             final ResteasyClient client = new ResteasyClientBuilder()
+                    .establishConnectionTimeout(TIMEOUT, TimeUnit.SECONDS)
+                    .socketTimeout(TIMEOUT, TimeUnit.SECONDS)
                     .httpEngine(engine).build();
             client.register(new ErrorCaptureResponseFilter());
             return client;

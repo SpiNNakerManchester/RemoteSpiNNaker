@@ -2,6 +2,8 @@ package uk.ac.manchester.cs.spinnaker.status;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.concurrent.TimeUnit;
+
 import javax.annotation.PostConstruct;
 
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
@@ -22,6 +24,11 @@ public class StatusCakeStatusMonitorManagerImpl
      * The URL of the service.
      */
     private static final String SERVICE_URL = "https://push.statuscake.com/";
+
+    /**
+     * The Timeout of socket operations in seconds.
+     */
+    private static final long TIMEOUT = 60;
 
     /**
      * The REST API to call.
@@ -50,7 +57,9 @@ public class StatusCakeStatusMonitorManagerImpl
      */
     @PostConstruct
     private void init() {
-        final ResteasyClient client = new ResteasyClientBuilder().build();
+        final ResteasyClient client = new ResteasyClientBuilder().
+                establishConnectionTimeout(TIMEOUT, TimeUnit.SECONDS).
+                socketTimeout(TIMEOUT, TimeUnit.SECONDS).build();
         statusCake = client.target(SERVICE_URL).proxy(StatusCake.class);
     }
 
