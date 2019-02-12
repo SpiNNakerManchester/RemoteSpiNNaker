@@ -148,7 +148,7 @@ public class DirectClientAuthenticationFilter extends OncePerRequestFilter {
      * @param context The encapsulation of the request and response.
      * @return The credentials, or {@code null} if none suitable are found.
      */
-    private Credentials getCredentials(WebContext context) {
+    private Credentials getCredentials(final WebContext context) {
         try {
             return client.getCredentials(context);
         } catch (final RequiresHttpAction e) {
