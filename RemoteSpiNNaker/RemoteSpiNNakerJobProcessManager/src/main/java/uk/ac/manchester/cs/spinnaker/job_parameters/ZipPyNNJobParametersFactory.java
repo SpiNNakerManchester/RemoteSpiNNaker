@@ -27,7 +27,7 @@ import uk.ac.manchester.cs.spinnaker.job.pynn.PyNNJobParameters;
 class ZipPyNNJobParametersFactory extends JobParametersFactory {
     @Override
     public JobParameters getJobParameters(final Job job,
-            final File workingDirectory)
+            final File workingDirectory, final String setupScript)
             throws UnsupportedJobException, JobParametersFactoryException {
         // Test that there is a URL
         final String jobCodeLocation = job.getCode().trim();
@@ -46,7 +46,7 @@ class ZipPyNNJobParametersFactory extends JobParametersFactory {
 
         // Try to get the file and extract it
         try {
-            return constructParameters(job, workingDirectory, url);
+            return constructParameters(job, workingDirectory, url, setupScript);
         } catch (final IOException e) {
             log(e);
             throw new JobParametersFactoryException(
@@ -133,13 +133,15 @@ class ZipPyNNJobParametersFactory extends JobParametersFactory {
      * @param job The job to build the parameters for
      * @param workingDirectory The directory where the job should be run
      * @param url The URL of the archive to use
+     * @param setupScript The setup script
      * @return The constructed parameters
      * @throws IOException If there is an error with the file
      * @throws JobParametersFactoryException If no way to uncompress the file
      *     could be found
      */
     private JobParameters constructParameters(final Job job,
-            final File workingDirectory, final URL url)
+            final File workingDirectory, final URL url,
+            final String setupScript)
             throws IOException, JobParametersFactoryException {
         final File output = downloadFile(url, workingDirectory, null);
 
@@ -181,7 +183,7 @@ class ZipPyNNJobParametersFactory extends JobParametersFactory {
             script = command;
         }
 
-        return new PyNNJobParameters(workingDirectory.getAbsolutePath(), script,
-                job.getHardwareConfig());
+        return new PyNNJobParameters(workingDirectory.getAbsolutePath(),
+                setupScript, script, job.getHardwareConfig());
     }
 }

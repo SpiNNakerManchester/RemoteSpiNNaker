@@ -16,12 +16,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.io.Reader;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,6 +40,8 @@ import javax.xml.transform.stream.StreamSource;
 import org.apache.commons.io.filefilter.AbstractFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.ini4j.ConfigParser;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import uk.ac.manchester.cs.spinnaker.job.Status;
 import uk.ac.manchester.cs.spinnaker.job.pynn.PyNNJobParameters;
@@ -72,6 +77,11 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
      * The command to call to run the process.
      */
     private static final String SUBPROCESS_RUNNER = "python";
+
+    /**
+     * The command to call to run the setup process.
+     */
+    private static final String SETUP_RUNNER = "bash";
 
     /**
      * The time to wait for the process to finish.
@@ -189,7 +199,14 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             status = Running;
             workingDirectory = new File(parameters.getWorkingDirectory());
 
-            // TODO Deal with hardware configuration
+            // Run the setup
+            final int setupValue = runSetup(parameters, logWriter);
+            if (setupValue != 0) {
+                throw new Exception("Setup exited with non-zero error code + ("
+                        + setupValue + ")");
+            }
+
+            // Create a spynnaker config file
             final File cfgFile = new File(workingDirectory, "spynnaker.cfg");
 
             // Add the details of the machine
@@ -244,9 +261,62 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             }
             status = Finished;
         } catch (final Throwable e) {
+            StringWriter stringWriter = new StringWriter();
+            PrintWriter printWriter = new PrintWriter(stringWriter);
+            e.printStackTrace(printWriter);
+            logWriter.append(stringWriter.toString());
             e.printStackTrace();
             error = e;
             status = Error;
+        }
+    }
+
+    /**
+     * Run the setup process.
+     *
+     * @param parameters
+     *            The parameters to the setup process.
+     * @param logWriter
+     *            Where to send log messages.
+     * @return
+     *            The exit value of the process
+     * @throws IOException
+     *            If there was an error starting the process
+     * @throws InterruptedException
+     *            If the process was interrupted before return
+     */
+    private int runSetup(final PyNNJobParameters parameters,
+            final LogWriter logWriter)
+            throws IOException, InterruptedException {
+        final List<String> command = new ArrayList<>();
+        command.add(SETUP_RUNNER);
+        command.add(parameters.getSetupScript());
+
+        // Build a process
+        final ProcessBuilder builder = new ProcessBuilder(command);
+        builder.directory(workingDirectory);
+        builder.redirectErrorStream(true);
+        ObjectMapper mapper = new ObjectMapper();
+        for (Entry<String, Object> entry
+                : parameters.getHardwareConfiguration().entrySet()) {
+            String stringValue = null;
+            Object value = entry.getValue();
+            if (value instanceof String) {
+                stringValue = (String) value;
+            } else {
+                stringValue = mapper.writeValueAsString(value);
+            }
+            builder.environment().put(entry.getKey(), stringValue);
+        }
+        final Process process = builder.start();
+
+        // Run a thread to gather the log
+        try (ReaderLogWriter logger =
+                new ReaderLogWriter(process.getInputStream(), logWriter)) {
+            logger.start();
+
+            // Wait for the process to finish
+            return process.waitFor();
         }
     }
 
@@ -271,7 +341,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         command.add(SUBPROCESS_RUNNER);
 
         final Matcher scriptMatcher =
-                ARGUMENT_FINDER.matcher(parameters.getScript());
+                ARGUMENT_FINDER.matcher(parameters.getUserScript());
         while (scriptMatcher.find()) {
             command.add(
                     scriptMatcher.group(1).replace("{system}", "spiNNaker"));

@@ -27,6 +27,8 @@ public abstract class JobParametersFactory {
      *            The job to be executed
      * @param workingDirectory
      *            The working directory where the job will be run
+     * @param setupScript
+     *            The setup script to run
      * @return A job description to be executed
      * @throws UnsupportedJobException
      *             If the factory does not support the job
@@ -34,7 +36,7 @@ public abstract class JobParametersFactory {
      *             If there was an error getting the parameters
      */
     public abstract JobParameters getJobParameters(Job job,
-            File workingDirectory)
+            File workingDirectory, String setupScript)
             throws UnsupportedJobException, JobParametersFactoryException;
 
     /** The factories for converting jobs into parameters. */
@@ -50,6 +52,8 @@ public abstract class JobParametersFactory {
      *            The job that these will be parameters for.
      * @param workingDirectory
      *            The working directory for the job.
+     * @param setupScript
+     *            The setup script.
      * @param errors
      *            What errors were found in the process of getting the
      *            parameters.
@@ -57,12 +61,13 @@ public abstract class JobParametersFactory {
      *         generated.
      */
     public static JobParameters getJobParameters(final Job job,
-            final File workingDirectory,
+            final File workingDirectory, final String setupScript,
             final Map<String, JobParametersFactoryException> errors) {
         for (final JobParametersFactory factory : JOB_PARAMETER_FACTORIES) {
             try {
                 final JobParameters parameters =
-                        factory.getJobParameters(job, workingDirectory);
+                        factory.getJobParameters(job, workingDirectory,
+                                setupScript);
                 if (parameters != null) {
                     return parameters;
                 }

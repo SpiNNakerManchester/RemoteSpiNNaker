@@ -2,22 +2,15 @@ package uk.ac.manchester.cs.spinnaker.rest.utils;
 
 import static org.apache.http.auth.AUTH.PROXY_AUTH_RESP;
 import static org.apache.http.auth.AUTH.WWW_AUTH_RESP;
-import static org.apache.http.auth.params.AuthParams.getCredentialCharset;
-import static org.apache.http.client.protocol.ClientContext.AUTH_CACHE;
-import static org.apache.http.client.protocol.ClientContext.CREDS_PROVIDER;
-import static org.apache.http.conn.ssl.SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER;
+import static org.apache.http.client.protocol.HttpClientContext.AUTH_CACHE;
+import static org.apache.http.client.protocol.HttpClientContext.CREDS_PROVIDER;
+import static org.apache.http.conn.ssl.SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URL;
 import java.security.KeyManagementException;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
@@ -29,16 +22,16 @@ import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.AuthCache;
 import org.apache.http.client.CredentialsProvider;
-import org.apache.http.conn.ClientConnectionManager;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.scheme.SchemeRegistry;
-import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLContextBuilder;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.auth.RFC2617Scheme;
 import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.BasicClientConnectionManager;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
@@ -57,8 +50,6 @@ import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
  * infrastructure required to allow this to work securely requires a lot of
  * interface changes (they'd have to supply the server's public certificate
  * chain as part of the job submission) and that's just awkward.
- *
- * @author Donal Fellows
  */
 public abstract class RestClientUtils {
 
@@ -73,9 +64,13 @@ public abstract class RestClientUtils {
      */
     public static final String SECURE_PROTOCOL = "TLS";
     /**
-     * Default port for HTTPS.
+     * The maximum total connections to allow.
      */
-    private static final int HTTPS_PORT = 443;
+    private static final int MAX_CONNECTIONS = 2000;
+    /**
+     * The maximum total connections per route.
+     */
+    private static final int MAX_CONNECTIONS_PER_ROUTE = 200;
 
     /**
      * Logging.
@@ -96,14 +91,22 @@ public abstract class RestClientUtils {
     protected static ResteasyClient createRestClient(final URL url,
             final Credentials credentials, final AuthScheme authScheme) {
         try {
-            final SchemeRegistry schemeRegistry = getSchemeRegistry();
             final HttpContext localContext = getConnectionContext(url,
                     credentials, authScheme);
 
             // Set up the connection
-            final ClientConnectionManager cm = new BasicClientConnectionManager(
-                    schemeRegistry);
-            final DefaultHttpClient httpClient = new DefaultHttpClient(cm);
+            final PoolingHttpClientConnectionManager cm =
+                    new PoolingHttpClientConnectionManager();
+            cm.setMaxTotal(MAX_CONNECTIONS);
+            cm.setDefaultMaxPerRoute(MAX_CONNECTIONS_PER_ROUTE);
+            SSLContextBuilder builder = new SSLContextBuilder();
+            builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
+            SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
+                    builder.build(), ALLOW_ALL_HOSTNAME_VERIFIER);
+            HttpClientBuilder httpClientBuilder = HttpClientBuilder.create();
+            httpClientBuilder.setConnectionManager(cm);
+            httpClientBuilder.setSSLSocketFactory(sslsf);
+            final CloseableHttpClient httpClient = httpClientBuilder.build();
             final ApacheHttpClient4Engine engine = new ApacheHttpClient4Engine(
                     httpClient, localContext);
 
@@ -112,7 +115,8 @@ public abstract class RestClientUtils {
                     .httpEngine(engine).build();
             client.register(new ErrorCaptureResponseFilter());
             return client;
-        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+        } catch (NoSuchAlgorithmException | KeyManagementException
+                | KeyStoreException e) {
             log.error("Cannot find basic SSL algorithms - "
                     + "this suggests a broken Java installation...");
             throw new RuntimeException("unexpectedly broken security", e);
@@ -151,82 +155,6 @@ public abstract class RestClientUtils {
         localContext.setAttribute(AUTH_CACHE, authCache);
         localContext.setAttribute(CREDS_PROVIDER, credsProvider);
         return localContext;
-    }
-
-    /**
-     * Hey, we trust everything!
-     *
-     * @param certs A certificate chain.
-     * @return Whether the certificate is trusted. It is! Always!
-     */
-    private static boolean checkTrusted(final X509Certificate[] certs) {
-        return true;
-    }
-
-    /**
-     * What issuers do we trust? None really, but we claim we do.
-     *
-     * @return The issuer certificate to trust. Or <tt>null</tt>.
-     */
-    private static X509Certificate getTrustedCert() {
-        return null;
-    }
-
-    /**
-     * A trust manager that believes everything it is told. This is how not to
-     * write a trust manager.
-     * @return the trusty trust manager
-     * @see #getSchemeRegistry()
-     */
-    private static TrustManager getGullableTrustManager() {
-        return new X509TrustManager() {
-            @Override
-            public void checkClientTrusted(final X509Certificate[] certs,
-                    final String authType) throws CertificateException {
-                // Does Nothing; we aren't deploying client-side certs
-            }
-
-            @Override
-            public void checkServerTrusted(final X509Certificate[] certs,
-                    final String authType) throws CertificateException {
-                if (!checkTrusted(certs)) {
-                    throw new CertificateException("untrusted server");
-                }
-            }
-
-            @Override
-            public X509Certificate[] getAcceptedIssuers() {
-                X509Certificate cert = getTrustedCert();
-                if (cert == null) {
-                    return null;
-                }
-                return new X509Certificate[] {
-                        cert };
-            }
-        };
-    }
-
-    /**
-     * Set up HTTPS to ignore certificate errors. This method is doing wicked
-     * things as it is using the gullable trust manager.
-     * <p>
-     * <i>Be aware that this method is doing very bad things; a trust-all trust
-     * manager is <b>entirely</b> doing it wrong, but the reality of academic
-     * security is that it is the only sane option.</i>
-     *
-     * @return The scheme registry
-     * @throws NoSuchAlgorithmException If TLS is unsupported
-     * @throws KeyManagementException If something goes wrong
-     */
-    private static SchemeRegistry getSchemeRegistry()
-            throws NoSuchAlgorithmException, KeyManagementException {
-        SSLContext sslContext = SSLContext.getInstance(SECURE_PROTOCOL);
-        sslContext.init(null, new TrustManager[] {
-                getGullableTrustManager() }, new SecureRandom());
-        SchemeRegistry schemeRegistry = new SchemeRegistry();
-        schemeRegistry.register(new Scheme("https", HTTPS_PORT,
-                new SSLSocketFactory(sslContext, ALLOW_ALL_HOSTNAME_VERIFIER)));
-        return schemeRegistry;
     }
 
     /**
@@ -419,10 +347,6 @@ public abstract class RestClientUtils {
             if (request == null) {
                 throw new IllegalArgumentException(
                         "HTTP request may not be null");
-            }
-            final String charset = getCredentialCharset(request.getParams());
-            if (charset == null) {
-                throw new IllegalArgumentException("charset may not be null");
             }
 
             return authenticate(credentials);
