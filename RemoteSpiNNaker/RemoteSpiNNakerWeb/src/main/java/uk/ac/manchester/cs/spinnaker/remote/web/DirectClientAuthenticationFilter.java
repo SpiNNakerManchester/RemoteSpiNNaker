@@ -132,40 +132,51 @@ public class DirectClientAuthenticationFilter extends OncePerRequestFilter {
         final WebContext context = new J2EContext(request, response);
 
         // get credentials
-        Credentials credentials = null;
-        try {
-            credentials = client.getCredentials(context);
-        } catch (final RequiresHttpAction e) {
-            logger.info("Requires additionnal HTTP action", e);
-        } catch (final CredentialsException ce) {
-            throw new AuthenticationCredentialsException(
-                    "Error retrieving credentials", ce);
-        }
-
+        final Credentials credentials = getCredentials(context);
         logger.debug("credentials : {}", credentials);
 
         // if credentials/profile is not null, do more
         if (credentials != null) {
-            authenticateCredentials(request, response, credentials);
+            authenticateCredentials(context, request, response, credentials);
         }
 
         filterChain.doFilter(request, response);
     }
 
     /**
+     * Get the credentials from the context.
+     * @param context The encapsulation of the request and response.
+     * @return The credentials, or {@code null} if none suitable are found.
+     */
+    private Credentials getCredentials(WebContext context) {
+        try {
+            return client.getCredentials(context);
+        } catch (final RequiresHttpAction e) {
+            logger.info("Requires additional HTTP action", e);
+            return null;
+        } catch (final CredentialsException ce) {
+            throw new AuthenticationCredentialsException(
+                    "Error retrieving credentials", ce);
+        }
+    }
+
+    /**
      * Authenticate the given credentials.
+     * @param context The context.
      * @param request The request to authenticate.
      * @param response The response to pass back.
      * @param credentials The credentials being authenticated with.
      * @throws IOException If there is an issue
      * @throws ServletException If there is an issue
      */
-    private void authenticateCredentials(final HttpServletRequest request,
+    private void authenticateCredentials(final WebContext context,
+            final HttpServletRequest request,
             final HttpServletResponse response, final Credentials credentials)
             throws IOException, ServletException {
         // create token from credential
         final ClientAuthenticationToken token =
-                new ClientAuthenticationToken(credentials, client.getName());
+                new ClientAuthenticationToken(credentials, client.getName(),
+                        context);
         token.setDetails(detailsSource.buildDetails(request));
 
         try {
