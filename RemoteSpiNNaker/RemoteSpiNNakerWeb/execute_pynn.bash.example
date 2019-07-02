@@ -1,0 +1,151 @@
+# Function to pip install a branch/tag or master if doesn't exist
+pipinstall() {
+    echo "pip install $@"
+    pip install $@ > /tmp/last_pip.tmp 2>&1
+    LAST_ERROR=$?
+    if [ $LAST_ERROR -ne 0 ]; then
+        cat /tmp/last_pip.tmp
+        exit $LAST_ERROR
+    fi
+}
+
+# Function to git clone a branch/tag or master if doesn't exist
+gitclone() {
+    REPO=$1
+    BRANCH=$2
+    PREFIX=$3
+    version=$(python support/find_closest_git_version.py $REPO $BRANCH $PREFIX)
+    echo "Cloning $REPO@$version"
+    git clone --branch $version $REPO > /tmp/last_git.tmp 2>&1
+    LAST_ERROR=$?
+    if [ $LAST_ERROR -ne 0 ]; then
+        cat /tmp/last_git.tmp
+        exit $LAST_ERROR
+    fi
+}
+
+domake() {
+    DIR=$1
+    GOAL=$2
+    echo "Building $GOAL in $DIR"
+    make -C $DIR $GOAL > /tmp/last_make.tmp 2>&1
+    LAST_ERROR=$?
+    if [ $LAST_ERROR -ne 0 ]; then
+        cat /tmp/last_make.tmp
+        exit $LAST_ERROR
+    fi
+}
+
+dosetup() {
+    DIR=$1
+    echo "Setting up $DIR"
+    (cd $DIR; python setup.py install > /tmp/last_setup.tmp 2>&1 )
+    LAST_ERROR=$?
+    if [ $LAST_ERROR -ne 0 ]; then
+        cat /tmp/last_setup.tmp
+        exit $LAST_ERROR
+    fi
+}
+
+setuppynn() {
+    echo "Setting up sPyNNaker PyNN Link"
+    python -m spynnaker8.setup_pynn > /tmp/setup_pynn_new.tmp 2>&1
+    LAST_ERROR=$?
+    if [ $LAST_ERROR -ne 0 ]; then
+        python -m spynnaker8.setup-pynn > /tmp/setup_pynn_old.tmp 2>&1
+        LAST_ERROR=$?
+        if [ $LAST_ERROR -ne 0 ]; then
+            echo "Old Error"
+            cat /tmp/setup_pynn_new.tmp
+            echo "New Error"
+            cat /tmp/setup_pynn_old.tmp
+            exit $LAST_ERROR
+        fi
+    fi
+}
+
+
+# Get support scripts
+git clone https://github.com/SpiNNakerManchester/SupportScripts support
+
+# Get SpiNNMan to determine SCAMP version
+spynnaker_version=${spynnaker_version:-4.0.1}
+gitclone https://github.com/SpiNNakerManchester/SpiNNMan.git $spynnaker_version
+
+# Setup Variables from environment
+version_string=$(strings SpiNNMan/spinnman/messages/spinnaker_boot/boot_data/scamp.boot | grep -A 1 "SC&MP/SpiNNaker")
+if [ -z "$spinnaker_tools_version" ]; then
+    if [ -z "$version_string" ]; then
+        spinnaker_tools_version=3.1.1
+    else
+        spinnaker_tools_version=$(echo $version_string | sed "s/SC&MP\/SpiNNaker /v/")
+    fi
+fi
+
+# Install and upgrade libraries
+pipinstall --upgrade pip setuptools wheel
+pipinstall --only-binary=numpy,scipy,matplotlib numpy scipy matplotlib
+
+# Get SpiNNaker Tools
+gitclone https://github.com/SpiNNakerManchester/spinnaker_tools.git $spinnaker_tools_version v
+
+# Get the rest of the tools
+gitclone https://github.com/SpiNNakerManchester/SpiNNUtils.git $spynnaker_version
+gitclone https://github.com/SpiNNakerManchester/SpiNNMachine.git $spynnaker_version
+gitclone https://github.com/SpiNNakerManchester/SpiNNStorageHandlers.git $spynnaker_version
+gitclone https://github.com/SpiNNakerManchester/PACMAN.git $spynnaker_version
+gitclone https://github.com/SpiNNakerManchester/DataSpecification.git $spynnaker_version
+gitclone https://github.com/SpiNNakerManchester/spalloc.git $spynnaker_version
+gitclone https://github.com/SpiNNakerManchester/spinn_common.git $spynnaker_version
+gitclone https://github.com/SpiNNakerManchester/SpiNNFrontEndCommon.git $spynnaker_version
+gitclone https://github.com/SpiNNakerManchester/sPyNNaker.git $spynnaker_version
+gitclone https://github.com/SpiNNakerManchester/sPyNNaker8.git $spynnaker_version
+
+# Build the C Code
+dosetup SpiNNUtils
+export SPINN_DIRS=${PWD}/spinnaker_tools
+export NEURAL_MODELLING_DIRS=${PWD}/sPyNNaker/neural_modelling
+domake $SPINN_DIRS
+domake spinn_common install
+if [ -e SpiNNMan/c_models ]; then
+    domake SpiNNMan/c_models
+fi
+domake SpiNNFrontEndCommon/c_common/
+domake SpiNNFrontEndCommon/c_common/ install
+domake sPyNNaker/neural_modelling/
+
+# Install the Python code (now with C binaries)
+dosetup SpiNNMachine
+dosetup SpiNNStorageHandlers
+dosetup SpiNNMan
+dosetup PACMAN
+dosetup DataSpecification
+dosetup spalloc
+dosetup SpiNNFrontEndCommon
+dosetup sPyNNaker
+dosetup sPyNNaker8
+setuppynn
+
+# Pip install any additional dependencies
+pip_installs=$(echo $extra_pip_installs | jq -r ".[]")
+for pip_install in $pip_installs; do
+    pipinstall $pip_install
+done
+
+# Clone any additional git repositories
+git_repos=$(echo $extra_git_repositories | jq -r ".[]")
+for git_repo in $git_repos; do
+    git clone $git_repo
+done
+
+# Make any additional C code
+makes=$(echo $extra_makes | jq -r ".[]")
+for to_make in $makes; do
+    domake $to_make
+done
+
+# Run any additional python setups
+python_setups=$(echo $extra_python_setups | jq -r ".[]")
+for python_setup in $python_setups; do
+    dosetup $python_setup
+done

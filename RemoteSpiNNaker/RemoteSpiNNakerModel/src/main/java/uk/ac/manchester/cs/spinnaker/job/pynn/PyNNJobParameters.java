@@ -17,9 +17,14 @@ public class PyNNJobParameters implements JobParameters {
     private String workingDirectory;
 
     /**
-     * The script to execute.
+     * The system (bash) script to be executed to setup the environment.
      */
-    private String script;
+    private String setupScript;
+
+    /**
+     * The user (python) script to eventually execute.
+     */
+    private String userScript;
 
     /**
      * The configuration of the hardware.
@@ -38,16 +43,19 @@ public class PyNNJobParameters implements JobParameters {
      *
      * @param workingDirectoryParam
      *            The working directory to use.
-     * @param scriptParam
-     *            The script to run.
+     * @param setupScriptParam
+     *            The setup script to run before execution
+     * @param userScriptParam
+     *            The user script to run.
      * @param hardwareConfigurationParam
      *            The hardware configuration desired.
      */
     public PyNNJobParameters(final String workingDirectoryParam,
-            final String scriptParam,
+            final String setupScriptParam, final String userScriptParam,
             final Map<String, Object> hardwareConfigurationParam) {
         this.workingDirectory = workingDirectoryParam;
-        this.script = scriptParam;
+        this.userScript = userScriptParam;
+        this.setupScript = setupScriptParam;
         this.hardwareConfiguration = hardwareConfigurationParam;
     }
 
@@ -70,21 +78,39 @@ public class PyNNJobParameters implements JobParameters {
     }
 
     /**
-     * Get the script.
+     * Get the setup script.
      *
      * @return the script
      */
-    public String getScript() {
-        return script;
+    public String getSetupScript() {
+        return setupScript;
     }
 
     /**
-     * Sets the script.
+     * Set the setup script.
      *
-     * @param scriptParam the script to set
+     * @param setupScriptParam the script
      */
-    public void setScript(final String scriptParam) {
-        this.script = scriptParam;
+    public void setSetupScript(final String setupScriptParam) {
+        this.setupScript = setupScriptParam;
+    }
+
+    /**
+     * Get the user script.
+     *
+     * @return the script
+     */
+    public String getUserScript() {
+        return userScript;
+    }
+
+    /**
+     * Sets the user script.
+     *
+     * @param userScriptParam the script to set
+     */
+    public void setUserScript(final String userScriptParam) {
+        this.userScript = userScriptParam;
     }
 
     /**

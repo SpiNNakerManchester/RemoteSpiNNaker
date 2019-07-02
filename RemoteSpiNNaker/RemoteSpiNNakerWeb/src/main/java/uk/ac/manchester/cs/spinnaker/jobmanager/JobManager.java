@@ -4,6 +4,7 @@ import static java.io.File.createTempFile;
 import static java.lang.Math.ceil;
 import static java.util.Objects.requireNonNull;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static org.apache.commons.io.FileUtils.copyInputStreamToFile;
 import static org.apache.commons.io.FileUtils.forceDelete;
 import static org.apache.commons.io.FileUtils.forceMkdir;
@@ -30,6 +31,7 @@ import javax.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -120,6 +122,12 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
      */
     @Value("${restartJobExecutorOnFailure}")
     private boolean restartJobExecuterOnFailure;
+
+    /**
+     * The name of the setup script.
+     */
+    @Value("${setupScript}")
+    private Resource setupScript;
 
     /**
      * Logging.
@@ -783,5 +791,13 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
                     JOB_PROCESS_MANAGER_ZIP + " not found in classpath");
         }
         return Response.ok(jobManagerStream).type(APPLICATION_ZIP).build();
+    }
+
+    @Override
+    public Response getSetupScript() throws IOException {
+        final InputStream setupScriptStream =
+                setupScript.getInputStream();
+        return Response.ok(setupScriptStream).type(
+                APPLICATION_OCTET_STREAM).build();
     }
 }

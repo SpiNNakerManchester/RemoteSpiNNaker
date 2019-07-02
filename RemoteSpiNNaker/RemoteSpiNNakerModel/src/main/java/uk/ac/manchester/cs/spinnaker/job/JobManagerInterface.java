@@ -4,6 +4,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
@@ -26,15 +27,25 @@ import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
 /**
  * JAX-RS interface to a {@link Job} for the purposes of management.
  */
-@Path("/job")
+@Path(JobManagerInterface.PATH)
 public interface JobManagerInterface {
+
+    /** The path to the interface. **/
+    String PATH = "job";
+
     /** The media type of ZIP files. */
     String APPLICATION_ZIP = "application/zip";
+
     /**
      * The name of the ZIP file we like to serve up when giving people a remote
      * process manager.
      */
     String JOB_PROCESS_MANAGER_ZIP = "RemoteSpiNNakerJobProcessManager.zip";
+
+    /**
+     * The name of the setup script.
+     */
+    String SETUP_SCRIPT = "setup.bash";
 
     /**
      * Get the job manager to find out what its next job will be.
@@ -279,4 +290,15 @@ public interface JobManagerInterface {
     @Path(JOB_PROCESS_MANAGER_ZIP)
     @Produces(APPLICATION_ZIP)
     Response getJobProcessManager();
+
+    /**
+     * Get the setup script to be executed.
+     *
+     * @return a response containing the setup script
+     * @throws IOException if something goes wrong
+     */
+    @GET
+    @Path(SETUP_SCRIPT)
+    @Produces(APPLICATION_OCTET_STREAM)
+    Response getSetupScript() throws IOException;
 }

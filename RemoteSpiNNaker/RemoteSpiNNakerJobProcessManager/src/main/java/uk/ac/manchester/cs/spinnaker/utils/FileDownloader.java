@@ -107,7 +107,10 @@ public abstract class FileDownloader {
         requireNonNull(workingDirectory);
 
         // Open a connection
-        String userInfo = URLDecoder.decode(url.getUserInfo(), "UTF8");
+        String userInfo = url.getUserInfo();
+        if (userInfo != null) {
+            userInfo = URLDecoder.decode(url.getUserInfo(), "UTF8");
+        }
         URLConnection urlConnection = createConnectionWithAuth(url, userInfo);
 
         if (urlConnection instanceof HttpURLConnection) {
