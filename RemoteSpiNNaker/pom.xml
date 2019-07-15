@@ -214,6 +214,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     <version>9.4.14.v20181114</version>
                 </plugin>
 				<plugin>
+					<groupId>org.jacoco</groupId>
+					<artifactId>jacoco-maven-plugin</artifactId>
+					<version>0.8.2</version>
+				</plugin>
+				<plugin>
 					<groupId>org.apache.rat</groupId>
 					<artifactId>apache-rat-plugin</artifactId>
 					<version>0.13</version>
@@ -240,6 +245,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         </pluginManagement>
         <plugins>
 			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>prepare-agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
 				<groupId>org.apache.rat</groupId>
 				<artifactId>apache-rat-plugin</artifactId>
 				<executions>
@@ -260,4 +277,27 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <module>RemoteSpiNNakerJobProcessManager</module>
         <module>RemoteSpiNNakerWeb</module>
     </modules>
+
+	<profiles>
+		<profile>
+			<id>SupportJDK9AndLater</id>
+			<activation>
+				<jdk>[1.9,)</jdk>
+			</activation>
+			<build>
+				<pluginManagement>
+					<plugins>
+						<plugin>
+							<artifactId>maven-javadoc-plugin</artifactId>
+							<configuration>
+								<additionalOptions>
+									<additionalOption>-html5</additionalOption>
+								</additionalOptions>
+							</configuration>
+						</plugin>
+					</plugins>
+				</pluginManagement>
+			</build>
+		</profile>
+	</profiles>
 </project>
