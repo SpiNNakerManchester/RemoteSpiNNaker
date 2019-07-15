@@ -56,9 +56,9 @@ public abstract class RemoteSpiNNakerAPI {
      * @param url
      *            Where the main web site is located.
      * @param authToken
-     *            How to authenticate to the main web site, or <tt>null</tt> to
+     *            How to authenticate to the main web site, or {@code null} to
      *            not provide authorisation. If given, Should be the
-     *            concatenation of the username, a colon (<tt>:</tt>), and the
+     *            concatenation of the username, a colon ({@code :}), and the
      *            password.
      * @return the proxy for the job manager service
      */
@@ -82,7 +82,7 @@ public abstract class RemoteSpiNNakerAPI {
      * Creates a filter for BASIC authorisation.
      *
      * @param authToken The token for authorisation
-     *     (encoded BASE64 username:password)
+     *     (encoded BASE64 username{@code :}password)
      * @return The filter
      */
     private static ClientRequestFilter

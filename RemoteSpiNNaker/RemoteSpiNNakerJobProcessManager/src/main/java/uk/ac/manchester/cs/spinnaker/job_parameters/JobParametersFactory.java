@@ -73,7 +73,7 @@ public abstract class JobParametersFactory {
      * @param errors
      *            What errors were found in the process of getting the
      *            parameters.
-     * @return The parameters, or <tt>null</tt> if the parameters can't be
+     * @return The parameters, or {@code null} if the parameters can't be
      *         generated.
      */
     public static JobParameters getJobParameters(final Job job,

@@ -34,10 +34,10 @@ public interface JobProcess<P extends JobParameters> {
      * Executes the job.
      *
      * @param machineUrl
-     *            The URL to request a machine using (or <tt>null</tt> if
+     *            The URL to request a machine using (or {@code null} if
      *            machine is given)
      * @param machine
-     *            The machine to execute the job on (or <tt>null</tt> if a URL
+     *            The machine to execute the job on (or {@code null} if a URL
      *            is given)
      * @param parameters
      *            The parameters of the job
@@ -56,9 +56,9 @@ public interface JobProcess<P extends JobParameters> {
 
     /**
      * Gets any errors returned by the job. If the status is not Error, this
-     * should return <tt>null</tt>
+     * should return {@code null}
      *
-     * @return An error, or <tt>null</tt> if no error
+     * @return An error, or {@code null} if no error
      */
     Throwable getError();
 

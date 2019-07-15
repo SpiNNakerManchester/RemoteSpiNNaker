@@ -29,7 +29,7 @@ public class NMPILog {
     /**
      * Gets the current log contents.
      *
-     * @return The log contents, or <tt>null</tt> if the log is not yet
+     * @return The log contents, or {@code null} if the log is not yet
      *         initialised.
      */
     public String getContent() {

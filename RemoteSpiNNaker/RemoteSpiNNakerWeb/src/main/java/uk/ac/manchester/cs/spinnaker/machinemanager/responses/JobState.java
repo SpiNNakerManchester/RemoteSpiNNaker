@@ -19,7 +19,7 @@ package uk.ac.manchester.cs.spinnaker.machinemanager.responses;
 /**
  * A description of the state of a job, in terms of its state, whether its
  * boards are powered, the advised keep-alive polling interval and the reason
- * that the job died (if in the <tt>DESTROYED</tt> state).
+ * that the job died (if in the {@code DESTROYED} state).
  */
 public class JobState {
     /** Job is unknown. */
@@ -30,7 +30,7 @@ public class JobState {
     public static final int POWER = 2;
     /** Job is running (or at least ready to run). */
     public static final int READY = 3;
-    /** Job has terminated, see the <tt>reason</tt> property for why. */
+    /** Job has terminated, see the {@code reason} property for why. */
     public static final int DESTROYED = 4;
 
     /**

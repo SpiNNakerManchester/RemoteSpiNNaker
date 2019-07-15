@@ -27,7 +27,7 @@ import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
 import uk.ac.manchester.cs.spinnaker.job.pynn.PyNNJobParameters;
 
 /**
- * A {@link JobParametersFactory} that uses the <tt>experimentDescription</tt>
+ * A {@link JobParametersFactory} that uses the {@code experimentDescription}
  * itself as a PyNN script.
  */
 class DirectPyNNJobParametersFactory extends JobParametersFactory {

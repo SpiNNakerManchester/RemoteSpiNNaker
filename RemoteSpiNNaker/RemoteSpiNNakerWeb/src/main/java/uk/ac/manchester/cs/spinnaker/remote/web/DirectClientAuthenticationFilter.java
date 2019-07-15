@@ -62,7 +62,7 @@ public class DirectClientAuthenticationFilter extends OncePerRequestFilter {
     private static final String MUST_AUTH_PAYLOAD = "Bearer realm=\"%s\"";
 
     /**
-     * The default authentication realm. "<tt>SpiNNaker</tt>"
+     * The default authentication realm. "{@code SpiNNaker}"
      */
     public static final String DEFAULT_REALM = "SpiNNaker";
 

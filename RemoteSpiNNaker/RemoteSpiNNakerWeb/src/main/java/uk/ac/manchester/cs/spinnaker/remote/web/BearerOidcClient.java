@@ -218,7 +218,7 @@ public class BearerOidcClient extends
      *            The credentials
      * @param context
      *            The web context
-     * @return the profile, or <tt>null</tt> if there isn't one.
+     * @return the profile, or {@code null} if there isn't one.
      */
     @Override
     protected OidcProfile retrieveUserProfile(

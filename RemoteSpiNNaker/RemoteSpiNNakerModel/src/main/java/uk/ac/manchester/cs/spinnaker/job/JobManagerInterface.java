@@ -92,8 +92,8 @@ public interface JobManagerInterface {
             @QueryParam("runTime") @DefaultValue("-1") double runTime);
 
     /**
-     * Get a machine for running a job. Typically, only one of <tt>nCores</tt>,
-     * <tt>nChips</tt> and <tt>nBoards</tt> will be specified.
+     * Get a machine for running a job. Typically, only one of {@code nCores},
+     * {@code nChips} and {@code nBoards} will be specified.
      *
      * @param id
      *            The job ID.

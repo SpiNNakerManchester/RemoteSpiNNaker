@@ -347,11 +347,11 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
      * Searches the list for the machine with the given name.
      *
      * @param machines
-     *            The list of machines (or <tt>null</tt>).
+     *            The list of machines (or {@code null}).
      * @param machineName
      *            The name of the machine to find.
-     * @return The index in the list, or <tt>-1</tt> if the machine isn't
-     *         present. (The <tt>null</tt> machine list never contains any
+     * @return The index in the list, or {@code -1} if the machine isn't
+     *         present. (The {@code null} machine list never contains any
      *         machines.)
      */
     private static int findMachineIndex(final List<SpinnakerMachine> machines,
@@ -674,7 +674,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
      * Release the machines allocated to a job.
      *
      * @param id The ID of the job
-     * @return <tt>true</tt> if there were machines removed by this. n
+     * @return {@code true} if there were machines removed by this.
      */
     private boolean releaseAllocatedMachines(final int id) {
         synchronized (allocatedMachines) {

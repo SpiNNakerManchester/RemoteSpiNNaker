@@ -113,7 +113,7 @@ public abstract class FileDownloader {
      *            The directory to output the file to
      * @param defaultFilename
      *            The name of the file to use if none can be worked out from the
-     *            URL or headers, or <tt>null</tt> to use a generated name
+     *            URL or headers, or {@code null} to use a generated name
      * @return The file downloaded
      * @throws IOException
      *          If anything goes wrong.
@@ -244,7 +244,7 @@ public abstract class FileDownloader {
      *            The directory to output the file to
      * @param defaultFilename
      *            The name of the file to use if none can be worked out from the
-     *            URL or headers, or <tt>null</tt> to use a generated name
+     *            URL or headers, or {@code null} to use a generated name
      * @return The file downloaded
      * @throws IOException
      *          If anything goes wrong.
