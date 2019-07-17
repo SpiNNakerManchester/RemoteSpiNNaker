@@ -1,3 +1,20 @@
+<?xml version="1.0"?>
+<!--
+Copyright (c) 2014-2019 The University of Manchester
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
@@ -5,6 +22,7 @@
     <artifactId>RemoteSpiNNaker</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
+    <inceptionYear>2014</inceptionYear>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -12,7 +30,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <resteasy.version>3.6.2.Final</resteasy.version>
         <jackson.version>2.9.8</jackson.version>
-        <httpclient.version>[4.3.6,)</httpclient.version>
+        <httpclient.version>4.5.9</httpclient.version>
         <xen.version>6.2.0-3.1</xen.version>
         <ini4j.version>0.5.4</ini4j.version>
         <jgit.version>5.2.1.201812262042-r</jgit.version>
@@ -195,8 +213,63 @@
                     <artifactId>jetty-maven-plugin</artifactId>
                     <version>9.4.14.v20181114</version>
                 </plugin>
+				<plugin>
+					<groupId>org.jacoco</groupId>
+					<artifactId>jacoco-maven-plugin</artifactId>
+					<version>0.8.2</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.rat</groupId>
+					<artifactId>apache-rat-plugin</artifactId>
+					<version>0.13</version>
+					<configuration>
+						<excludes>
+							<!-- Files without comment formats should be excluded -->
+							<exclude>.github/*</exclude>
+							<exclude>.travis/*</exclude>
+							<exclude>.travis.yml</exclude>
+							<exclude>.springBeans</exclude>
+							<exclude>nbactions.xml</exclude>
+							<exclude>support/**</exclude>
+							<exclude>**/*.json</exclude>
+							<exclude>**/*.txt</exclude>
+							<exclude>**/*.csv</exclude>
+							<exclude>**/nbproject/**</exclude>
+							<exclude>**/target/**</exclude>
+							<exclude>README.md</exclude>
+						</excludes>
+						<consoleOutput>true</consoleOutput>
+					</configuration>
+				</plugin>
             </plugins>
         </pluginManagement>
+        <plugins>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>prepare-agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.rat</groupId>
+				<artifactId>apache-rat-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>default-check</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+        </plugins>
     </build>
 
     <modules>
@@ -204,4 +277,27 @@
         <module>RemoteSpiNNakerJobProcessManager</module>
         <module>RemoteSpiNNakerWeb</module>
     </modules>
+
+	<profiles>
+		<profile>
+			<id>SupportJDK9AndLater</id>
+			<activation>
+				<jdk>[1.9,)</jdk>
+			</activation>
+			<build>
+				<pluginManagement>
+					<plugins>
+						<plugin>
+							<artifactId>maven-javadoc-plugin</artifactId>
+							<configuration>
+								<additionalOptions>
+									<additionalOption>-html5</additionalOption>
+								</additionalOptions>
+							</configuration>
+						</plugin>
+					</plugins>
+				</pluginManagement>
+			</build>
+		</profile>
+	</profiles>
 </project>

@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2014-2019 The University of Manchester
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package uk.ac.manchester.cs.spinnaker.jobprocessmanager;
 
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
@@ -40,9 +56,9 @@ public abstract class RemoteSpiNNakerAPI {
      * @param url
      *            Where the main web site is located.
      * @param authToken
-     *            How to authenticate to the main web site, or <tt>null</tt> to
+     *            How to authenticate to the main web site, or {@code null} to
      *            not provide authorisation. If given, Should be the
-     *            concatenation of the username, a colon (<tt>:</tt>), and the
+     *            concatenation of the username, a colon ({@code :}), and the
      *            password.
      * @return the proxy for the job manager service
      */
@@ -66,7 +82,7 @@ public abstract class RemoteSpiNNakerAPI {
      * Creates a filter for BASIC authorisation.
      *
      * @param authToken The token for authorisation
-     *     (encoded BASE64 username:password)
+     *     (encoded BASE64 username{@code :}password)
      * @return The filter
      */
     private static ClientRequestFilter

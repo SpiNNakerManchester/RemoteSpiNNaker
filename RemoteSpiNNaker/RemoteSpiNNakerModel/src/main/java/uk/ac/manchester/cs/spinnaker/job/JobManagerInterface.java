@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2014-2019 The University of Manchester
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package uk.ac.manchester.cs.spinnaker.job;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -76,8 +92,8 @@ public interface JobManagerInterface {
             @QueryParam("runTime") @DefaultValue("-1") double runTime);
 
     /**
-     * Get a machine for running a job. Typically, only one of <tt>nCores</tt>,
-     * <tt>nChips</tt> and <tt>nBoards</tt> will be specified.
+     * Get a machine for running a job. Typically, only one of {@code nCores},
+     * {@code nChips} and {@code nBoards} will be specified.
      *
      * @param id
      *            The job ID.
