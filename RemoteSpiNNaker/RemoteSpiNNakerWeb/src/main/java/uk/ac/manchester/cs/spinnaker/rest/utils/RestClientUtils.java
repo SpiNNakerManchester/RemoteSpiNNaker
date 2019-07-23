@@ -20,7 +20,6 @@ import static org.apache.http.auth.AUTH.PROXY_AUTH_RESP;
 import static org.apache.http.auth.AUTH.WWW_AUTH_RESP;
 import static org.apache.http.client.protocol.HttpClientContext.AUTH_CACHE;
 import static org.apache.http.client.protocol.HttpClientContext.CREDS_PROVIDER;
-import static org.apache.http.conn.ssl.SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URL;
@@ -39,8 +38,8 @@ import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.AuthCache;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLContextBuilder;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.auth.RFC2617Scheme;
@@ -52,9 +51,11 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
+import org.apache.http.ssl.SSLContextBuilder;
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.jboss.resteasy.client.jaxrs.engines.ApacheHttpClient4Engine;
+import org.jboss.resteasy.client.jaxrs.engines.HttpContextProvider;
 import org.slf4j.Logger;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
@@ -113,7 +114,7 @@ public abstract class RestClientUtils {
     protected static ResteasyClient createRestClient(final URL url,
             final Credentials credentials, final AuthScheme authScheme) {
         try {
-            final HttpContext localContext = getConnectionContext(url,
+            final HttpContextProvider localContext = getConnectionContext(url,
                     credentials, authScheme);
 
             // Set up the connection
@@ -124,7 +125,7 @@ public abstract class RestClientUtils {
             SSLContextBuilder builder = new SSLContextBuilder();
             builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
             SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
-                    builder.build(), ALLOW_ALL_HOSTNAME_VERIFIER);
+                    builder.build(), NoopHostnameVerifier.INSTANCE);
             HttpClientBuilder httpClientBuilder = HttpClientBuilder.create();
             httpClientBuilder.setConnectionManager(cm);
             httpClientBuilder.setSSLSocketFactory(sslsf);
@@ -134,8 +135,8 @@ public abstract class RestClientUtils {
 
             // Create and return a client
             final ResteasyClient client = new ResteasyClientBuilder()
-                    .establishConnectionTimeout(TIMEOUT, TimeUnit.SECONDS)
-                    .socketTimeout(TIMEOUT, TimeUnit.SECONDS)
+                    .connectTimeout(TIMEOUT, TimeUnit.SECONDS)
+                    .readTimeout(TIMEOUT, TimeUnit.SECONDS)
                     .httpEngine(engine).build();
             client.register(new ErrorCaptureResponseFilter());
             return client;
@@ -158,7 +159,7 @@ public abstract class RestClientUtils {
      *            The authentication scheme to use.
      * @return the configured context.
      */
-    private static HttpContext getConnectionContext(final URL url,
+    private static HttpContextProvider getConnectionContext(final URL url,
             final Credentials credentials, final AuthScheme authScheme) {
         int port = url.getPort();
         if (port == -1) {
@@ -178,7 +179,13 @@ public abstract class RestClientUtils {
         HttpContext localContext = new BasicHttpContext();
         localContext.setAttribute(AUTH_CACHE, authCache);
         localContext.setAttribute(CREDS_PROVIDER, credsProvider);
-        return localContext;
+        HttpContextProvider provider = new HttpContextProvider() {
+            @Override
+            public HttpContext getContext() {
+                return localContext;
+            }
+        };
+        return provider;
     }
 
     /**
@@ -260,6 +267,11 @@ public abstract class RestClientUtils {
         return createClient(url,
                 new UsernamePasswordCredentials(username, apiKey),
                 new ConnectionIndependentScheme("ApiKey") {
+                    /**
+                     *
+                     */
+                    private static final long serialVersionUID = 1L;
+
                     @Override
                     protected Header authenticate(
                             final Credentials credentials) {
@@ -288,6 +300,11 @@ public abstract class RestClientUtils {
             final Class<T> clazz, final Object... providers) {
         return createClient(url, new UsernamePasswordCredentials("", token),
                 new ConnectionIndependentScheme("Bearer") {
+                    /**
+                     *
+                     */
+                    private static final long serialVersionUID = 1L;
+
                     @Override
                     protected Header authenticate(
                             final Credentials credentials) {
@@ -302,6 +319,11 @@ public abstract class RestClientUtils {
      */
     private abstract static class ConnectionIndependentScheme
             extends RFC2617Scheme {
+
+        /**
+         *
+         */
+        private static final long serialVersionUID = 1L;
 
         /**
          * True when complete.

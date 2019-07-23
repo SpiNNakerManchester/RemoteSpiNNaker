@@ -21,13 +21,13 @@ import static com.fasterxml.jackson.databind.PropertyNamingStrategy.CAMEL_CASE_T
 import static java.util.Arrays.asList;
 import static java.util.concurrent.Executors.newScheduledThreadPool;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.apache.commons.io.IOUtils.closeQuietly;
 import static org.slf4j.LoggerFactory.getLogger;
 import static uk.ac.manchester.cs.spinnaker.machinemanager.responses.JobState.DESTROYED;
 import static uk.ac.manchester.cs.spinnaker.machinemanager.responses.JobState.READY;
 import static uk.ac.manchester.cs.spinnaker.utils.ThreadUtils.sleep;
 
 import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -445,6 +445,18 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
             // Send an empty JCR over
             notifications.offer(new JobsChangedResponse());
             notifyAll();
+        }
+
+        /**
+         * Close an object ignoring errors.
+         * @param closable The object to close
+         */
+        private void closeQuietly(final Closeable closable) {
+            try {
+                closable.close();
+            } catch (IOException e) {
+                // Ignore error
+            }
         }
 
         /**

@@ -58,8 +58,8 @@ public class StatusCakeStatusMonitorManagerImpl
     @PostConstruct
     private void init() {
         final ResteasyClient client = new ResteasyClientBuilder().
-                establishConnectionTimeout(TIMEOUT, TimeUnit.SECONDS).
-                socketTimeout(TIMEOUT, TimeUnit.SECONDS).build();
+                connectTimeout(TIMEOUT, TimeUnit.SECONDS).
+                readTimeout(TIMEOUT, TimeUnit.SECONDS).build();
         statusCake = client.target(SERVICE_URL).proxy(StatusCake.class);
     }
 
