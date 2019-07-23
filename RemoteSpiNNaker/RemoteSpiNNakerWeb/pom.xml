@@ -72,13 +72,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-maven-plugin</artifactId>
                 <configuration>
-                    <connectors>
-                        <connector implementation="org.eclipse.jetty.server.nio.SelectChannelConnector">
-                            <port>${jetty.port}</port>
-                            <requestBufferSize>${jetty.buffer.size}</requestBufferSize>
-                            <requestHeaderSize>${jetty.buffer.size}</requestHeaderSize>
-                        </connector>
-                    </connectors>
+                    <httpConnector>
+                        <port>${jetty.port}</port>
+                    </httpConnector>
                     <webAppConfig>
                         <contextPath>${jetty.root}</contextPath>
                     </webAppConfig>
