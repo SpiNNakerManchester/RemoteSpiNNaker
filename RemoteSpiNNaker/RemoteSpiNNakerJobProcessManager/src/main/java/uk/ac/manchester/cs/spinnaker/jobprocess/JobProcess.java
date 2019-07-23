@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2014-2019 The University of Manchester
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package uk.ac.manchester.cs.spinnaker.jobprocess;
 
 import java.io.File;
@@ -18,10 +34,10 @@ public interface JobProcess<P extends JobParameters> {
      * Executes the job.
      *
      * @param machineUrl
-     *            The URL to request a machine using (or <tt>null</tt> if
+     *            The URL to request a machine using (or {@code null} if
      *            machine is given)
      * @param machine
-     *            The machine to execute the job on (or <tt>null</tt> if a URL
+     *            The machine to execute the job on (or {@code null} if a URL
      *            is given)
      * @param parameters
      *            The parameters of the job
@@ -40,9 +56,9 @@ public interface JobProcess<P extends JobParameters> {
 
     /**
      * Gets any errors returned by the job. If the status is not Error, this
-     * should return <tt>null</tt>
+     * should return {@code null}
      *
-     * @return An error, or <tt>null</tt> if no error
+     * @return An error, or {@code null} if no error
      */
     Throwable getError();
 

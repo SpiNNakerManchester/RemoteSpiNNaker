@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2014-2019 The University of Manchester
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package uk.ac.manchester.cs.spinnaker.jobmanager;
 
 import static java.io.File.createTempFile;
@@ -350,11 +366,11 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
      * Searches the list for the machine with the given name.
      *
      * @param machines
-     *            The list of machines (or <tt>null</tt>).
+     *            The list of machines (or {@code null}).
      * @param machineName
      *            The name of the machine to find.
-     * @return The index in the list, or <tt>-1</tt> if the machine isn't
-     *         present. (The <tt>null</tt> machine list never contains any
+     * @return The index in the list, or {@code -1} if the machine isn't
+     *         present. (The {@code null} machine list never contains any
      *         machines.)
      */
     private static int findMachineIndex(final List<SpinnakerMachine> machines,
@@ -677,7 +693,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
      * Release the machines allocated to a job.
      *
      * @param id The ID of the job
-     * @return <tt>true</tt> if there were machines removed by this. n
+     * @return {@code true} if there were machines removed by this.
      */
     private boolean releaseAllocatedMachines(final int id) {
         synchronized (allocatedMachines) {

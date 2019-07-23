@@ -1,9 +1,25 @@
+/*
+ * Copyright (c) 2014-2019 The University of Manchester
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package uk.ac.manchester.cs.spinnaker.machinemanager.responses;
 
 /**
  * A description of the state of a job, in terms of its state, whether its
  * boards are powered, the advised keep-alive polling interval and the reason
- * that the job died (if in the <tt>DESTROYED</tt> state).
+ * that the job died (if in the {@code DESTROYED} state).
  */
 public class JobState {
     /** Job is unknown. */
@@ -14,7 +30,7 @@ public class JobState {
     public static final int POWER = 2;
     /** Job is running (or at least ready to run). */
     public static final int READY = 3;
-    /** Job has terminated, see the <tt>reason</tt> property for why. */
+    /** Job has terminated, see the {@code reason} property for why. */
     public static final int DESTROYED = 4;
 
     /**
