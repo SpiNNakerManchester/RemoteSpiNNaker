@@ -203,7 +203,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>3.0.1</version>
+                    <version>3.1.0</version>
                     <configuration>
                         <quiet>true</quiet>
                     </configuration>
@@ -213,62 +213,62 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     <artifactId>jetty-maven-plugin</artifactId>
                     <version>9.4.14.v20181114</version>
                 </plugin>
-				<plugin>
-					<groupId>org.jacoco</groupId>
-					<artifactId>jacoco-maven-plugin</artifactId>
-					<version>0.8.2</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.rat</groupId>
-					<artifactId>apache-rat-plugin</artifactId>
-					<version>0.13</version>
-					<configuration>
-						<excludes>
-							<!-- Files without comment formats should be excluded -->
-							<exclude>.github/*</exclude>
-							<exclude>.travis/*</exclude>
-							<exclude>.travis.yml</exclude>
-							<exclude>.springBeans</exclude>
-							<exclude>nbactions.xml</exclude>
-							<exclude>support/**</exclude>
-							<exclude>**/*.json</exclude>
-							<exclude>**/*.txt</exclude>
-							<exclude>**/*.csv</exclude>
-							<exclude>**/nbproject/**</exclude>
-							<exclude>**/target/**</exclude>
-							<exclude>README.md</exclude>
-						</excludes>
-						<consoleOutput>true</consoleOutput>
-					</configuration>
-				</plugin>
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>0.8.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.rat</groupId>
+                    <artifactId>apache-rat-plugin</artifactId>
+                    <version>0.13</version>
+                    <configuration>
+                        <excludes>
+                            <!-- Files without comment formats should be excluded -->
+                            <exclude>.github/*</exclude>
+                            <exclude>.travis/*</exclude>
+                            <exclude>.travis.yml</exclude>
+                            <exclude>.springBeans</exclude>
+                            <exclude>nbactions.xml</exclude>
+                            <exclude>support/**</exclude>
+                            <exclude>**/*.json</exclude>
+                            <exclude>**/*.txt</exclude>
+                            <exclude>**/*.csv</exclude>
+                            <exclude>**/nbproject/**</exclude>
+                            <exclude>**/target/**</exclude>
+                            <exclude>README.md</exclude>
+                        </excludes>
+                        <consoleOutput>true</consoleOutput>
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
-			<plugin>
-				<groupId>org.jacoco</groupId>
-				<artifactId>jacoco-maven-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>prepare-agent</id>
-						<goals>
-							<goal>prepare-agent</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.rat</groupId>
-				<artifactId>apache-rat-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>default-check</id>
-						<phase>verify</phase>
-						<goals>
-							<goal>check</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.rat</groupId>
+                <artifactId>apache-rat-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>default-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
@@ -278,26 +278,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <module>RemoteSpiNNakerWeb</module>
     </modules>
 
-	<profiles>
-		<profile>
-			<id>SupportJDK9AndLater</id>
-			<activation>
-				<jdk>[1.9,)</jdk>
-			</activation>
-			<build>
-				<pluginManagement>
-					<plugins>
-						<plugin>
-							<artifactId>maven-javadoc-plugin</artifactId>
-							<configuration>
-								<additionalOptions>
-									<additionalOption>-html5</additionalOption>
-								</additionalOptions>
-							</configuration>
-						</plugin>
-					</plugins>
-				</pluginManagement>
-			</build>
-		</profile>
-	</profiles>
+    <profiles>
+        <profile>
+            <id>SupportJDK9AndLater</id>
+            <activation>
+                <jdk>[1.9,)</jdk>
+            </activation>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <artifactId>maven-javadoc-plugin</artifactId>
+                            <configuration>
+                                <additionalOptions>
+                                    <additionalOption>-html5</additionalOption>
+                                </additionalOptions>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+    </profiles>
 </project>
