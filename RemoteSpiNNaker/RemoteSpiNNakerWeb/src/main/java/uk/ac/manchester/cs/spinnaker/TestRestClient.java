@@ -1,17 +1,3 @@
-package uk.ac.manchester.cs.spinnaker;
-import static uk.ac.manchester.cs.spinnaker.rest.utils.RestClientUtils.createApiKeyClient;
-
-import java.net.URL;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
-import uk.ac.manchester.cs.spinnaker.job.nmpi.QueueEmpty;
-import uk.ac.manchester.cs.spinnaker.job.nmpi.QueueNextResponse;
-import uk.ac.manchester.cs.spinnaker.rest.NMPIQueue;
-import uk.ac.manchester.cs.spinnaker.rest.utils.CustomJacksonJsonProvider;
-import uk.ac.manchester.cs.spinnaker.rest.utils.PropertyBasedDeserialiser;
-
 /*
  * Copyright (c) 2014-2019 The University of Manchester
  *
@@ -28,6 +14,20 @@ import uk.ac.manchester.cs.spinnaker.rest.utils.PropertyBasedDeserialiser;
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+package uk.ac.manchester.cs.spinnaker;
+
+import static uk.ac.manchester.cs.spinnaker.rest.utils.RestClientUtils.createApiKeyClient;
+
+import java.net.URL;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
+import uk.ac.manchester.cs.spinnaker.job.nmpi.QueueEmpty;
+import uk.ac.manchester.cs.spinnaker.job.nmpi.QueueNextResponse;
+import uk.ac.manchester.cs.spinnaker.rest.NMPIQueue;
+import uk.ac.manchester.cs.spinnaker.rest.utils.CustomJacksonJsonProvider;
+import uk.ac.manchester.cs.spinnaker.rest.utils.PropertyBasedDeserialiser;
 
 /**
  * Testing.
