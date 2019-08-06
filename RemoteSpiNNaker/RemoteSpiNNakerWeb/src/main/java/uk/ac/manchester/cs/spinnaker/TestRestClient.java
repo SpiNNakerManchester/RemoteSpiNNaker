@@ -3,6 +3,8 @@ import static uk.ac.manchester.cs.spinnaker.rest.utils.RestClientUtils.createApi
 
 import java.net.URL;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.QueueEmpty;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.QueueNextResponse;
@@ -61,7 +63,10 @@ public final class TestRestClient {
         if (response instanceof QueueEmpty) {
             System.err.println("No items in queue");
         } else if (response instanceof Job) {
-            System.err.println(response.toString());
+            ObjectMapper om = new ObjectMapper();
+            System.err.println(
+                    om.writerWithDefaultPrettyPrinter().writeValueAsString(
+                            response));
         } else {
             throw new IllegalStateException();
         }
