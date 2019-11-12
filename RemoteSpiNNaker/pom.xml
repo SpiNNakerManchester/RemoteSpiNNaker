@@ -35,7 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <ini4j.version>0.5.4</ini4j.version>
         <jgit.version>5.2.1.201812262042-r</jgit.version>
         <jarchivelib.version>0.7.1</jarchivelib.version>
-        <springsecurity.version>4.2.11.RELEASE</springsecurity.version>
+        <springsecurity.version>5.0.0.RELEASE</springsecurity.version>
         <spring.version>4.3.22.RELEASE</spring.version>
         <cxf.version>3.3.0</cxf.version>
         <slf4j.version>1.7.25</slf4j.version>
