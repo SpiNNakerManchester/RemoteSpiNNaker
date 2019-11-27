@@ -70,6 +70,11 @@ public class JobProcessManager {
     private static final int UPDATE_INTERVAL = 500;
 
     /**
+     * The maximum size of cached log messages before a forced send is done.
+     */
+    private static final int MAX_LOG_CACHED = 1000000;
+
+    /**
      * Default parameters for getting a machine.
      */
     private static final int DEFAULT = -1;
@@ -126,8 +131,11 @@ public class JobProcessManager {
         public void append(final String logMsg) {
             log("Process Output: " + logMsg);
             synchronized (this) {
-                appendCache(logMsg);
                 sendTimer.restart();
+                appendCache(logMsg);
+                if (cacheSize() >= MAX_LOG_CACHED) {
+                    sendLog();
+                }
             }
         }
 
@@ -599,6 +607,15 @@ abstract class JobManagerLogWriter implements LogWriter {
         } finally {
             cached.setLength(0);
         }
+    }
+
+    /**
+     * Get the number of characters in the current log.
+     *
+     * @return The number of characters in the log.
+     */
+    public final int cacheSize() {
+        return cached.length();
     }
 
     /**
