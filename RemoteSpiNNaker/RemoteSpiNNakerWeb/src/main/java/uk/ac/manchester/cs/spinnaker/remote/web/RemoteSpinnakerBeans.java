@@ -56,6 +56,9 @@ import uk.ac.manchester.cs.spinnaker.nmpi.NMPIQueueManager;
 import uk.ac.manchester.cs.spinnaker.output.OutputManagerImpl;
 import uk.ac.manchester.cs.spinnaker.rest.OutputManager;
 import uk.ac.manchester.cs.spinnaker.rest.utils.NullExceptionMapper;
+import uk.ac.manchester.cs.spinnaker.status.NullStatusMonitorManagerImpl;
+import uk.ac.manchester.cs.spinnaker.status.StatusCakeStatusMonitorManagerImpl;
+import uk.ac.manchester.cs.spinnaker.status.StatusMonitorManager;
 
 /**
  * Builds the Spring beans in the application.
@@ -130,6 +133,12 @@ public class RemoteSpinnakerBeans {
      */
     @Value("${baseserver.url}${callback.path}")
     private String oidcRedirectUri;
+
+    /**
+     * Determine whether status updates should be done.
+     */
+    @Value("${status.update}")
+    private boolean updateStatus;
 
     /**
      * Configuration that connects to external HBP services.
@@ -342,6 +351,19 @@ public class RemoteSpinnakerBeans {
     public JobManager jobManager() {
         // Pass this, as it is non-trivial constructed value
         return new JobManager(baseServerUrl);
+    }
+
+    /**
+     * The status monitor manager.
+     *
+     * @return bean
+     */
+    @Bean
+    public StatusMonitorManager statusMonitorManager() {
+        if (updateStatus) {
+            return new StatusCakeStatusMonitorManagerImpl();
+        }
+        return new NullStatusMonitorManagerImpl();
     }
 
     /**
