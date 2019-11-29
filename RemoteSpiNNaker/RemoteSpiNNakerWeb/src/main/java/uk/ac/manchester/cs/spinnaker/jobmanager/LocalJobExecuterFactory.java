@@ -22,7 +22,6 @@ import static java.util.Objects.requireNonNull;
 import static org.apache.commons.io.FileUtils.copyToFile;
 import static org.apache.commons.io.FileUtils.forceDeleteOnExit;
 import static org.apache.commons.io.FileUtils.forceMkdirParent;
-import static org.apache.commons.io.IOUtils.closeQuietly;
 import static org.slf4j.LoggerFactory.getLogger;
 import static uk.ac.manchester.cs.spinnaker.job.JobManagerInterface.JOB_PROCESS_MANAGER_ZIP;
 
@@ -441,7 +440,11 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         @Override
         public void close() {
             done = true;
-            closeQuietly(reader);
+            try {
+                reader.close();
+            } catch (IOException e) {
+                // Ignore exceptions
+            }
         }
     }
 }

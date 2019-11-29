@@ -93,8 +93,16 @@ class GitPyNNJobParametersFactory extends JobParametersFactory {
             clone.setCredentialsProvider(
                 new UsernamePasswordCredentialsProvider(urish.getUser(), pass));
         }
+
+        // Clone into a sub-directory of the working directory
+        String subdir = urish.getHumanishName();
+        if (subdir.equals("")) {
+            subdir = "repo";
+        }
+        final File cloneDir = new File(workingDirectory, subdir);
+
         clone.setURI(experimentDescription);
-        clone.setDirectory(workingDirectory);
+        clone.setDirectory(cloneDir);
         clone.setCloneSubmodules(true);
         clone.call();
 
@@ -104,7 +112,7 @@ class GitPyNNJobParametersFactory extends JobParametersFactory {
             script = command;
         }
 
-        return new PyNNJobParameters(workingDirectory.getAbsolutePath(),
+        return new PyNNJobParameters(cloneDir.getAbsolutePath(),
                 setupScript, script, job.getHardwareConfig());
     }
 }
