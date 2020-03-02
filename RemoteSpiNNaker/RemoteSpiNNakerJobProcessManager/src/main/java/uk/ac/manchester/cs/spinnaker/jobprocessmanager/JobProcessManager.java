@@ -141,7 +141,9 @@ public class JobProcessManager {
 
         @Override
         public void stop() {
-            sendTimer.stop();
+            synchronized (this) {
+                sendTimer.stop();
+            }
         }
     }
 
