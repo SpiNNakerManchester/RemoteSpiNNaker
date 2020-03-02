@@ -160,7 +160,7 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
      */
     private void waitToClaimVM() {
         synchronized (lock) {
-            logger.debug(nVirtualMachines + " of " + maxNVirtualMachines
+            logger.info(nVirtualMachines + " of " + maxNVirtualMachines
                     + " in use");
             while (nVirtualMachines >= maxNVirtualMachines) {
                 logger.debug("Waiting for a VM to become available ("
@@ -180,7 +180,7 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
     protected void executorFinished() {
         synchronized (lock) {
             nVirtualMachines--;
-            logger.debug(nVirtualMachines + " of " + maxNVirtualMachines
+            logger.info(nVirtualMachines + " of " + maxNVirtualMachines
                     + " now in use");
             lock.notifyAll();
         }
