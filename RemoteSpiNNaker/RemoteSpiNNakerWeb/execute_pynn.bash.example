@@ -1,3 +1,18 @@
+# Copyright (c) 2014-2019 The University of Manchester
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 # Function to pip install a branch/tag or master if doesn't exist
 pipinstall() {
     echo "pip install $@"
@@ -11,12 +26,13 @@ pipinstall() {
 
 # Function to git clone a branch/tag or master if doesn't exist
 gitclone() {
-    REPO=$1
-    BRANCH=$2
-    PREFIX=$3
+    FOLDER=$1
+    REPO=$2
+    BRANCH=$3
+    PREFIX=$4
     version=$(python support/find_closest_git_version.py $REPO $BRANCH $PREFIX)
-    echo "Cloning $REPO@$version"
-    git clone --branch $version $REPO > /tmp/last_git.tmp 2>&1
+    echo "Getting version $version of $REPO"
+    (cd $FOLDER; git checkout master; git pull; git checkout $version) &> /tmp/last_git.tmp
     LAST_ERROR=$?
     if [ $LAST_ERROR -ne 0 ]; then
         cat /tmp/last_git.tmp
@@ -28,7 +44,7 @@ domake() {
     DIR=$1
     GOAL=$2
     echo "Building $GOAL in $DIR"
-    make -C $DIR $GOAL > /tmp/last_make.tmp 2>&1
+    make -C $DIR $GOAL &> /tmp/last_make.tmp 2>&1
     LAST_ERROR=$?
     if [ $LAST_ERROR -ne 0 ]; then
         cat /tmp/last_make.tmp
@@ -49,10 +65,10 @@ dosetup() {
 
 setuppynn() {
     echo "Setting up sPyNNaker PyNN Link"
-    python -m spynnaker8.setup_pynn > /tmp/setup_pynn_new.tmp 2>&1
+    python -m spynnaker8.setup_pynn &> /tmp/setup_pynn_new.tmp 2>&1
     LAST_ERROR=$?
     if [ $LAST_ERROR -ne 0 ]; then
-        python -m spynnaker8.setup-pynn > /tmp/setup_pynn_old.tmp 2>&1
+        python -m spynnaker8.setup-pynn &> /tmp/setup_pynn_old.tmp 2>&1
         LAST_ERROR=$?
         if [ $LAST_ERROR -ne 0 ]; then
             echo "Old Error"
@@ -64,67 +80,84 @@ setuppynn() {
     fi
 }
 
+switchversion() {
+    VERSION=$1
+    # Get SpiNNFrontEndCommon to determine spalloc version
+    gitclone SpiNNFrontEndCommon https://github.com/SpiNNakerManchester/SpiNNFrontEndCommon.git $VERSION
 
-# Get support scripts
-git clone https://github.com/SpiNNakerManchester/SupportScripts support
-
-# Get SpiNNMan to determine SCAMP version
-spynnaker_version=${spynnaker_version:-4.0.1}
-gitclone https://github.com/SpiNNakerManchester/SpiNNMan.git $spynnaker_version
-
-# Setup Variables from environment
-version_string=$(strings SpiNNMan/spinnman/messages/spinnaker_boot/boot_data/scamp.boot | grep -A 1 "SC&MP/SpiNNaker")
-if [ -z "$spinnaker_tools_version" ]; then
-    if [ -z "$version_string" ]; then
-        spinnaker_tools_version=3.1.1
-    else
-        spinnaker_tools_version=$(echo $version_string | sed "s/SC&MP\/SpiNNaker /v/")
+    # Get spalloc version from FEC if possible
+    spalloc_version_string=$(grep spalloc SpiNNFrontEndCommon/requirements.txt | sed "s/spalloc >= \([0-9\.]*\), < \([0-9\.]*\)/\1/")
+    if [ -z "$spalloc_version" ]; then
+        if [ "$VERSION" == "master" ]; then
+            spalloc_version=$VERSION
+        elif [ -z "spalloc_version_string" ]; then
+            spalloc_version=$VERSION
+        else
+            spalloc_version=$spalloc_version_string
+        fi
     fi
+
+    # Get SpiNNMan to determine SCAMP version
+    gitclone SpiNNMan https://github.com/SpiNNakerManchester/SpiNNMan.git $VERSION
+
+    # Get SCAMP version from SpiNNMan if possible
+    version_string=$(strings SpiNNMan/spinnman/messages/spinnaker_boot/boot_data/scamp.boot | grep -A 1 "SC&MP/SpiNNaker")
+    if [ -z "$spinnaker_tools_version" ]; then
+        if [ -z "$version_string" ]; then
+            spinnaker_tools_version=3.2.5
+        else
+            spinnaker_tools_version=$(echo $version_string | sed "s/SC&MP\/SpiNNaker /v/")
+        fi
+    fi
+
+    # Get SpiNNaker Tools
+    gitclone spinnaker_tools https://github.com/SpiNNakerManchester/spinnaker_tools.git $spinnaker_tools_version v
+
+    # Get the rest of the tools
+    gitclone SpiNNUtils https://github.com/SpiNNakerManchester/SpiNNUtils.git $VERSION
+    gitclone SpiNNMachine https://github.com/SpiNNakerManchester/SpiNNMachine.git $VERSION
+    gitclone SpiNNStorageHandlers https://github.com/SpiNNakerManchester/SpiNNStorageHandlers.git $VERSION
+    gitclone PACMAN https://github.com/SpiNNakerManchester/PACMAN.git $VERSION
+    gitclone DataSpecification https://github.com/SpiNNakerManchester/DataSpecification.git $VERSION
+    gitclone spalloc https://github.com/SpiNNakerManchester/spalloc.git $spalloc_version
+    gitclone spinn_common https://github.com/SpiNNakerManchester/spinn_common.git $VERSION
+    gitclone sPyNNaker https://github.com/SpiNNakerManchester/sPyNNaker.git $VERSION
+    gitclone sPyNNaker8 https://github.com/SpiNNakerManchester/sPyNNaker8.git $VERSION
+
+    # Build the C Code
+    export SPINN_DIRS=${PWD}/spinnaker_tools
+    export NEURAL_MODELLING_DIRS=${PWD}/sPyNNaker/neural_modelling
+    domake $SPINN_DIRS clean
+    domake $SPINN_DIRS
+    domake spinn_common clean
+    domake spinn_common install
+    if [ -e SpiNNMan/c_models ]; then
+        domake SpiNNMan/c_models clean
+        domake SpiNNMan/c_models
+    fi
+    domake SpiNNFrontEndCommon/c_common/front_end_common_lib install-clean
+    domake SpiNNFrontEndCommon/c_common/ clean
+    domake SpiNNFrontEndCommon/c_common/
+    domake SpiNNFrontEndCommon/c_common/ install
+    domake sPyNNaker/neural_modelling/ clean
+    domake sPyNNaker/neural_modelling/
+}
+
+if [ ! -z $pyver ]; then
+    echo "Using Python $pyver"
 fi
 
-# Install and upgrade libraries
-pipinstall --upgrade pip setuptools wheel
-pipinstall --only-binary=numpy,scipy,matplotlib numpy scipy matplotlib
+initdir=${PWD}
+cd /home/spinnaker/spinnaker
 
-# Get SpiNNaker Tools
-gitclone https://github.com/SpiNNakerManchester/spinnaker_tools.git $spinnaker_tools_version v
-
-# Get the rest of the tools
-gitclone https://github.com/SpiNNakerManchester/SpiNNUtils.git $spynnaker_version
-gitclone https://github.com/SpiNNakerManchester/SpiNNMachine.git $spynnaker_version
-gitclone https://github.com/SpiNNakerManchester/SpiNNStorageHandlers.git $spynnaker_version
-gitclone https://github.com/SpiNNakerManchester/PACMAN.git $spynnaker_version
-gitclone https://github.com/SpiNNakerManchester/DataSpecification.git $spynnaker_version
-gitclone https://github.com/SpiNNakerManchester/spalloc.git $spynnaker_version
-gitclone https://github.com/SpiNNakerManchester/spinn_common.git $spynnaker_version
-gitclone https://github.com/SpiNNakerManchester/SpiNNFrontEndCommon.git $spynnaker_version
-gitclone https://github.com/SpiNNakerManchester/sPyNNaker.git $spynnaker_version
-gitclone https://github.com/SpiNNakerManchester/sPyNNaker8.git $spynnaker_version
-
-# Build the C Code
-dosetup SpiNNUtils
-export SPINN_DIRS=${PWD}/spinnaker_tools
-export NEURAL_MODELLING_DIRS=${PWD}/sPyNNaker/neural_modelling
-domake $SPINN_DIRS
-domake spinn_common install
-if [ -e SpiNNMan/c_models ]; then
-    domake SpiNNMan/c_models
+# Work out spynnaker version
+defver=5.1.0
+spynnakerver=${spynnaker_version:-$defver}
+if [ "$spynnakerver" != "$defver" ]; then
+    switchversion $spynnakerver
 fi
-domake SpiNNFrontEndCommon/c_common/
-domake SpiNNFrontEndCommon/c_common/ install
-domake sPyNNaker/neural_modelling/
 
-# Install the Python code (now with C binaries)
-dosetup SpiNNMachine
-dosetup SpiNNStorageHandlers
-dosetup SpiNNMan
-dosetup PACMAN
-dosetup DataSpecification
-dosetup spalloc
-dosetup SpiNNFrontEndCommon
-dosetup sPyNNaker
-dosetup sPyNNaker8
-setuppynn
+cd $initdir
 
 # Pip install any additional dependencies
 pip_installs=$(echo $extra_pip_installs | jq -r ".[]")
@@ -149,18 +182,3 @@ python_setups=$(echo $extra_python_setups | jq -r ".[]")
 for python_setup in $python_setups; do
     dosetup $python_setup
 done
-
-# Copyright (c) 2014-2019 The University of Manchester
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
