@@ -123,6 +123,12 @@ public class RemoteSpinnakerBeans {
     private URL baseServerUrl;
 
     /**
+     * The URL of the server for local (non-external) access.
+     */
+    @Value("$(localbaseserver.url}${cxf.path}${cxf.rest.path}/")
+    private URL localBaseServerUrl;
+
+    /**
      * The REST path of the server.
      */
     @Value("${cxf.rest.path}")
@@ -350,7 +356,7 @@ public class RemoteSpinnakerBeans {
     @Bean
     public JobManager jobManager() {
         // Pass this, as it is non-trivial constructed value
-        return new JobManager(baseServerUrl);
+        return new JobManager(localBaseServerUrl);
     }
 
     /**
