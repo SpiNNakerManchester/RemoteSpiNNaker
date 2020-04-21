@@ -125,7 +125,7 @@ public class RemoteSpinnakerBeans {
     /**
      * The URL of the server for local (non-external) access.
      */
-    @Value("$(localbaseserver.url}${cxf.path}${cxf.rest.path}/")
+    @Value("${localbaseserver.url}${cxf.path}${cxf.rest.path}/")
     private URL localBaseServerUrl;
 
     /**
