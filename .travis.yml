@@ -13,9 +13,9 @@ before_install:
   - git clone https://github.com/SpiNNakerManchester/SupportScripts.git support
   - python support/travis_blocking_stdout.py
   - unset _JAVA_OPTIONS
+  - cfg=$PWD/.travis/travis-settings.xml
   # Look for POM in subfolder
   - cd RemoteSpiNNaker
-  - cfg=$PWD/.travis/travis-settings.xml
 
 install:
   # Not a critical failure for this to fail
