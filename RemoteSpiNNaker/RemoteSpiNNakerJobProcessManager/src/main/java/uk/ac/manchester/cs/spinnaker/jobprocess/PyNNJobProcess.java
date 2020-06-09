@@ -19,7 +19,6 @@ package uk.ac.manchester.cs.spinnaker.jobprocess;
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.io.FileUtils.listFiles;
 import static org.apache.commons.io.FilenameUtils.getExtension;
-import static org.apache.commons.io.IOUtils.closeQuietly;
 import static uk.ac.manchester.cs.spinnaker.job.Status.Error;
 import static uk.ac.manchester.cs.spinnaker.job.Status.Finished;
 import static uk.ac.manchester.cs.spinnaker.job.Status.Running;
@@ -669,7 +668,11 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             }
 
             log("Log writer has exited");
-            closeQuietly(reader);
+            try {
+                reader.close();
+            } catch (IOException | RuntimeException e) {
+                // Do nothing
+            }
             ThreadUtils.sleep(FINALIZATION_DELAY);
         }
     }
