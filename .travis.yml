@@ -1,7 +1,11 @@
 language: java
-jdk:
-  - openjdk8
-  - openjdk11
+os: linux
+jobs:
+  include:
+    - dist: focal
+      jdk: openjdk11
+    - dist: xenial
+      jdk: openjdk8
 cache:
   directories:
     - $HOME/.m2
@@ -11,19 +15,20 @@ before_install:
   - git clone https://github.com/SpiNNakerManchester/SupportScripts.git support
   - python support/travis_blocking_stdout.py
   - unset _JAVA_OPTIONS
+  - cfg=$PWD/.travis/travis-settings.xml
   # Look for POM in subfolder
   - cd RemoteSpiNNaker
 
 install:
   # Not a critical failure for this to fail
-  - mvn -B dependency:resolve dependency:resolve-plugins --settings ../.travis/travis-settings.xml || true
+  - mvn -B dependency:resolve dependency:resolve-plugins --settings $cfg || true
 
 script:
-  - mvn apache-rat:check --settings ../.travis/travis-settings.xml -V || (find . -type f -name 'rat*.txt' -print | xargs grep -l unapproved | xargs cat; exit 1)
-  - mvn install --settings ../.travis/travis-settings.xml -DskipTests=true -Dmaven.javadoc.skip=true
-  - mvn verify --settings ../.travis/travis-settings.xml -Dmaven.javadoc.skip=true jacoco:report
-  - mvn checkstyle:check --settings ../.travis/travis-settings.xml -Dmaven.javadoc.skip=true
-  - mvn javadoc:aggregate --settings ../.travis/travis-settings.xml
+  - mvn apache-rat:check     --settings $cfg -V || (find . -type f -name 'rat*.txt' -print | xargs grep -l unapproved | xargs cat; exit 1)
+  - mvn install              --settings $cfg -Dmaven.javadoc.skip=true -DskipTests=true
+  - mvn verify jacoco:report --settings $cfg -Dmaven.javadoc.skip=true
+  - mvn checkstyle:check     --settings $cfg -Dmaven.javadoc.skip=true
+  - mvn javadoc:aggregate    --settings $cfg
 
 after_success:
-  - mvn coveralls:report --settings ../.travis/travis-settings.xml
+  - mvn coveralls:report     --settings $cfg
