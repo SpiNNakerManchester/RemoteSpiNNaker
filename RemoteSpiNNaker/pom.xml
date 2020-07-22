@@ -28,22 +28,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <resteasy.version>3.6.2.Final</resteasy.version>
-        <jackson.version>2.9.8</jackson.version>
-        <httpclient.version>4.5.9</httpclient.version>
+
+        <resteasy.version>3.12.1.Final</resteasy.version>
+        <jackson.version>2.11.0</jackson.version>
+        <httpclient.version>4.5.12</httpclient.version>
         <xen.version>6.2.0-3.1</xen.version>
         <ini4j.version>0.5.4</ini4j.version>
-        <jgit.version>5.2.1.201812262042-r</jgit.version>
-        <jarchivelib.version>0.7.1</jarchivelib.version>
-        <springsecurity.version>4.2.11.RELEASE</springsecurity.version>
-        <spring.version>4.3.22.RELEASE</spring.version>
-        <cxf.version>3.3.0</cxf.version>
-        <slf4j.version>1.7.25</slf4j.version>
+        <jgit.version>5.7.0.202003110725-r</jgit.version>
+        <jarchivelib.version>1.0.0</jarchivelib.version>
+        <springsecurity.version>5.3.3.RELEASE</springsecurity.version>
+        <spring.version>5.2.6.RELEASE</spring.version>
+        <cxf.version>3.3.6</cxf.version>
+        <slf4j.version>1.7.30</slf4j.version>
         <pac4j.springsecurity.version>1.4.3</pac4j.springsecurity.version>
         <pac4j.oidc.version>1.8.9</pac4j.oidc.version>
-        <j2ee.version>6.0</j2ee.version>
-        <commons.lang.version>3.8.1</commons.lang.version>
-        <commons.io.version>2.6</commons.io.version>
+        <j2ee.version>8.0.1</j2ee.version>
+        <commons.lang.version>3.10</commons.lang.version>
+        <commons.io.version>2.7</commons.io.version>
     </properties>
 
     <dependencyManagement>
@@ -122,6 +123,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             <dependency>
                 <groupId>org.springframework.security</groupId>
                 <artifactId>spring-security-core</artifactId>
+                <version>${springsecurity.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-web</artifactId>
+                <version>${springsecurity.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-config</artifactId>
                 <version>${springsecurity.version}</version>
             </dependency>
             <dependency>
