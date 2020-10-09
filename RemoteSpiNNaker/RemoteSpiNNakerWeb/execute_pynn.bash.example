@@ -92,7 +92,6 @@ gitclone https://github.com/SpiNNakerManchester/spinnaker_tools.git $spinnaker_t
 # Get the rest of the tools
 gitclone https://github.com/SpiNNakerManchester/SpiNNUtils.git $spynnaker_version
 gitclone https://github.com/SpiNNakerManchester/SpiNNMachine.git $spynnaker_version
-gitclone https://github.com/SpiNNakerManchester/SpiNNStorageHandlers.git $spynnaker_version
 gitclone https://github.com/SpiNNakerManchester/PACMAN.git $spynnaker_version
 gitclone https://github.com/SpiNNakerManchester/DataSpecification.git $spynnaker_version
 gitclone https://github.com/SpiNNakerManchester/spalloc.git $spynnaker_version
@@ -116,7 +115,6 @@ domake sPyNNaker/neural_modelling/
 
 # Install the Python code (now with C binaries)
 dosetup SpiNNMachine
-dosetup SpiNNStorageHandlers
 dosetup SpiNNMan
 dosetup PACMAN
 dosetup DataSpecification
