@@ -252,6 +252,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                         <consoleOutput>true</consoleOutput>
                     </configuration>
                 </plugin>
+				<plugin>
+					<groupId>org.eluder.coveralls</groupId>
+					<artifactId>coveralls-maven-plugin</artifactId>
+					<version>4.3.0</version>
+				</plugin>
             </plugins>
         </pluginManagement>
         <plugins>
@@ -290,25 +295,37 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     </modules>
 
     <profiles>
-        <profile>
-            <id>SupportJDK9AndLater</id>
-            <activation>
-                <jdk>[1.9,)</jdk>
-            </activation>
-            <build>
-                <pluginManagement>
-                    <plugins>
-                        <plugin>
-                            <artifactId>maven-javadoc-plugin</artifactId>
-                            <configuration>
-                                <additionalOptions>
-                                    <additionalOption>-html5</additionalOption>
-                                </additionalOptions>
-                            </configuration>
-                        </plugin>
-                    </plugins>
-                </pluginManagement>
-            </build>
-        </profile>
+		<profile>
+			<id>SupportJDK9AndLater</id>
+			<activation>
+				<jdk>[1.9,)</jdk>
+			</activation>
+			<build>
+				<pluginManagement>
+					<plugins>
+						<plugin>
+							<artifactId>maven-javadoc-plugin</artifactId>
+							<configuration>
+								<additionalOptions>
+									<additionalOption>-html5</additionalOption>
+								</additionalOptions>
+							</configuration>
+						</plugin>
+						<plugin>
+							<groupId>org.eluder.coveralls</groupId>
+							<artifactId>coveralls-maven-plugin</artifactId>
+							<dependencies>
+								<!-- Of course! -->
+								<dependency>
+									<groupId>javax.xml.bind</groupId>
+									<artifactId>jaxb-api</artifactId>
+									<version>2.3.1</version>
+								</dependency>
+							</dependencies>
+						</plugin>
+					</plugins>
+				</pluginManagement>
+			</build>
+		</profile>
     </profiles>
 </project>
