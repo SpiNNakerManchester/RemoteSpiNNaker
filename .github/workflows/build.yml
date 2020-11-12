@@ -62,7 +62,14 @@ jobs:
         working-directory: RemoteSpiNNaker
 
       - name: Maven test
-        run: mvn verify --settings $SETTINGS_FILE -Dmaven.javadoc.skip=true jacoco:report
+        id: test
+        run: |
+          mvn verify --settings $SETTINGS_FILE -Dmaven.javadoc.skip=true jacoco:report
+          present=0
+          for dir in JobProcessManager Model Web; do
+              [ -f RemoteSpiNNaker$dir/target/jacoco.exec ] && present=1
+          done
+          echo "::set-output name=coverage_data_present::$present"
         working-directory: RemoteSpiNNaker
 
       - name: Maven checkstyle
@@ -74,7 +81,7 @@ jobs:
         working-directory: RemoteSpiNNaker
 
       - name: "Report Coverage via coveralls.io"
-        if: ${{ steps.refs.outputs.secret_present }} > 0
+        if: ${{ steps.refs.outputs.secret_present }} > 0 && ${{ steps.test.outputs.coverage_data_present }}
         run: mvn coveralls:report --settings $SETTINGS_FILE --no-transfer-progress -DrepoToken=$COVERALLS_SECRET
         working-directory: RemoteSpiNNaker
         env:
