@@ -261,6 +261,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 					<groupId>org.jacoco</groupId>
 					<artifactId>jacoco-maven-plugin</artifactId>
 					<version>${jacoco.version}</version>
+					<configuration>
+						<includes>
+							<include>uk/ac/manchester/cs/spinnaker/**/*.class</include>
+						</includes>
+					</configuration>
 				</plugin>
                 <plugin>
                     <groupId>org.apache.rat</groupId>
