@@ -1,0 +1,13 @@
+uk.ac.manchester.cs.spinnaker
+uk.ac.manchester.cs.spinnaker.jobmanager
+uk.ac.manchester.cs.spinnaker.machinemanager
+uk.ac.manchester.cs.spinnaker.machinemanager.commands
+uk.ac.manchester.cs.spinnaker.machinemanager.responses
+uk.ac.manchester.cs.spinnaker.model
+uk.ac.manchester.cs.spinnaker.nmpi
+uk.ac.manchester.cs.spinnaker.output
+uk.ac.manchester.cs.spinnaker.remote.web
+uk.ac.manchester.cs.spinnaker.rest
+uk.ac.manchester.cs.spinnaker.rest.utils
+uk.ac.manchester.cs.spinnaker.status
+uk.ac.manchester.cs.spinnaker.utils
