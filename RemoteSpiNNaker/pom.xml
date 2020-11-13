@@ -45,6 +45,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <j2ee.version>8.0.1</j2ee.version>
         <commons.lang.version>3.10</commons.lang.version>
         <commons.io.version>2.7</commons.io.version>
+        <javadoc.version>3.2.0</javadoc.version>
     </properties>
 
     <dependencyManagement>
@@ -211,6 +212,40 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                         <suppressionsLocation>src/support/checkstyle/suppressions.xml</suppressionsLocation>
                     </configuration>
                 </plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-javadoc-plugin</artifactId>
+					<version>${javadoc.version}</version>
+					<configuration>
+						<quiet>true</quiet>
+						<groups>
+							<group>
+								<title>Web Interface</title>
+								<packages>uk.ac.manchester.cs.spinnaker:uk.ac.manchester.cs.spinnaker.jobmanager:uk.ac.manchester.cs.spinnaker.machinem*:uk.ac.manchester.cs.spinnaker.model:uk.ac.manchester.cs.spinnaker.output:uk.ac.manchester.cs.spinnaker.remote*:uk.ac.manchester.cs.spinnaker.rest.*:uk.ac.manchester.cs.spinnaker.status</packages>
+							</group>
+							<group>
+								<title>Web Interface: REST API</title>
+								<packages>uk.ac.manchester.cs.spinnaker.rest</packages>
+							</group>
+							<group>
+								<title>Model</title>
+								<packages>uk.ac.manchester.cs.spinnaker.job.*:uk.ac.manchester.cs.spinnaker.machine</packages>
+							</group>
+							<group>
+								<title>Model: REST API</title>
+								<packages>uk.ac.manchester.cs.spinnaker.job</packages>
+							</group>
+							<group>
+								<title>Job Process Manager</title>
+								<packages>uk.ac.manchester.cs.spinnaker.job_parameters:uk.ac.manchester.cs.spinnaker.jobprocess*</packages>
+							</group>
+							<group>
+								<title>Utilities</title>
+								<packages>uk.ac.manchester.cs.spinnaker.utils</packages>
+							</group>
+						</groups>
+					</configuration>
+				</plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
