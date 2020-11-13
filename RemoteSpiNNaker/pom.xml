@@ -263,7 +263,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 					<version>${jacoco.version}</version>
 					<configuration>
 						<includes>
-							<include>uk/ac/manchester/cs/spinnaker/**/*.class</include>
+							<include>uk/ac/manchester/**</include>
 						</includes>
 					</configuration>
 				</plugin>
