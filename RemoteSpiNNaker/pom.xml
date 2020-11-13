@@ -45,6 +45,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <j2ee.version>8.0.1</j2ee.version>
         <commons.lang.version>3.10</commons.lang.version>
         <commons.io.version>2.7</commons.io.version>
+		<jacoco.version>0.8.5</jacoco.version>
         <javadoc.version>3.2.0</javadoc.version>
     </properties>
 
@@ -246,14 +247,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 						</groups>
 					</configuration>
 				</plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>3.1.0</version>
-                    <configuration>
-                        <quiet>true</quiet>
-                    </configuration>
-                </plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-site-plugin</artifactId>
@@ -264,11 +257,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     <artifactId>jetty-maven-plugin</artifactId>
                     <version>9.4.19.v20190610</version>
                 </plugin>
-                <plugin>
-                    <groupId>org.jacoco</groupId>
-                    <artifactId>jacoco-maven-plugin</artifactId>
-                    <version>0.8.2</version>
-                </plugin>
+				<plugin>
+					<groupId>org.jacoco</groupId>
+					<artifactId>jacoco-maven-plugin</artifactId>
+					<version>${jacoco.version}</version>
+				</plugin>
                 <plugin>
                     <groupId>org.apache.rat</groupId>
                     <artifactId>apache-rat-plugin</artifactId>
