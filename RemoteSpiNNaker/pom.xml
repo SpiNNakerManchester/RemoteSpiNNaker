@@ -294,6 +294,166 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <module>RemoteSpiNNakerWeb</module>
     </modules>
 
+	<name>Remote SpiNNaker</name>
+	<description>Remote Access to SpiNNaker via the HBP NMPI Queue.</description>
+	<url>http://spinnakermanchester.github.io/</url>
+	<organization>
+		<name>SpiNNaker Team @ University of Manchester</name>
+		<url>http://apt.cs.manchester.ac.uk/projects/SpiNNaker/</url>
+	</organization>
+	<licenses>
+		<license>
+			<url>https://www.gnu.org/licenses/gpl-3.0.en.html</url>
+			<name>GNU General Public License, version 3</name>
+			<distribution>manual</distribution>
+		</license>
+	</licenses>
+	<scm>
+		<connection>scm:git:https://github.com/SpiNNakerManchester/RemoteSpiNNaker.git</connection>
+		<url>https://github.com/SpiNNakerManchester/RemoteSpiNNaker</url>
+	</scm>
+	<issueManagement>
+		<system>github</system>
+		<url>https://github.com/SpiNNakerManchester/RemoteSpiNNaker/issues</url>
+	</issueManagement>
+	<ciManagement>
+		<system>GitHub Actions</system>
+		<url>https://github.com/SpiNNakerManchester/RemoteSpiNNaker/actions</url>
+	</ciManagement>
+	<distributionManagement>
+		<site>
+			<id>github-pages</id>
+			<name>GitHub Pages</name>
+			<url>http://spinnakermanchester.github.io/RemoteSpiNNaker</url>
+		</site>
+	</distributionManagement>
+	<mailingLists>
+		<mailingList>
+			<name>SpiNNaker Users Group</name>
+			<post>spinnakerusers@googlegroups.com</post>
+			<subscribe>http://groups.google.com/group/spinnakerusers/subscribe</subscribe>
+			<unsubscribe>spinnakerusers+unsubscribe@googlegroups.com</unsubscribe>
+		</mailingList>
+	</mailingLists>
+	<developers>
+		<!-- IDs are github logins -->
+		<developer>
+			<id>alan-stokes</id>
+			<name>Alan Stokes</name>
+			<roles>
+				<role>New Feature Development Lead</role>
+				<role>Dissemination</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>andrewgait</id>
+			<name>Andrew Gait</name>
+			<roles>
+				<role>New Feature Development</role>
+				<role>User Support</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>agr</id>
+			<name>Andrew Rowley</name>
+			<roles>
+				<role>New Feature Development</role>
+				<role>Architectural Design</role>
+				<role>Project Liaison</role>
+				<role>Dissemination</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>Christian-B</id>
+			<name>Christian Brenninkmeijer</name>
+			<roles>
+				<role>New Feature Development</role>
+				<role>Software Testing</role>
+				<role>Continuous Integration Control</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>dkfellows</id>
+			<name>Donal Fellows</name>
+			<roles>
+				<role>New Feature Development</role>
+				<role>Low-Level Maintenance</role>
+				<role>Software Quality Control</role>
+				<role>Continuous Integration Control</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>oliverrhodes</id>
+			<name>Oliver Rhodes</name>
+			<roles>
+				<role>Academic Oversight</role>
+				<role>Dissemination</role>
+				<role>Model Development</role>
+			</roles>
+			<url>https://www.research.manchester.ac.uk/portal/oliver.rhodes.html</url>
+		</developer>
+	</developers>
+	<reporting>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-project-info-reports-plugin</artifactId>
+				<version>3.1.0</version>
+				<reportSets>
+					<reportSet>
+						<reports><!-- select reports -->
+							<report>index</report>
+							<report>dependencies</report>
+							<report>scm</report>
+							<report>ci-management</report>
+							<report>mailing-lists</report>
+							<report>team</report>
+							<report>summary</report>
+						</reports>
+					</reportSet>
+				</reportSets>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>${javadoc.version}</version>
+				<reportSets>
+					<reportSet>
+						<reports>
+							<report>javadoc</report>
+						</reports>
+					</reportSet>
+					<reportSet>
+						<id>aggregate</id>
+						<inherited>false</inherited>
+						<reports>
+							<report>aggregate</report>
+						</reports>
+					</reportSet>
+				</reportSets>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jxr-plugin</artifactId>
+				<version>3.0.0</version>
+				<reportSets>
+					<reportSet>
+						<reports>
+							<report>jxr</report>
+						</reports>
+					</reportSet>
+					<reportSet>
+						<id>aggregate</id>
+						<inherited>false</inherited>
+						<reports>
+							<report>aggregate</report>
+						</reports>
+					</reportSet>
+				</reportSets>
+			</plugin>
+		</plugins>
+	</reporting>
+
     <profiles>
 		<profile>
 			<id>SupportJDK9AndLater</id>
