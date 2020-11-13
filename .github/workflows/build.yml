@@ -32,11 +32,9 @@ jobs:
         id: refs
         env:
           BRANCH_NAME_OR_REF: ${{ github.head_ref || github.ref }}
-          COVERALLS_SECRET: ${{ secrets.COVERALLS_REPO_TOKEN }}
         run: |
           echo "::set-output name=branch_name::${BRANCH_NAME_OR_REF#refs/heads/}"
           echo "::set-output name=pr_number::$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")"
-          echo "::set-output name=secret_present::$(test -n "$COVERALLS_SECRET"; echo $?)"
           echo "SETTINGS_FILE=$PWD/.github/settings.xml" >> $GITHUB_ENV
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
@@ -63,13 +61,7 @@ jobs:
 
       - name: Maven test
         id: test
-        run: |
-          mvn verify --settings $SETTINGS_FILE -Dmaven.javadoc.skip=true jacoco:report
-          present=0
-          for dir in JobProcessManager Model Web; do
-              [ -f RemoteSpiNNaker$dir/target/jacoco.exec ] && present=1
-          done
-          echo "::set-output name=coverage_data_present::$present"
+        run: mvn verify --settings $SETTINGS_FILE -Dmaven.javadoc.skip=true jacoco:report
         working-directory: RemoteSpiNNaker
 
       - name: Maven checkstyle
@@ -81,7 +73,6 @@ jobs:
         working-directory: RemoteSpiNNaker
 
       - name: "Report Coverage via coveralls.io"
-        if: ${{ steps.refs.outputs.secret_present > 0 && steps.test.outputs.coverage_data_present > 0 }}
         run: mvn coveralls:report --settings $SETTINGS_FILE --no-transfer-progress -DrepoToken=$COVERALLS_SECRET
         working-directory: RemoteSpiNNaker
         env:

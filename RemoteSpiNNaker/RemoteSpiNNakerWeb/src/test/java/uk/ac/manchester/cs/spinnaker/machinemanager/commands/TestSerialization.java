@@ -24,7 +24,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @SuppressWarnings("rawtypes")
-public class SerializationTests {
+public class TestSerialization {
     ObjectMapper mapper = new ObjectMapper();
 
     @Test

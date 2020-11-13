@@ -28,7 +28,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class DeserializationTests {
+public class TestDeserialization {
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Test
