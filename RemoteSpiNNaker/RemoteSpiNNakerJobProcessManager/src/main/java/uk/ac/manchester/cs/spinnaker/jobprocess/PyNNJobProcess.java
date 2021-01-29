@@ -170,6 +170,9 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
      */
     private ThreadGroup threadGroup;
 
+    /**
+     * How long to wait for the main subprocess to run, in hours.
+     */
     private int lifetimeHours = RUN_TIMEOUT;
 
     /**
@@ -351,15 +354,16 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
      *            The parameters to the subprocess.
      * @param logWriter
      *            Where to send log messages.
-     * @return
-     *            The exit value of the process
+     * @param lifetime
+     *            How long to wait for the subprocess to run, in hours.
+     * @return The exit value of the process
      * @throws IOException
-     *            If there was an error starting the process
+     *             If there was an error starting the process
      * @throws InterruptedException
-     *            If the process was interrupted before return
+     *             If the process was interrupted before return
      */
     private int runSubprocess(final PyNNJobParameters parameters,
-            final LogWriter logWriter, int lifetime)
+            final LogWriter logWriter, final int lifetime)
             throws IOException, InterruptedException {
         final List<String> command = new ArrayList<>();
         command.add(SUBPROCESS_RUNNER);
@@ -387,8 +391,22 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         }
     }
 
-    private static int runProcess(Process process, int lifetime,
-            TimeUnit lifetimeUnits) throws InterruptedException {
+    /**
+     * Run a subprocess until timeout or completion (whichever comes first). If
+     * timeout happens, the subprocess will be killed.
+     *
+     * @param process
+     *            The subprocess.
+     * @param lifetime
+     *            How long to wait.
+     * @param lifetimeUnits
+     *            The units for <em>lifetime</em>.
+     * @return The exit code of the subprocess
+     * @throws InterruptedException
+     *             If the process was interrupted before return
+     */
+    private static int runProcess(final Process process, final int lifetime,
+            final TimeUnit lifetimeUnits) throws InterruptedException {
         if (!process.waitFor(lifetime, lifetimeUnits)) {
             process.destroy();
             if (!process.waitFor(FINALIZATION_DELAY, MILLISECONDS)) {
