@@ -17,6 +17,8 @@
 package uk.ac.manchester.cs.spinnaker.jobprocess;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.concurrent.TimeUnit.HOURS;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.apache.commons.io.FileUtils.listFiles;
 import static org.apache.commons.io.FilenameUtils.getExtension;
 import static uk.ac.manchester.cs.spinnaker.job.Status.Error;
@@ -41,6 +43,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -113,6 +116,9 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
      */
     private static final Set<String> IGNORED_DIRECTORIES = new HashSet<>();
 
+    /** The timeout for running jobs, in <em>hours.</em> */
+    private static final int RUN_TIMEOUT = 7 * 24;
+
     /**
      * A pattern for finding arguments of the command to execute.
      */
@@ -163,6 +169,8 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
      * A thread group for the log monitoring.
      */
     private ThreadGroup threadGroup;
+
+    private int lifetimeHours = RUN_TIMEOUT;
 
     /**
      * Gathers files in a directory and sub-directories.
@@ -251,7 +259,8 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             final Set<File> existingFiles = gatherFiles(workingDirectory);
 
             // Execute the program
-            final int exitValue = runSubprocess(parameters, logWriter);
+            final int exitValue = runSubprocess(
+                    parameters, logWriter, lifetimeHours);
 
             // Get the provenance data
             gatherProvenance(workingDirectory);
@@ -330,8 +339,8 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
                 new ReaderLogWriter(process.getInputStream(), logWriter)) {
             logger.start();
 
-            // Wait for the process to finish
-            return process.waitFor();
+            // Wait for the process to finish; 1 hour is very generous!
+            return runProcess(process, 1, HOURS);
         }
     }
 
@@ -350,7 +359,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
      *            If the process was interrupted before return
      */
     private int runSubprocess(final PyNNJobParameters parameters,
-            final LogWriter logWriter)
+            final LogWriter logWriter, int lifetime)
             throws IOException, InterruptedException {
         final List<String> command = new ArrayList<>();
         command.add(SUBPROCESS_RUNNER);
@@ -374,8 +383,20 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             logger.start();
 
             // Wait for the process to finish
-            return process.waitFor();
+            return runProcess(process, lifetime, HOURS);
         }
+    }
+
+    private static int runProcess(Process process, int lifetime,
+            TimeUnit lifetimeUnits) throws InterruptedException {
+        if (!process.waitFor(lifetime, lifetimeUnits)) {
+            process.destroy();
+            if (!process.waitFor(FINALIZATION_DELAY, MILLISECONDS)) {
+                process.destroyForcibly();
+                Thread.sleep(FINALIZATION_DELAY);
+            }
+        }
+        return process.exitValue();
     }
 
     /**
