@@ -226,12 +226,12 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             final File cfgFile = new File(workingDirectory, "spynnaker.cfg");
 
             // Add the details of the machine
-            Ini ini = new Ini();
+            final Ini ini = new Ini();
             if (cfgFile.exists()) {
                 ini.load(cfgFile);
             }
 
-            Section section = null;
+            final Section section;
             if (!ini.containsKey(SECTION)) {
                 section = ini.add(SECTION);
             } else {
