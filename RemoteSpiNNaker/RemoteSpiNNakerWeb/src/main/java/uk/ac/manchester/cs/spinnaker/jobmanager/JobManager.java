@@ -351,7 +351,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         logger.info("Running " + id + " on " + machine.getMachineName());
         final long resourceUsage =
                 (long) ((runTime / MILLISECONDS_PER_SECOND) * quotaNCores);
-        logger.info("Resource usage " + resourceUsage);
+        logger.debug("Resource usage " + resourceUsage);
         synchronized (jobResourceUsage) {
             jobResourceUsage.put(id, resourceUsage);
             jobNCores.put(id, quotaNCores);
@@ -673,7 +673,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         requireNonNull(logToAppend);
         requireNonNull(baseDirectory);
         requireNonNull(outputs);
-        logger.debug("Marking job " + id + " as finished");
+        logger.info("Marking job " + id + " as finished");
         releaseAllocatedMachines(id);
 
         // Do these before anything that can throw
@@ -720,7 +720,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         requireNonNull(outputs);
         requireNonNull(stackTrace);
 
-        logger.debug("Marking job " + id + " as error");
+        logger.info("Marking job " + id + " as error");
         releaseAllocatedMachines(id);
 
         final Exception exception =

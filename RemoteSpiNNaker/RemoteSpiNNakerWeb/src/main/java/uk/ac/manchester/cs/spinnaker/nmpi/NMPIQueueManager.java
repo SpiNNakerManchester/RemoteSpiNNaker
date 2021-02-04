@@ -299,6 +299,9 @@ public class NMPIQueueManager implements Runnable {
 
         logger.debug("Updating job status on server");
         queue.updateJob(id, job);
+
+        jobLog.remove(id);
+        jobCache.remove(id);
     }
 
     /**
@@ -344,6 +347,9 @@ public class NMPIQueueManager implements Runnable {
 
         logger.debug("Updating job on server");
         queue.updateJob(id, job);
+
+        jobLog.remove(id);
+        jobCache.remove(id);
     }
 
     /**
