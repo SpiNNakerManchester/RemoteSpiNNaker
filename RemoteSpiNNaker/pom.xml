@@ -28,22 +28,25 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <resteasy.version>3.6.2.Final</resteasy.version>
-        <jackson.version>2.9.8</jackson.version>
-        <httpclient.version>4.5.9</httpclient.version>
+
+        <resteasy.version>3.12.1.Final</resteasy.version>
+        <jackson.version>2.11.0</jackson.version>
+        <httpclient.version>4.5.12</httpclient.version>
         <xen.version>6.2.0-3.1</xen.version>
         <ini4j.version>0.5.4</ini4j.version>
-        <jgit.version>5.2.1.201812262042-r</jgit.version>
-        <jarchivelib.version>0.7.1</jarchivelib.version>
-        <springsecurity.version>4.2.11.RELEASE</springsecurity.version>
-        <spring.version>4.3.22.RELEASE</spring.version>
-        <cxf.version>3.3.0</cxf.version>
-        <slf4j.version>1.7.25</slf4j.version>
+        <jgit.version>5.7.0.202003110725-r</jgit.version>
+        <jarchivelib.version>1.0.0</jarchivelib.version>
+        <springsecurity.version>5.3.3.RELEASE</springsecurity.version>
+        <spring.version>5.2.6.RELEASE</spring.version>
+        <cxf.version>3.3.6</cxf.version>
+        <slf4j.version>1.7.30</slf4j.version>
         <pac4j.springsecurity.version>1.4.3</pac4j.springsecurity.version>
         <pac4j.oidc.version>1.8.9</pac4j.oidc.version>
-        <j2ee.version>6.0</j2ee.version>
-        <commons.lang.version>3.8.1</commons.lang.version>
-        <commons.io.version>2.6</commons.io.version>
+        <j2ee.version>8.0.1</j2ee.version>
+        <commons.lang.version>3.10</commons.lang.version>
+        <commons.io.version>2.7</commons.io.version>
+		<jacoco.version>0.8.5</jacoco.version>
+        <javadoc.version>3.2.0</javadoc.version>
     </properties>
 
     <dependencyManagement>
@@ -125,6 +128,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 <version>${springsecurity.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-web</artifactId>
+                <version>${springsecurity.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-config</artifactId>
+                <version>${springsecurity.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.pac4j</groupId>
                 <artifactId>spring-security-pac4j</artifactId>
                 <version>${pac4j.springsecurity.version}</version>
@@ -157,7 +170,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
-                <version>4.12</version>
+                <version>4.13.1</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>
@@ -200,24 +213,60 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                         <suppressionsLocation>src/support/checkstyle/suppressions.xml</suppressionsLocation>
                     </configuration>
                 </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>3.1.0</version>
-                    <configuration>
-                        <quiet>true</quiet>
-                    </configuration>
-                </plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-javadoc-plugin</artifactId>
+					<version>${javadoc.version}</version>
+					<configuration>
+						<quiet>true</quiet>
+						<groups>
+							<group>
+								<title>Web Interface</title>
+								<packages>uk.ac.manchester.cs.spinnaker:uk.ac.manchester.cs.spinnaker.jobmanager:uk.ac.manchester.cs.spinnaker.machinem*:uk.ac.manchester.cs.spinnaker.model:uk.ac.manchester.cs.spinnaker.output:uk.ac.manchester.cs.spinnaker.remote*:uk.ac.manchester.cs.spinnaker.rest.*:uk.ac.manchester.cs.spinnaker.status</packages>
+							</group>
+							<group>
+								<title>Web Interface: REST API</title>
+								<packages>uk.ac.manchester.cs.spinnaker.rest</packages>
+							</group>
+							<group>
+								<title>Model</title>
+								<packages>uk.ac.manchester.cs.spinnaker.job.*:uk.ac.manchester.cs.spinnaker.machine</packages>
+							</group>
+							<group>
+								<title>Model: REST API</title>
+								<packages>uk.ac.manchester.cs.spinnaker.job</packages>
+							</group>
+							<group>
+								<title>Job Process Manager</title>
+								<packages>uk.ac.manchester.cs.spinnaker.job_parameters:uk.ac.manchester.cs.spinnaker.jobprocess*</packages>
+							</group>
+							<group>
+								<title>Utilities</title>
+								<packages>uk.ac.manchester.cs.spinnaker.utils</packages>
+							</group>
+						</groups>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-site-plugin</artifactId>
+					<version>3.9.1</version>
+				</plugin>
                 <plugin>
                     <groupId>org.eclipse.jetty</groupId>
                     <artifactId>jetty-maven-plugin</artifactId>
                     <version>9.4.24.v20191120</version>
                 </plugin>
-                <plugin>
-                    <groupId>org.jacoco</groupId>
-                    <artifactId>jacoco-maven-plugin</artifactId>
-                    <version>0.8.2</version>
-                </plugin>
+				<plugin>
+					<groupId>org.jacoco</groupId>
+					<artifactId>jacoco-maven-plugin</artifactId>
+					<version>${jacoco.version}</version>
+					<configuration>
+						<includes>
+							<include>uk/ac/manchester/**</include>
+						</includes>
+					</configuration>
+				</plugin>
                 <plugin>
                     <groupId>org.apache.rat</groupId>
                     <artifactId>apache-rat-plugin</artifactId>
@@ -241,6 +290,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                         <consoleOutput>true</consoleOutput>
                     </configuration>
                 </plugin>
+				<plugin>
+					<groupId>org.eluder.coveralls</groupId>
+					<artifactId>coveralls-maven-plugin</artifactId>
+					<version>4.3.0</version>
+				</plugin>
             </plugins>
         </pluginManagement>
         <plugins>
@@ -278,26 +332,198 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <module>RemoteSpiNNakerWeb</module>
     </modules>
 
+	<name>Remote SpiNNaker</name>
+	<description>Remote Access to SpiNNaker via the HBP NMPI Queue.</description>
+	<url>http://spinnakermanchester.github.io/</url>
+	<organization>
+		<name>SpiNNaker Team @ University of Manchester</name>
+		<url>http://apt.cs.manchester.ac.uk/projects/SpiNNaker/</url>
+	</organization>
+	<licenses>
+		<license>
+			<url>https://www.gnu.org/licenses/gpl-3.0.en.html</url>
+			<name>GNU General Public License, version 3</name>
+			<distribution>manual</distribution>
+		</license>
+	</licenses>
+	<scm>
+		<connection>scm:git:https://github.com/SpiNNakerManchester/RemoteSpiNNaker.git</connection>
+		<url>https://github.com/SpiNNakerManchester/RemoteSpiNNaker</url>
+	</scm>
+	<issueManagement>
+		<system>github</system>
+		<url>https://github.com/SpiNNakerManchester/RemoteSpiNNaker/issues</url>
+	</issueManagement>
+	<ciManagement>
+		<system>GitHub Actions</system>
+		<url>https://github.com/SpiNNakerManchester/RemoteSpiNNaker/actions</url>
+	</ciManagement>
+	<distributionManagement>
+		<site>
+			<id>github-pages</id>
+			<name>GitHub Pages</name>
+			<url>http://spinnakermanchester.github.io/RemoteSpiNNaker</url>
+		</site>
+	</distributionManagement>
+	<mailingLists>
+		<mailingList>
+			<name>SpiNNaker Users Group</name>
+			<post>spinnakerusers@googlegroups.com</post>
+			<subscribe>http://groups.google.com/group/spinnakerusers/subscribe</subscribe>
+			<unsubscribe>spinnakerusers+unsubscribe@googlegroups.com</unsubscribe>
+		</mailingList>
+	</mailingLists>
+	<developers>
+		<!-- IDs are github logins -->
+		<developer>
+			<id>alan-stokes</id>
+			<name>Alan Stokes</name>
+			<roles>
+				<role>New Feature Development Lead</role>
+				<role>Dissemination</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>andrewgait</id>
+			<name>Andrew Gait</name>
+			<roles>
+				<role>New Feature Development</role>
+				<role>User Support</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>agr</id>
+			<name>Andrew Rowley</name>
+			<roles>
+				<role>New Feature Development</role>
+				<role>Architectural Design</role>
+				<role>Project Liaison</role>
+				<role>Dissemination</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>Christian-B</id>
+			<name>Christian Brenninkmeijer</name>
+			<roles>
+				<role>New Feature Development</role>
+				<role>Software Testing</role>
+				<role>Continuous Integration Control</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>dkfellows</id>
+			<name>Donal Fellows</name>
+			<roles>
+				<role>New Feature Development</role>
+				<role>Low-Level Maintenance</role>
+				<role>Software Quality Control</role>
+				<role>Continuous Integration Control</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>oliverrhodes</id>
+			<name>Oliver Rhodes</name>
+			<roles>
+				<role>Academic Oversight</role>
+				<role>Dissemination</role>
+				<role>Model Development</role>
+			</roles>
+			<url>https://www.research.manchester.ac.uk/portal/oliver.rhodes.html</url>
+		</developer>
+	</developers>
+	<reporting>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-project-info-reports-plugin</artifactId>
+				<version>3.1.0</version>
+				<reportSets>
+					<reportSet>
+						<reports><!-- select reports -->
+							<report>index</report>
+							<report>dependencies</report>
+							<report>scm</report>
+							<report>ci-management</report>
+							<report>mailing-lists</report>
+							<report>team</report>
+							<report>summary</report>
+						</reports>
+					</reportSet>
+				</reportSets>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>${javadoc.version}</version>
+				<reportSets>
+					<reportSet>
+						<reports>
+							<report>javadoc</report>
+						</reports>
+					</reportSet>
+					<reportSet>
+						<id>aggregate</id>
+						<inherited>false</inherited>
+						<reports>
+							<report>aggregate</report>
+						</reports>
+					</reportSet>
+				</reportSets>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jxr-plugin</artifactId>
+				<version>3.0.0</version>
+				<reportSets>
+					<reportSet>
+						<reports>
+							<report>jxr</report>
+						</reports>
+					</reportSet>
+					<reportSet>
+						<id>aggregate</id>
+						<inherited>false</inherited>
+						<reports>
+							<report>aggregate</report>
+						</reports>
+					</reportSet>
+				</reportSets>
+			</plugin>
+		</plugins>
+	</reporting>
+
     <profiles>
-        <profile>
-            <id>SupportJDK9AndLater</id>
-            <activation>
-                <jdk>[1.9,)</jdk>
-            </activation>
-            <build>
-                <pluginManagement>
-                    <plugins>
-                        <plugin>
-                            <artifactId>maven-javadoc-plugin</artifactId>
-                            <configuration>
-                                <additionalOptions>
-                                    <additionalOption>-html5</additionalOption>
-                                </additionalOptions>
-                            </configuration>
-                        </plugin>
-                    </plugins>
-                </pluginManagement>
-            </build>
-        </profile>
+		<profile>
+			<id>SupportJDK9AndLater</id>
+			<activation>
+				<jdk>[1.9,)</jdk>
+			</activation>
+			<build>
+				<pluginManagement>
+					<plugins>
+						<plugin>
+							<artifactId>maven-javadoc-plugin</artifactId>
+							<configuration>
+								<additionalOptions>
+									<additionalOption>-html5</additionalOption>
+								</additionalOptions>
+							</configuration>
+						</plugin>
+						<plugin>
+							<groupId>org.eluder.coveralls</groupId>
+							<artifactId>coveralls-maven-plugin</artifactId>
+							<dependencies>
+								<!-- Of course! -->
+								<dependency>
+									<groupId>javax.xml.bind</groupId>
+									<artifactId>jaxb-api</artifactId>
+									<version>2.3.1</version>
+								</dependency>
+							</dependencies>
+						</plugin>
+					</plugins>
+				</pluginManagement>
+			</build>
+		</profile>
     </profiles>
 </project>
