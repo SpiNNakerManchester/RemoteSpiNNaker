@@ -54,6 +54,7 @@ import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.io.filefilter.AbstractFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
+import org.ini4j.Config;
 import org.ini4j.Ini;
 import org.ini4j.Profile.Section;
 
@@ -227,6 +228,10 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
 
             // Add the details of the machine
             final Ini ini = new Ini();
+            final Config config = ini.getConfig();
+            config.setEscape(false);
+            config.setLowerCaseSection(false);
+            config.setLowerCaseOption(false);
             if (cfgFile.exists()) {
                 ini.load(cfgFile);
             }
@@ -245,7 +250,6 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
                     section.put("bmp_names", bmpDetails);
                 }
             } else {
-                System.err.println("Using Remote URL: " + machineUrl);
                 section.put("remote_spinnaker_url", machineUrl);
             }
             ini.store(cfgFile);
