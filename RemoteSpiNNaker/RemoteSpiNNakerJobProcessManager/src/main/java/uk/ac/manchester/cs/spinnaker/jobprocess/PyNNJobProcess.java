@@ -245,6 +245,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
                     section.put("bmp_names", bmpDetails);
                 }
             } else {
+                System.err.println("Using Remote URL: " + machineUrl);
                 section.put("remote_spinnaker_url", machineUrl);
             }
             ini.store(cfgFile);

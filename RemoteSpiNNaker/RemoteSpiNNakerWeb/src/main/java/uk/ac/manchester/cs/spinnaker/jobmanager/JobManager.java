@@ -213,6 +213,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
      */
     public JobManager(final URL baseUrlParam) {
         this.baseUrl = requireNonNull(baseUrlParam);
+        System.err.println("Base URL is " + baseUrlParam);
     }
 
     /**
