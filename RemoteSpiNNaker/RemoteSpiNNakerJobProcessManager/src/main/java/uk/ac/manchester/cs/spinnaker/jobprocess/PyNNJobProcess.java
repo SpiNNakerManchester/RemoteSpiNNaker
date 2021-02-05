@@ -54,7 +54,9 @@ import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.io.filefilter.AbstractFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
-import org.ini4j.ConfigParser;
+import org.ini4j.Config;
+import org.ini4j.Ini;
+import org.ini4j.Profile.Section;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -225,27 +227,32 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             final File cfgFile = new File(workingDirectory, "spynnaker.cfg");
 
             // Add the details of the machine
-            final ConfigParser parser = new ConfigParser();
+            final Ini ini = new Ini();
+            final Config config = ini.getConfig();
+            config.setEscape(false);
+            config.setLowerCaseSection(false);
+            config.setLowerCaseOption(false);
             if (cfgFile.exists()) {
-                parser.read(cfgFile);
+                ini.load(cfgFile);
             }
 
-            if (!parser.hasSection(SECTION)) {
-                parser.addSection(SECTION);
+            final Section section;
+            if (!ini.containsKey(SECTION)) {
+                section = ini.add(SECTION);
+            } else {
+                section = ini.get(SECTION);
             }
             if (machine != null) {
-                parser.set(SECTION, "machineName", machine.getMachineName());
-                parser.set(SECTION, "version", machine.getVersion());
-                parser.set(SECTION, "width", machine.getWidth());
-                parser.set(SECTION, "height", machine.getHeight());
+                section.put("machine_name", machine.getMachineName());
+                section.put("version", machine.getVersion());
                 final String bmpDetails = machine.getBmpDetails();
                 if (bmpDetails != null) {
-                    parser.set(SECTION, "bmp_names", bmpDetails);
+                    section.put("bmp_names", bmpDetails);
                 }
             } else {
-                parser.set(SECTION, "remote_spinnaker_url", machineUrl);
+                section.put("remote_spinnaker_url", machineUrl);
             }
-            parser.write(cfgFile);
+            ini.store(cfgFile);
 
             // Keep existing files to compare to later
             final Set<File> existingFiles = gatherFiles(workingDirectory);
