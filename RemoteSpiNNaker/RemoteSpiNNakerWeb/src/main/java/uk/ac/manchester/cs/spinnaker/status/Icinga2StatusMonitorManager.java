@@ -44,19 +44,19 @@ public class Icinga2StatusMonitorManager implements StatusMonitorManager {
 
     private Icinga2 icinga;
 
-    @Value("icinga2.url")
+    @Value("${icinga2.url}")
     private String icingaUrl;
 
-    @Value("icinga2.host")
+    @Value("${icinga2.host:@null}")
     private String host;
 
-    @Value("icinca2.service")
+    @Value("${icinca2.service:@null}")
     private String service;
 
-    @Value("icinga2.username")
+    @Value("${icinga2.username}")
     private String username;
 
-    @Value("icinga2.password")
+    @Value("${icinga2.password}")
     private String password;
 
     /**
