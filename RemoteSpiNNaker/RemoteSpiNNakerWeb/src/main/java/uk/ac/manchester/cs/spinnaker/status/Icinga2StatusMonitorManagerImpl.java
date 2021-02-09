@@ -20,6 +20,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import static uk.ac.manchester.cs.spinnaker.rest.utils.RestClientUtils.createBasicClient;
 
 import java.net.URL;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
@@ -122,7 +123,7 @@ public class Icinga2StatusMonitorManagerImpl implements StatusMonitorManager {
         final Icinga2CheckResult result = new Icinga2CheckResult(
                 STATUS, STATUS_MESSAGE, performanceData, ttl, host, service);
         try {
-            String response = icinga.processCheckResult(result);
+            Map<String, Object> response = icinga.processCheckResult(result);
             logger.info("Status updated, result = " + response);
         } catch (Throwable e) {
             logger.error("Error updating to Icinga", e);

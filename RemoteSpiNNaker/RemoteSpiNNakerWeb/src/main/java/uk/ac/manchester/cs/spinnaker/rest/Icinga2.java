@@ -16,6 +16,8 @@
  */
 package uk.ac.manchester.cs.spinnaker.rest;
 
+import java.util.Map;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -38,5 +40,5 @@ public interface Icinga2 {
     @Consumes("application/json")
     @POST
     @Path("/v1/actions/process-check-result")
-    String processCheckResult(Icinga2CheckResult result);
+    Map<String, Object> processCheckResult(Icinga2CheckResult result);
 }
