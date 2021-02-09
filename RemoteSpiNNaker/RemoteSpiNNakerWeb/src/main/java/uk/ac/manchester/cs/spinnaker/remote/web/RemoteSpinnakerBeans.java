@@ -56,6 +56,7 @@ import uk.ac.manchester.cs.spinnaker.nmpi.NMPIQueueManager;
 import uk.ac.manchester.cs.spinnaker.output.OutputManagerImpl;
 import uk.ac.manchester.cs.spinnaker.rest.OutputManager;
 import uk.ac.manchester.cs.spinnaker.rest.utils.NullExceptionMapper;
+import uk.ac.manchester.cs.spinnaker.status.Icinga2StatusMonitorManager;
 import uk.ac.manchester.cs.spinnaker.status.NullStatusMonitorManagerImpl;
 import uk.ac.manchester.cs.spinnaker.status.StatusCakeStatusMonitorManagerImpl;
 import uk.ac.manchester.cs.spinnaker.status.StatusMonitorManager;
@@ -68,6 +69,21 @@ import uk.ac.manchester.cs.spinnaker.status.StatusMonitorManager;
 // @EnableWebSecurity
 @Import(JaxRsConfig.class)
 public class RemoteSpinnakerBeans {
+
+    /**
+     * Types of status possible.
+     */
+    public enum StatusServiceType {
+        /**
+         * Status Cake service.
+         */
+        STATUS_CAKE,
+        /**
+         * Icigna2 service.
+         */
+        ICINGA2
+    }
+
     /**
      * Configures using properties.
      *
@@ -145,6 +161,12 @@ public class RemoteSpinnakerBeans {
      */
     @Value("${status.update}")
     private boolean updateStatus;
+
+    /**
+     * The type of status service to use.
+     */
+    @Value("${status.update.type}")
+    private StatusServiceType statusType;
 
     /**
      * Configuration that connects to external HBP services.
@@ -367,7 +389,14 @@ public class RemoteSpinnakerBeans {
     @Bean
     public StatusMonitorManager statusMonitorManager() {
         if (updateStatus) {
-            return new StatusCakeStatusMonitorManagerImpl();
+            if (statusType == StatusServiceType.STATUS_CAKE) {
+                return new StatusCakeStatusMonitorManagerImpl();
+            } else if (statusType == StatusServiceType.ICINGA2) {
+                return new Icinga2StatusMonitorManager();
+            } else {
+                throw new RuntimeException(
+                        "Unknown status service type: " + statusType);
+            }
         }
         return new NullStatusMonitorManagerImpl();
     }

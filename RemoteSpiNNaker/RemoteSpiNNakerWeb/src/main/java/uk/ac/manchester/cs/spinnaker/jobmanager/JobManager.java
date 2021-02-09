@@ -105,7 +105,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     /**
      * Seconds between status updates.
      */
-    private static final int STATUS_UPDATE_PERIOD = 10;
+    public static final int STATUS_UPDATE_PERIOD = 10;
 
     /**
      * The name of the JAR containing the job process manager implementation.
