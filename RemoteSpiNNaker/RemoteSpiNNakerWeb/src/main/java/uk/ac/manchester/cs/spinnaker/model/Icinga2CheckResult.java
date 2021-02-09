@@ -18,6 +18,10 @@ package uk.ac.manchester.cs.spinnaker.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * A result to report to Icinga.
+ *
+ */
 public class Icinga2CheckResult {
 
     /**
@@ -55,6 +59,16 @@ public class Icinga2CheckResult {
      */
     private String service;
 
+    /**
+     * Create a new result to report.
+     *
+     * @param exitStatus The status to report.
+     * @param pluginOutput An output string to add to the report.
+     * @param performanceData Any performance data to report as a string.
+     * @param ttl The time at which the next report is expected in seconds.
+     * @param host The host to report on.
+     * @param service The service to report on.
+     */
     public Icinga2CheckResult(int exitStatus, String pluginOutput, String performanceData,
             Integer ttl, String host, String service) {
         this.exitStatus = exitStatus;

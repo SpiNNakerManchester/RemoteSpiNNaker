@@ -23,8 +23,16 @@ import javax.ws.rs.Produces;
 
 import uk.ac.manchester.cs.spinnaker.model.Icinga2CheckResult;
 
+/**
+ * Interface to the Icinga2 API for status monitoring.
+ */
 public interface Icinga2 {
 
+    /**
+     * Update the status of a service or host.
+     *
+     * @param result The result of a status check to update with.
+     */
     @Produces("application/json")
     @Consumes("application/json")
     @POST

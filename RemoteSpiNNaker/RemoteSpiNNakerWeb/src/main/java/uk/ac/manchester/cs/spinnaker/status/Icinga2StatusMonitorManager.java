@@ -32,30 +32,64 @@ import uk.ac.manchester.cs.spinnaker.jobmanager.JobManager;
 import uk.ac.manchester.cs.spinnaker.model.Icinga2CheckResult;
 import uk.ac.manchester.cs.spinnaker.rest.Icinga2;
 
+/**
+ * Status monitor manager that reports to Icinga.
+ *
+ */
 public class Icinga2StatusMonitorManager implements StatusMonitorManager {
 
+    /**
+     * Timeout of the socket to talk to the service.
+     */
     private static final long TIMEOUT = 60;
 
+    /**
+     * The status to report - always 0 if reporting as OK.
+     */
     private static final int STATUS = 0;
 
+    /**
+     * The status message to report.
+     */
     private static final String STATUS_MESSAGE = "OK";
 
+    /**
+     * The multiplier for the TTL vs. the status update time.
+     */
     private static final int STATUS_UPDATE_TTL_MULTIPLIER = 2;
 
+    /**
+     * The proxy to speak to the service with.
+     */
     private Icinga2 icinga;
 
+    /**
+     * The URL of the service.
+     */
     @Value("${icinga2.url}")
     private String icingaUrl;
 
+    /**
+     * The host to report on.
+     */
     @Value("${icinga2.host:@null}")
     private String host;
 
+    /**
+     * The service to report on.
+     */
     @Value("${icinca2.service:@null}")
     private String service;
 
+    /**
+     * The username to log in with.
+     */
     @Value("${icinga2.username}")
     private String username;
 
+    /**
+     * The password to log in with.
+     */
     @Value("${icinga2.password}")
     private String password;
 
@@ -68,19 +102,19 @@ public class Icinga2StatusMonitorManager implements StatusMonitorManager {
         final ResteasyClient client = new ResteasyClientBuilder().
                 connectTimeout(TIMEOUT, TimeUnit.SECONDS).
                 readTimeout(TIMEOUT, TimeUnit.SECONDS).build();
-        icinga = createBasicClient(new URL(icingaUrl), username, password, Icinga2.class);
+        icinga = createBasicClient(new URL(icingaUrl), username, password,
+                Icinga2.class);
         icinga = client.target(icingaUrl).proxy(Icinga2.class);
     }
-
 
     @Override
     public void updateStatus(int runningJobs, int nBoardsInUse) {
         String performanceData = runningJobs + " running jobs\n"
                 + nBoardsInUse + " boards in use";
-        int ttl = JobManager.STATUS_UPDATE_PERIOD * STATUS_UPDATE_TTL_MULTIPLIER;
+        int ttl = JobManager.STATUS_UPDATE_PERIOD *
+                STATUS_UPDATE_TTL_MULTIPLIER;
         Icinga2CheckResult result = new Icinga2CheckResult(
                 STATUS, STATUS_MESSAGE, performanceData, ttl, host, service);
         icinga.processCheckResult(result);
     }
-
 }
