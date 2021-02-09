@@ -32,6 +32,7 @@ public interface Icinga2 {
      * Update the status of a service or host.
      *
      * @param result The result of a status check to update with.
+     * @return The response from the server as a String.
      */
     @Produces("application/json")
     @Consumes("application/json")
