@@ -67,7 +67,7 @@ public class Icinga2StatusMonitorManager implements StatusMonitorManager {
      * The URL of the service.
      */
     @Value("${icinga2.url}")
-    private String icingaUrl;
+    private URL icingaUrl;
 
     /**
      * The host to report on.
@@ -98,22 +98,22 @@ public class Icinga2StatusMonitorManager implements StatusMonitorManager {
      * @throws MalformedURLException if the URL isn't a URL
      */
     @PostConstruct
-    private void init() throws MalformedURLException {
+    private void init() {
         final ResteasyClient client = new ResteasyClientBuilder().
                 connectTimeout(TIMEOUT, TimeUnit.SECONDS).
                 readTimeout(TIMEOUT, TimeUnit.SECONDS).build();
-        icinga = createBasicClient(new URL(icingaUrl), username, password,
+        icinga = createBasicClient(icingaUrl, username, password,
                 Icinga2.class);
-        icinga = client.target(icingaUrl).proxy(Icinga2.class);
+        icinga = client.target(icingaUrl.toString()).proxy(Icinga2.class);
     }
 
     @Override
-    public void updateStatus(int runningJobs, int nBoardsInUse) {
-        String performanceData = runningJobs + " running jobs\n"
+    public void updateStatus(final int runningJobs, final int nBoardsInUse) {
+        final String performanceData = runningJobs + " running jobs\n"
                 + nBoardsInUse + " boards in use";
-        int ttl = JobManager.STATUS_UPDATE_PERIOD *
-                STATUS_UPDATE_TTL_MULTIPLIER;
-        Icinga2CheckResult result = new Icinga2CheckResult(
+        final int ttl = JobManager.STATUS_UPDATE_PERIOD
+                * STATUS_UPDATE_TTL_MULTIPLIER;
+        final Icinga2CheckResult result = new Icinga2CheckResult(
                 STATUS, STATUS_MESSAGE, performanceData, ttl, host, service);
         icinga.processCheckResult(result);
     }
