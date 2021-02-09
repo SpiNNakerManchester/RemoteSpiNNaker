@@ -21,12 +21,9 @@ import static uk.ac.manchester.cs.spinnaker.rest.utils.RestClientUtils.createBas
 
 import java.net.URL;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
 
-import org.jboss.resteasy.client.jaxrs.ResteasyClient;
-import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -39,11 +36,6 @@ import uk.ac.manchester.cs.spinnaker.rest.Icinga2;
  *
  */
 public class Icinga2StatusMonitorManagerImpl implements StatusMonitorManager {
-
-    /**
-     * Timeout of the socket to talk to the service.
-     */
-    private static final long TIMEOUT = 60;
 
     /**
      * The status to report - always 0 if reporting as OK.
@@ -106,12 +98,8 @@ public class Icinga2StatusMonitorManagerImpl implements StatusMonitorManager {
      */
     @PostConstruct
     private void init() {
-        final ResteasyClient client = new ResteasyClientBuilder().
-                connectTimeout(TIMEOUT, TimeUnit.SECONDS).
-                readTimeout(TIMEOUT, TimeUnit.SECONDS).build();
         icinga = createBasicClient(icingaUrl, username, password,
                 Icinga2.class);
-        icinga = client.target(icingaUrl.toString()).proxy(Icinga2.class);
     }
 
     @Override

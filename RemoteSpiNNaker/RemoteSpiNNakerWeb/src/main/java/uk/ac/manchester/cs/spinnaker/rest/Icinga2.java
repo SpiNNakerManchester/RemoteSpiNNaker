@@ -16,6 +16,8 @@
  */
 package uk.ac.manchester.cs.spinnaker.rest;
 
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+
 import java.util.Map;
 
 import javax.ws.rs.Consumes;
@@ -36,8 +38,8 @@ public interface Icinga2 {
      * @param result The result of a status check to update with.
      * @return The response from the server as a String.
      */
-    @Produces("application/json")
-    @Consumes("application/json")
+    @Produces(APPLICATION_JSON)
+    @Consumes(APPLICATION_JSON)
     @POST
     @Path("/v1/actions/process-check-result")
     Map<String, Object> processCheckResult(Icinga2CheckResult result);
