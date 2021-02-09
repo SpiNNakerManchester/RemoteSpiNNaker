@@ -62,12 +62,12 @@ public class Icinga2CheckResult {
     /**
      * Create a new result to report.
      *
-     * @param exitStatus The status to report.
-     * @param pluginOutput An output string to add to the report.
-     * @param performanceData Any performance data to report as a string.
-     * @param ttl The time at which the next report is expected in seconds.
-     * @param host The host to report on.
-     * @param service The service to report on.
+     * @param exitStatusParam The status to report.
+     * @param pluginOutputParam An output string to add to the report.
+     * @param performanceDataParam Any performance data to report as a string.
+     * @param ttlParam The time at which the next report is expected in seconds.
+     * @param hostParam The host to report on.
+     * @param serviceParam The service to report on.
      */
     public Icinga2CheckResult(final int exitStatusParam,
             final String pluginOutputParam, final String performanceDataParam,
