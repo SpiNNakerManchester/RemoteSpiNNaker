@@ -18,7 +18,6 @@ package uk.ac.manchester.cs.spinnaker.status;
 
 import static uk.ac.manchester.cs.spinnaker.rest.utils.RestClientUtils.createBasicClient;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
