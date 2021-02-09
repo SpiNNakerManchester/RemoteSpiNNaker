@@ -56,7 +56,7 @@ import uk.ac.manchester.cs.spinnaker.nmpi.NMPIQueueManager;
 import uk.ac.manchester.cs.spinnaker.output.OutputManagerImpl;
 import uk.ac.manchester.cs.spinnaker.rest.OutputManager;
 import uk.ac.manchester.cs.spinnaker.rest.utils.NullExceptionMapper;
-import uk.ac.manchester.cs.spinnaker.status.Icinga2StatusMonitorManager;
+import uk.ac.manchester.cs.spinnaker.status.Icinga2StatusMonitorManagerImpl;
 import uk.ac.manchester.cs.spinnaker.status.NullStatusMonitorManagerImpl;
 import uk.ac.manchester.cs.spinnaker.status.StatusCakeStatusMonitorManagerImpl;
 import uk.ac.manchester.cs.spinnaker.status.StatusMonitorManager;
@@ -392,7 +392,7 @@ public class RemoteSpinnakerBeans {
             if (statusType == StatusServiceType.STATUS_CAKE) {
                 return new StatusCakeStatusMonitorManagerImpl();
             } else if (statusType == StatusServiceType.ICINGA2) {
-                return new Icinga2StatusMonitorManager();
+                return new Icinga2StatusMonitorManagerImpl();
             } else {
                 throw new RuntimeException(
                         "Unknown status service type: " + statusType);

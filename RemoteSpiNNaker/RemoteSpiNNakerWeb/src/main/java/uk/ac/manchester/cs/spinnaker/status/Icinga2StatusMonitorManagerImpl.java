@@ -35,7 +35,7 @@ import uk.ac.manchester.cs.spinnaker.rest.Icinga2;
  * Status monitor manager that reports to Icinga.
  *
  */
-public class Icinga2StatusMonitorManager implements StatusMonitorManager {
+public class Icinga2StatusMonitorManagerImpl implements StatusMonitorManager {
 
     /**
      * Timeout of the socket to talk to the service.
