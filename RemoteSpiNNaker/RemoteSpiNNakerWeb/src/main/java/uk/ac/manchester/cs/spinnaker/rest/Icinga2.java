@@ -37,5 +37,5 @@ public interface Icinga2 {
     @Consumes("application/json")
     @POST
     @Path("/v1/actions/process-check-result")
-    void processCheckResult(Icinga2CheckResult result);
+    String processCheckResult(Icinga2CheckResult result);
 }

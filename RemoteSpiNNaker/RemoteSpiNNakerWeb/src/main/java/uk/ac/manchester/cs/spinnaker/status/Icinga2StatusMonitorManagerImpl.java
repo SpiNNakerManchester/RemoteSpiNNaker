@@ -16,6 +16,7 @@
  */
 package uk.ac.manchester.cs.spinnaker.status;
 
+import static org.slf4j.LoggerFactory.getLogger;
 import static uk.ac.manchester.cs.spinnaker.rest.utils.RestClientUtils.createBasicClient;
 
 import java.net.URL;
@@ -25,6 +26,7 @@ import javax.annotation.PostConstruct;
 
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 
 import uk.ac.manchester.cs.spinnaker.jobmanager.JobManager;
@@ -93,6 +95,11 @@ public class Icinga2StatusMonitorManagerImpl implements StatusMonitorManager {
     private String password;
 
     /**
+     * Logging.
+     */
+    private final Logger logger = getLogger(getClass());
+
+    /**
      * Initialise the service.
      * @throws MalformedURLException if the URL isn't a URL
      */
@@ -114,6 +121,11 @@ public class Icinga2StatusMonitorManagerImpl implements StatusMonitorManager {
                 * STATUS_UPDATE_TTL_MULTIPLIER;
         final Icinga2CheckResult result = new Icinga2CheckResult(
                 STATUS, STATUS_MESSAGE, performanceData, ttl, host, service);
-        icinga.processCheckResult(result);
+        try {
+            String response = icinga.processCheckResult(result);
+            logger.info("Status updated, result = " + response);
+        } catch (Throwable e) {
+            logger.error("Error updating to Icinga", e);
+        }
     }
 }
