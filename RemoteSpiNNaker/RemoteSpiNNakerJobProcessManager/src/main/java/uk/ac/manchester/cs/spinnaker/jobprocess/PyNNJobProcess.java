@@ -41,6 +41,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -119,6 +120,9 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
     /** The timeout for running jobs, in <em>hours.</em> */
     private static final int RUN_TIMEOUT = 7 * 24;
 
+    /** The parameter to request a change in the timeout (also in hours) */
+    private static final String TIMEOUT_PARAMETER = "timeout";
+
     /**
      * A pattern for finding arguments of the command to execute.
      */
@@ -169,11 +173,6 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
      * A thread group for the log monitoring.
      */
     private ThreadGroup threadGroup;
-
-    /**
-     * How long to wait for the main subprocess to run, in hours.
-     */
-    private int lifetimeHours = RUN_TIMEOUT;
 
     /**
      * Gathers files in a directory and sub-directories.
@@ -260,6 +259,11 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
 
             // Keep existing files to compare to later
             final Set<File> existingFiles = gatherFiles(workingDirectory);
+
+            // Get a lifetime if there is one
+            Map<String, Object> config = parameters.getHardwareConfiguration();
+            int lifetimeHours = (Integer) config.getOrDefault(
+                    TIMEOUT_PARAMETER, RUN_TIMEOUT);
 
             // Execute the program
             final int exitValue = runSubprocess(
