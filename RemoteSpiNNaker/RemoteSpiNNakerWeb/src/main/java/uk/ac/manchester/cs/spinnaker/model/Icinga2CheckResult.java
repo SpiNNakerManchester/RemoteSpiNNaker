@@ -16,12 +16,15 @@
  */
 package uk.ac.manchester.cs.spinnaker.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * A result to report to Icinga.
  *
  */
+@JsonInclude(Include.NON_NULL)
 public class Icinga2CheckResult {
 
     /**
@@ -47,16 +50,19 @@ public class Icinga2CheckResult {
     /**
      * Optional durations in seconds of the test result.
      */
+    @JsonProperty("ttl")
     private Integer ttl;
 
     /**
      * The target host being reported on.
      */
+    @JsonProperty("host")
     private String host;
 
     /**
      * Optional target service being reported on.
      */
+    @JsonProperty("service")
     private String service;
 
     /**

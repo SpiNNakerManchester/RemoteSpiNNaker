@@ -19,11 +19,13 @@ package uk.ac.manchester.cs.spinnaker.rest.utils;
 import static org.apache.http.auth.AUTH.WWW_AUTH_RESP;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.client.ClientRequestContext;
@@ -88,9 +90,24 @@ public abstract class RestClientUtils {
      * @return the client
      */
     protected static ResteasyClient createRestClient(final URL url) {
+
         try {
             SSLContextBuilder builder = new SSLContextBuilder();
-            builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
+            builder.loadTrustMaterial(new TrustSelfSignedStrategy());
+            String trustStore = System.getProperty(
+                    "remotespinnaker.keystore", null);
+            if (trustStore != null) {
+                String password = System.getProperty(
+                        "remotespinnaker.keystore.password", "");
+                try {
+                    builder.loadTrustMaterial(new File(trustStore),
+                            password.toCharArray());
+                } catch (IOException | CertificateException e) {
+                    log.error("Error loading certificates", e);
+                    throw new RuntimeException(
+                            "Unexpected error loading certificates", e);
+                }
+            }
 
             // Create and return a client
             final ResteasyClient client = new ResteasyClientBuilder()

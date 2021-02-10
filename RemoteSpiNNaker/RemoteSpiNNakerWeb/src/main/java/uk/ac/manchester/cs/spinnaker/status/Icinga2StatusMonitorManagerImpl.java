@@ -23,6 +23,8 @@ import java.net.URL;
 import java.util.Map;
 
 import javax.annotation.PostConstruct;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
@@ -66,13 +68,13 @@ public class Icinga2StatusMonitorManagerImpl implements StatusMonitorManager {
     /**
      * The host to report on.
      */
-    @Value("${icinga2.host:@null}")
+    @Value("${icinga2.host:#{null}}")
     private String host;
 
     /**
      * The service to report on.
      */
-    @Value("${icinca2.service:@null}")
+    @Value("${icinga2.service:#{null}}")
     private String service;
 
     /**
@@ -112,7 +114,15 @@ public class Icinga2StatusMonitorManagerImpl implements StatusMonitorManager {
                 STATUS, STATUS_MESSAGE, performanceData, ttl, host, service);
         try {
             Map<String, Object> response = icinga.processCheckResult(result);
-            logger.info("Status updated, result = " + response);
+            logger.debug("Status updated, result = " + response);
+        } catch (WebApplicationException e) {
+            Response response = e.getResponse();
+            logger.error("Error updating to Icinga on "
+                    + response.getLocation() + ":", e);
+            logger.error("    Status: " + response.getStatus());
+            logger.error("    Message: "
+                    + response.getStatusInfo().getReasonPhrase());
+            logger.error("    Body: " + response.readEntity(String.class));
         } catch (Throwable e) {
             logger.error("Error updating to Icinga", e);
         }
