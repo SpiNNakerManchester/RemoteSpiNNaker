@@ -120,7 +120,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
     /** The timeout for running jobs, in <em>hours.</em> */
     private static final int RUN_TIMEOUT = 7 * 24;
 
-    /** The parameter to request a change in the timeout (also in hours) */
+    /** The parameter to request a change in the timeout (also in hours). */
     private static final String TIMEOUT_PARAMETER = "timeout";
 
     /**
