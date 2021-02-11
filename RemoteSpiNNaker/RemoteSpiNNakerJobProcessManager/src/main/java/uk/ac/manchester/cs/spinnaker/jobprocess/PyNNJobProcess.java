@@ -17,6 +17,8 @@
 package uk.ac.manchester.cs.spinnaker.jobprocess;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.concurrent.TimeUnit.HOURS;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.apache.commons.io.FileUtils.listFiles;
 import static org.apache.commons.io.FilenameUtils.getExtension;
 import static uk.ac.manchester.cs.spinnaker.job.Status.Error;
@@ -39,8 +41,10 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -114,6 +118,12 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
      * The set of ignored directories in the outputs.
      */
     private static final Set<String> IGNORED_DIRECTORIES = new HashSet<>();
+
+    /** The timeout for running jobs, in <em>hours.</em> */
+    private static final int RUN_TIMEOUT = 7 * 24;
+
+    /** The parameter to request a change in the timeout (also in hours). */
+    private static final String TIMEOUT_PARAMETER = "timeout";
 
     /**
      * A pattern for finding arguments of the command to execute.
@@ -257,8 +267,14 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             // Keep existing files to compare to later
             final Set<File> existingFiles = gatherFiles(workingDirectory);
 
+            // Get a lifetime if there is one
+            Map<String, Object> config = parameters.getHardwareConfiguration();
+            int lifetimeHours = (Integer) config.getOrDefault(
+                    TIMEOUT_PARAMETER, RUN_TIMEOUT);
+
             // Execute the program
-            final int exitValue = runSubprocess(parameters, logWriter);
+            final int exitValue = runSubprocess(
+                    parameters, logWriter, lifetimeHours);
 
             // Get the provenance data
             gatherProvenance(workingDirectory);
@@ -337,8 +353,8 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
                 new ReaderLogWriter(process.getInputStream(), logWriter)) {
             logger.start();
 
-            // Wait for the process to finish
-            return process.waitFor();
+            // Wait for the process to finish; 1 hour is very generous!
+            return runProcess(process, 1, HOURS);
         }
     }
 
@@ -349,15 +365,16 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
      *            The parameters to the subprocess.
      * @param logWriter
      *            Where to send log messages.
-     * @return
-     *            The exit value of the process
+     * @param lifetime
+     *            How long to wait for the subprocess to run, in hours.
+     * @return The exit value of the process
      * @throws IOException
-     *            If there was an error starting the process
+     *             If there was an error starting the process
      * @throws InterruptedException
-     *            If the process was interrupted before return
+     *             If the process was interrupted before return
      */
     private int runSubprocess(final PyNNJobParameters parameters,
-            final LogWriter logWriter)
+            final LogWriter logWriter, final int lifetime)
             throws IOException, InterruptedException {
         final List<String> command = new ArrayList<>();
         command.add(SUBPROCESS_RUNNER);
@@ -381,8 +398,34 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             logger.start();
 
             // Wait for the process to finish
-            return process.waitFor();
+            return runProcess(process, lifetime, HOURS);
         }
+    }
+
+    /**
+     * Run a subprocess until timeout or completion (whichever comes first). If
+     * timeout happens, the subprocess will be killed.
+     *
+     * @param process
+     *            The subprocess.
+     * @param lifetime
+     *            How long to wait.
+     * @param lifetimeUnits
+     *            The units for <em>lifetime</em>.
+     * @return The exit code of the subprocess
+     * @throws InterruptedException
+     *             If the process was interrupted before return
+     */
+    private static int runProcess(final Process process, final int lifetime,
+            final TimeUnit lifetimeUnits) throws InterruptedException {
+        if (!process.waitFor(lifetime, lifetimeUnits)) {
+            process.destroy();
+            if (!process.waitFor(FINALIZATION_DELAY, MILLISECONDS)) {
+                process.destroyForcibly();
+                Thread.sleep(FINALIZATION_DELAY);
+            }
+        }
+        return process.exitValue();
     }
 
     /**
