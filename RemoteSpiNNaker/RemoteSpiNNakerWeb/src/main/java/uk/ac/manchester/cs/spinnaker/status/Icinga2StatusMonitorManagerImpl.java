@@ -106,8 +106,8 @@ public class Icinga2StatusMonitorManagerImpl implements StatusMonitorManager {
 
     @Override
     public void updateStatus(final int runningJobs, final int nBoardsInUse) {
-        final String performanceData = runningJobs + " running jobs\n"
-                + nBoardsInUse + " boards in use";
+        final String performanceData = "'Running Jobs'=" + runningJobs +
+                " 'Boards In Use='" + nBoardsInUse;
         final int ttl = JobManager.STATUS_UPDATE_PERIOD
                 * STATUS_UPDATE_TTL_MULTIPLIER;
         final Icinga2CheckResult result = new Icinga2CheckResult(
