@@ -268,8 +268,9 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             final Set<File> existingFiles = gatherFiles(workingDirectory);
 
             // Get a lifetime if there is one
-            Map<String, Object> config = parameters.getHardwareConfiguration();
-            int lifetimeHours = (Integer) config.getOrDefault(
+            Map<String, Object> hwConfig =
+                    parameters.getHardwareConfiguration();
+            int lifetimeHours = (Integer) hwConfig.getOrDefault(
                     TIMEOUT_PARAMETER, RUN_TIMEOUT);
 
             // Execute the program
