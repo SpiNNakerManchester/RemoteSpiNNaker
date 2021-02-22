@@ -368,13 +368,12 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     /**
      * Searches the list for the machine with the given name.
      *
-     * @param machines
-     *            The list of machines (or {@code null}).
+     * @param id
+     *            The job id
      * @param machineName
      *            The name of the machine to find.
-     * @return The index in the list, or {@code -1} if the machine isn't
-     *         present. (The {@code null} machine list never contains any
-     *         machines.)
+     * @return The machine found
+     * @throws WebApplicationException if machine not found
      */
     private SpinnakerMachine findMachine(final int id,
             final String machineName, boolean remove) {
