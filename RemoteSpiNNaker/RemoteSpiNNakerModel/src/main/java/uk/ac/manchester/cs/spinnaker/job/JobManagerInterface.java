@@ -195,6 +195,7 @@ public interface JobManagerInterface {
      */
     @GET
     @Path("{id}/machine/chipCoordinates")
+    @Produces(APPLICATION_JSON)
     ChipCoordinates getChipCoordinates(@PathParam("id") int id,
             @QueryParam("machineName") String machineName,
             @QueryParam("chipX") int chipX, @QueryParam("chipY") int chipY);
