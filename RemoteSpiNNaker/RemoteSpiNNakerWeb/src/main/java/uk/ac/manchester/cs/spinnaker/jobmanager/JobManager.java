@@ -29,6 +29,7 @@ import static org.apache.commons.io.FileUtils.listFiles;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -46,6 +47,7 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -374,30 +376,31 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
      *         present. (The {@code null} machine list never contains any
      *         machines.)
      */
-    private static int findMachineIndex(final List<SpinnakerMachine> machines,
-            final String machineName) {
+    private SpinnakerMachine findMachine(final int id,
+            final String machineName, boolean remove) {
+        List<SpinnakerMachine> machines = allocatedMachines.get(id);
         if (machines == null) {
-            return -1;
+            throw new WebApplicationException(
+                "No machines found for job " + id, Status.NOT_FOUND);
         }
-        SpinnakerMachine machine = null;
         for (int i = 0; i < machines.size(); i++) {
-            machine = machines.get(i);
+            final SpinnakerMachine machine = machines.get(i);
             if (machine.getMachineName().equals(machineName)) {
-                return i;
+                if (remove) {
+                    machines.remove(i);
+                }
+                return machine;
             }
         }
-        return -1;
+        throw new WebApplicationException(
+                "Machine " + machineName + " does not exist for job " + id);
     }
 
     @Override
     public void releaseMachine(final int id, final String machineName) {
         synchronized (allocatedMachines) {
-            List<SpinnakerMachine> machines = allocatedMachines.get(id);
-            int index = findMachineIndex(machines, machineName);
-            if (index != -1) {
-                SpinnakerMachine machine = machines.remove(index);
-                machineManager.releaseMachine(machine);
-            }
+            SpinnakerMachine machine = findMachine(id, machineName, true);
+            machineManager.releaseMachine(machine);
         }
     }
 
@@ -405,11 +408,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     public void setMachinePower(final int id, final String machineName,
             final boolean powerOn) {
         synchronized (allocatedMachines) {
-            List<SpinnakerMachine> machines = allocatedMachines.get(id);
-            int index = findMachineIndex(machines, machineName);
-            if (index != -1) {
-                machineManager.setMachinePower(machines.get(index), powerOn);
-            }
+            SpinnakerMachine machine = findMachine(id, machineName, false);
+            machineManager.setMachinePower(machine, powerOn);
         }
     }
 
@@ -417,14 +417,9 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     public ChipCoordinates getChipCoordinates(final int id,
             final String machineName, final int chipX, final int chipY) {
         synchronized (allocatedMachines) {
-            final List<SpinnakerMachine> machines = allocatedMachines.get(id);
-            int index = findMachineIndex(machines, machineName);
-            if (index != -1) {
-                return machineManager.getChipCoordinates(machines.get(index),
-                        chipX, chipY);
-            }
+            SpinnakerMachine machine = findMachine(id, machineName, false);
+            return machineManager.getChipCoordinates(machine, chipX, chipY);
         }
-        return null;
     }
 
     /**
