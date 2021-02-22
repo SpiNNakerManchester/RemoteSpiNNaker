@@ -25,673 +25,717 @@
 <a class="jxr_linenumber" name="L17" href="#L17">17</a>  <strong class="jxr_keyword">package</strong> uk.ac.manchester.cs.spinnaker.jobprocess;
 <a class="jxr_linenumber" name="L18" href="#L18">18</a>  
 <a class="jxr_linenumber" name="L19" href="#L19">19</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> java.util.Objects.requireNonNull;
-<a class="jxr_linenumber" name="L20" href="#L20">20</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.apache.commons.io.FileUtils.listFiles;
-<a class="jxr_linenumber" name="L21" href="#L21">21</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.apache.commons.io.FilenameUtils.getExtension;
-<a class="jxr_linenumber" name="L22" href="#L22">22</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> uk.ac.manchester.cs.spinnaker.job.Status.Error;
-<a class="jxr_linenumber" name="L23" href="#L23">23</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> uk.ac.manchester.cs.spinnaker.job.Status.Finished;
-<a class="jxr_linenumber" name="L24" href="#L24">24</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> uk.ac.manchester.cs.spinnaker.job.Status.Running;
-<a class="jxr_linenumber" name="L25" href="#L25">25</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> uk.ac.manchester.cs.spinnaker.utils.Log.log;
-<a class="jxr_linenumber" name="L26" href="#L26">26</a>  
-<a class="jxr_linenumber" name="L27" href="#L27">27</a>  <strong class="jxr_keyword">import</strong> java.io.BufferedReader;
-<a class="jxr_linenumber" name="L28" href="#L28">28</a>  <strong class="jxr_keyword">import</strong> java.io.File;
-<a class="jxr_linenumber" name="L29" href="#L29">29</a>  <strong class="jxr_keyword">import</strong> java.io.FileInputStream;
-<a class="jxr_linenumber" name="L30" href="#L30">30</a>  <strong class="jxr_keyword">import</strong> java.io.FileOutputStream;
-<a class="jxr_linenumber" name="L31" href="#L31">31</a>  <strong class="jxr_keyword">import</strong> java.io.IOException;
-<a class="jxr_linenumber" name="L32" href="#L32">32</a>  <strong class="jxr_keyword">import</strong> java.io.InputStream;
-<a class="jxr_linenumber" name="L33" href="#L33">33</a>  <strong class="jxr_keyword">import</strong> java.io.InputStreamReader;
-<a class="jxr_linenumber" name="L34" href="#L34">34</a>  <strong class="jxr_keyword">import</strong> java.io.PrintWriter;
-<a class="jxr_linenumber" name="L35" href="#L35">35</a>  <strong class="jxr_keyword">import</strong> java.io.Reader;
-<a class="jxr_linenumber" name="L36" href="#L36">36</a>  <strong class="jxr_keyword">import</strong> java.io.StringWriter;
-<a class="jxr_linenumber" name="L37" href="#L37">37</a>  <strong class="jxr_keyword">import</strong> java.util.ArrayList;
-<a class="jxr_linenumber" name="L38" href="#L38">38</a>  <strong class="jxr_keyword">import</strong> java.util.HashSet;
-<a class="jxr_linenumber" name="L39" href="#L39">39</a>  <strong class="jxr_keyword">import</strong> java.util.LinkedHashSet;
-<a class="jxr_linenumber" name="L40" href="#L40">40</a>  <strong class="jxr_keyword">import</strong> java.util.LinkedList;
-<a class="jxr_linenumber" name="L41" href="#L41">41</a>  <strong class="jxr_keyword">import</strong> java.util.List;
-<a class="jxr_linenumber" name="L42" href="#L42">42</a>  <strong class="jxr_keyword">import</strong> java.util.Map.Entry;
-<a class="jxr_linenumber" name="L43" href="#L43">43</a>  <strong class="jxr_keyword">import</strong> java.util.Set;
-<a class="jxr_linenumber" name="L44" href="#L44">44</a>  <strong class="jxr_keyword">import</strong> java.util.regex.Matcher;
-<a class="jxr_linenumber" name="L45" href="#L45">45</a>  <strong class="jxr_keyword">import</strong> java.util.regex.Pattern;
-<a class="jxr_linenumber" name="L46" href="#L46">46</a>  <strong class="jxr_keyword">import</strong> java.util.zip.ZipEntry;
-<a class="jxr_linenumber" name="L47" href="#L47">47</a>  <strong class="jxr_keyword">import</strong> java.util.zip.ZipOutputStream;
-<a class="jxr_linenumber" name="L48" href="#L48">48</a>  
-<a class="jxr_linenumber" name="L49" href="#L49">49</a>  <strong class="jxr_keyword">import</strong> javax.xml.bind.JAXBContext;
-<a class="jxr_linenumber" name="L50" href="#L50">50</a>  <strong class="jxr_keyword">import</strong> javax.xml.bind.JAXBException;
-<a class="jxr_linenumber" name="L51" href="#L51">51</a>  <strong class="jxr_keyword">import</strong> javax.xml.bind.Unmarshaller;
-<a class="jxr_linenumber" name="L52" href="#L52">52</a>  <strong class="jxr_keyword">import</strong> javax.xml.transform.Source;
-<a class="jxr_linenumber" name="L53" href="#L53">53</a>  <strong class="jxr_keyword">import</strong> javax.xml.transform.stream.StreamSource;
-<a class="jxr_linenumber" name="L54" href="#L54">54</a>  
-<a class="jxr_linenumber" name="L55" href="#L55">55</a>  <strong class="jxr_keyword">import</strong> org.apache.commons.io.filefilter.AbstractFileFilter;
-<a class="jxr_linenumber" name="L56" href="#L56">56</a>  <strong class="jxr_keyword">import</strong> org.apache.commons.io.filefilter.IOFileFilter;
-<a class="jxr_linenumber" name="L57" href="#L57">57</a>  <strong class="jxr_keyword">import</strong> org.ini4j.Config;
-<a class="jxr_linenumber" name="L58" href="#L58">58</a>  <strong class="jxr_keyword">import</strong> org.ini4j.Ini;
-<a class="jxr_linenumber" name="L59" href="#L59">59</a>  <strong class="jxr_keyword">import</strong> org.ini4j.Profile.Section;
-<a class="jxr_linenumber" name="L60" href="#L60">60</a>  
-<a class="jxr_linenumber" name="L61" href="#L61">61</a>  <strong class="jxr_keyword">import</strong> com.fasterxml.jackson.databind.ObjectMapper;
-<a class="jxr_linenumber" name="L62" href="#L62">62</a>  
-<a class="jxr_linenumber" name="L63" href="#L63">63</a>  <strong class="jxr_keyword">import</strong> uk.ac.manchester.cs.spinnaker.job.Status;
-<a class="jxr_linenumber" name="L64" href="#L64">64</a>  <strong class="jxr_keyword">import</strong> uk.ac.manchester.cs.spinnaker.job.pynn.PyNNJobParameters;
-<a class="jxr_linenumber" name="L65" href="#L65">65</a>  <strong class="jxr_keyword">import</strong> uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
-<a class="jxr_linenumber" name="L66" href="#L66">66</a>  <strong class="jxr_keyword">import</strong> uk.ac.manchester.cs.spinnaker.utils.ThreadUtils;
-<a class="jxr_linenumber" name="L67" href="#L67">67</a>  
-<a class="jxr_linenumber" name="L68" href="#L68">68</a>  <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L69" href="#L69">69</a>  <em class="jxr_javadoccomment"> * A process for running PyNN jobs.</em>
-<a class="jxr_linenumber" name="L70" href="#L70">70</a>  <em class="jxr_javadoccomment"> */</em>
-<a class="jxr_linenumber" name="L71" href="#L71">71</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> <a name="PyNNJobProcess" href="../../../../../../uk/ac/manchester/cs/spinnaker/jobprocess/PyNNJobProcess.html#PyNNJobProcess">PyNNJobProcess</a> <strong class="jxr_keyword">implements</strong> JobProcess&lt;PyNNJobParameters&gt; {
-<a class="jxr_linenumber" name="L72" href="#L72">72</a>  
-<a class="jxr_linenumber" name="L73" href="#L73">73</a>      <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L74" href="#L74">74</a>  <em class="jxr_javadoccomment">     * The size of buffer to use when transferring data between files.</em>
-<a class="jxr_linenumber" name="L75" href="#L75">75</a>  <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L76" href="#L76">76</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> BUFFER_SIZE = 8196;
-<a class="jxr_linenumber" name="L77" href="#L77">77</a>  
-<a class="jxr_linenumber" name="L78" href="#L78">78</a>      <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L79" href="#L79">79</a>  <em class="jxr_javadoccomment">     * The error level that represents a signal.</em>
-<a class="jxr_linenumber" name="L80" href="#L80">80</a>  <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L81" href="#L81">81</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> MIN_SIGNAL_OFFSET = 128;
-<a class="jxr_linenumber" name="L82" href="#L82">82</a>  
-<a class="jxr_linenumber" name="L83" href="#L83">83</a>      <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L84" href="#L84">84</a>  <em class="jxr_javadoccomment">     * The directory containing provenance within the reports.</em>
-<a class="jxr_linenumber" name="L85" href="#L85">85</a>  <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L86" href="#L86">86</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String PROVENANCE_DIRECTORY = <span class="jxr_string">"provenance_data"</span>;
-<a class="jxr_linenumber" name="L87" href="#L87">87</a>  
-<a class="jxr_linenumber" name="L88" href="#L88">88</a>      <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L89" href="#L89">89</a>  <em class="jxr_javadoccomment">     * The section of the config where the machine is contained.</em>
-<a class="jxr_linenumber" name="L90" href="#L90">90</a>  <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L91" href="#L91">91</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String SECTION = <span class="jxr_string">"Machine"</span>;
-<a class="jxr_linenumber" name="L92" href="#L92">92</a>  
-<a class="jxr_linenumber" name="L93" href="#L93">93</a>      <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L94" href="#L94">94</a>  <em class="jxr_javadoccomment">     * The command to call to run the process.</em>
-<a class="jxr_linenumber" name="L95" href="#L95">95</a>  <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L96" href="#L96">96</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String SUBPROCESS_RUNNER = <span class="jxr_string">"python"</span>;
-<a class="jxr_linenumber" name="L97" href="#L97">97</a>  
-<a class="jxr_linenumber" name="L98" href="#L98">98</a>      <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L99" href="#L99">99</a>  <em class="jxr_javadoccomment">     * The command to call to run the setup process.</em>
-<a class="jxr_linenumber" name="L100" href="#L100">100</a> <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L101" href="#L101">101</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String SETUP_RUNNER = <span class="jxr_string">"bash"</span>;
-<a class="jxr_linenumber" name="L102" href="#L102">102</a> 
-<a class="jxr_linenumber" name="L103" href="#L103">103</a>     <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L104" href="#L104">104</a> <em class="jxr_javadoccomment">     * The time to wait for the process to finish.</em>
-<a class="jxr_linenumber" name="L105" href="#L105">105</a> <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L106" href="#L106">106</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> FINALIZATION_DELAY = 1000;
-<a class="jxr_linenumber" name="L107" href="#L107">107</a> 
-<a class="jxr_linenumber" name="L108" href="#L108">108</a>     <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L109" href="#L109">109</a> <em class="jxr_javadoccomment">     * The set of ignored file extensions in the outputs.</em>
-<a class="jxr_linenumber" name="L110" href="#L110">110</a> <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L111" href="#L111">111</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> Set&lt;String&gt; IGNORED_EXTENSIONS = <strong class="jxr_keyword">new</strong> HashSet&lt;&gt;();
-<a class="jxr_linenumber" name="L112" href="#L112">112</a> 
-<a class="jxr_linenumber" name="L113" href="#L113">113</a>     <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L114" href="#L114">114</a> <em class="jxr_javadoccomment">     * The set of ignored directories in the outputs.</em>
-<a class="jxr_linenumber" name="L115" href="#L115">115</a> <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L116" href="#L116">116</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> Set&lt;String&gt; IGNORED_DIRECTORIES = <strong class="jxr_keyword">new</strong> HashSet&lt;&gt;();
-<a class="jxr_linenumber" name="L117" href="#L117">117</a> 
-<a class="jxr_linenumber" name="L118" href="#L118">118</a>     <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L119" href="#L119">119</a> <em class="jxr_javadoccomment">     * A pattern for finding arguments of the command to execute.</em>
-<a class="jxr_linenumber" name="L120" href="#L120">120</a> <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L121" href="#L121">121</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> Pattern ARGUMENT_FINDER =
-<a class="jxr_linenumber" name="L122" href="#L122">122</a>             Pattern.compile(<span class="jxr_string">"([^\&quot;]&#92;&#92;S*|\&quot;.+?\&quot;)&#92;&#92;s*"</span>);
-<a class="jxr_linenumber" name="L123" href="#L123">123</a>     <strong class="jxr_keyword">static</strong> {
-<a class="jxr_linenumber" name="L124" href="#L124">124</a>         IGNORED_EXTENSIONS.add(<span class="jxr_string">"pyc"</span>);
-<a class="jxr_linenumber" name="L125" href="#L125">125</a>         IGNORED_DIRECTORIES.add(<span class="jxr_string">"application_generated_data_files"</span>);
-<a class="jxr_linenumber" name="L126" href="#L126">126</a>         IGNORED_DIRECTORIES.add(<span class="jxr_string">"reports"</span>);
-<a class="jxr_linenumber" name="L127" href="#L127">127</a>     };
-<a class="jxr_linenumber" name="L128" href="#L128">128</a> 
-<a class="jxr_linenumber" name="L129" href="#L129">129</a>     <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L130" href="#L130">130</a> <em class="jxr_javadoccomment">     * Provenance data items to be added to final provenance data.</em>
-<a class="jxr_linenumber" name="L131" href="#L131">131</a> <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L132" href="#L132">132</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String[] PROVENANCE_ITEMS_TO_ADD = <strong class="jxr_keyword">new</strong> String[]{
-<a class="jxr_linenumber" name="L133" href="#L133">133</a>         <span class="jxr_string">"version_data/.*"</span>, <span class="jxr_string">"router_provenance/total_multi_cast_sent_packets"</span>,
-<a class="jxr_linenumber" name="L134" href="#L134">134</a>         <span class="jxr_string">"router_provenance/total_created_packets"</span>,
-<a class="jxr_linenumber" name="L135" href="#L135">135</a>         <span class="jxr_string">"router_provenance/total_dropped_packets"</span>,
-<a class="jxr_linenumber" name="L136" href="#L136">136</a>         <span class="jxr_string">"router_provenance/total_missed_dropped_packets"</span>,
-<a class="jxr_linenumber" name="L137" href="#L137">137</a>         <span class="jxr_string">"router_provenance/total_lost_dropped_packets"</span>};
+<a class="jxr_linenumber" name="L20" href="#L20">20</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> java.util.concurrent.TimeUnit.HOURS;
+<a class="jxr_linenumber" name="L21" href="#L21">21</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> java.util.concurrent.TimeUnit.MILLISECONDS;
+<a class="jxr_linenumber" name="L22" href="#L22">22</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.apache.commons.io.FileUtils.listFiles;
+<a class="jxr_linenumber" name="L23" href="#L23">23</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.apache.commons.io.FilenameUtils.getExtension;
+<a class="jxr_linenumber" name="L24" href="#L24">24</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> uk.ac.manchester.cs.spinnaker.job.Status.Error;
+<a class="jxr_linenumber" name="L25" href="#L25">25</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> uk.ac.manchester.cs.spinnaker.job.Status.Finished;
+<a class="jxr_linenumber" name="L26" href="#L26">26</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> uk.ac.manchester.cs.spinnaker.job.Status.Running;
+<a class="jxr_linenumber" name="L27" href="#L27">27</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> uk.ac.manchester.cs.spinnaker.utils.Log.log;
+<a class="jxr_linenumber" name="L28" href="#L28">28</a>  
+<a class="jxr_linenumber" name="L29" href="#L29">29</a>  <strong class="jxr_keyword">import</strong> java.io.BufferedReader;
+<a class="jxr_linenumber" name="L30" href="#L30">30</a>  <strong class="jxr_keyword">import</strong> java.io.File;
+<a class="jxr_linenumber" name="L31" href="#L31">31</a>  <strong class="jxr_keyword">import</strong> java.io.FileInputStream;
+<a class="jxr_linenumber" name="L32" href="#L32">32</a>  <strong class="jxr_keyword">import</strong> java.io.FileOutputStream;
+<a class="jxr_linenumber" name="L33" href="#L33">33</a>  <strong class="jxr_keyword">import</strong> java.io.IOException;
+<a class="jxr_linenumber" name="L34" href="#L34">34</a>  <strong class="jxr_keyword">import</strong> java.io.InputStream;
+<a class="jxr_linenumber" name="L35" href="#L35">35</a>  <strong class="jxr_keyword">import</strong> java.io.InputStreamReader;
+<a class="jxr_linenumber" name="L36" href="#L36">36</a>  <strong class="jxr_keyword">import</strong> java.io.PrintWriter;
+<a class="jxr_linenumber" name="L37" href="#L37">37</a>  <strong class="jxr_keyword">import</strong> java.io.Reader;
+<a class="jxr_linenumber" name="L38" href="#L38">38</a>  <strong class="jxr_keyword">import</strong> java.io.StringWriter;
+<a class="jxr_linenumber" name="L39" href="#L39">39</a>  <strong class="jxr_keyword">import</strong> java.util.ArrayList;
+<a class="jxr_linenumber" name="L40" href="#L40">40</a>  <strong class="jxr_keyword">import</strong> java.util.HashSet;
+<a class="jxr_linenumber" name="L41" href="#L41">41</a>  <strong class="jxr_keyword">import</strong> java.util.LinkedHashSet;
+<a class="jxr_linenumber" name="L42" href="#L42">42</a>  <strong class="jxr_keyword">import</strong> java.util.LinkedList;
+<a class="jxr_linenumber" name="L43" href="#L43">43</a>  <strong class="jxr_keyword">import</strong> java.util.List;
+<a class="jxr_linenumber" name="L44" href="#L44">44</a>  <strong class="jxr_keyword">import</strong> java.util.Map;
+<a class="jxr_linenumber" name="L45" href="#L45">45</a>  <strong class="jxr_keyword">import</strong> java.util.Map.Entry;
+<a class="jxr_linenumber" name="L46" href="#L46">46</a>  <strong class="jxr_keyword">import</strong> java.util.Set;
+<a class="jxr_linenumber" name="L47" href="#L47">47</a>  <strong class="jxr_keyword">import</strong> java.util.concurrent.TimeUnit;
+<a class="jxr_linenumber" name="L48" href="#L48">48</a>  <strong class="jxr_keyword">import</strong> java.util.regex.Matcher;
+<a class="jxr_linenumber" name="L49" href="#L49">49</a>  <strong class="jxr_keyword">import</strong> java.util.regex.Pattern;
+<a class="jxr_linenumber" name="L50" href="#L50">50</a>  <strong class="jxr_keyword">import</strong> java.util.zip.ZipEntry;
+<a class="jxr_linenumber" name="L51" href="#L51">51</a>  <strong class="jxr_keyword">import</strong> java.util.zip.ZipOutputStream;
+<a class="jxr_linenumber" name="L52" href="#L52">52</a>  
+<a class="jxr_linenumber" name="L53" href="#L53">53</a>  <strong class="jxr_keyword">import</strong> javax.xml.bind.JAXBContext;
+<a class="jxr_linenumber" name="L54" href="#L54">54</a>  <strong class="jxr_keyword">import</strong> javax.xml.bind.JAXBException;
+<a class="jxr_linenumber" name="L55" href="#L55">55</a>  <strong class="jxr_keyword">import</strong> javax.xml.bind.Unmarshaller;
+<a class="jxr_linenumber" name="L56" href="#L56">56</a>  <strong class="jxr_keyword">import</strong> javax.xml.transform.Source;
+<a class="jxr_linenumber" name="L57" href="#L57">57</a>  <strong class="jxr_keyword">import</strong> javax.xml.transform.stream.StreamSource;
+<a class="jxr_linenumber" name="L58" href="#L58">58</a>  
+<a class="jxr_linenumber" name="L59" href="#L59">59</a>  <strong class="jxr_keyword">import</strong> org.apache.commons.io.filefilter.AbstractFileFilter;
+<a class="jxr_linenumber" name="L60" href="#L60">60</a>  <strong class="jxr_keyword">import</strong> org.apache.commons.io.filefilter.IOFileFilter;
+<a class="jxr_linenumber" name="L61" href="#L61">61</a>  <strong class="jxr_keyword">import</strong> org.ini4j.Config;
+<a class="jxr_linenumber" name="L62" href="#L62">62</a>  <strong class="jxr_keyword">import</strong> org.ini4j.Ini;
+<a class="jxr_linenumber" name="L63" href="#L63">63</a>  <strong class="jxr_keyword">import</strong> org.ini4j.Profile.Section;
+<a class="jxr_linenumber" name="L64" href="#L64">64</a>  
+<a class="jxr_linenumber" name="L65" href="#L65">65</a>  <strong class="jxr_keyword">import</strong> com.fasterxml.jackson.databind.ObjectMapper;
+<a class="jxr_linenumber" name="L66" href="#L66">66</a>  
+<a class="jxr_linenumber" name="L67" href="#L67">67</a>  <strong class="jxr_keyword">import</strong> uk.ac.manchester.cs.spinnaker.job.Status;
+<a class="jxr_linenumber" name="L68" href="#L68">68</a>  <strong class="jxr_keyword">import</strong> uk.ac.manchester.cs.spinnaker.job.pynn.PyNNJobParameters;
+<a class="jxr_linenumber" name="L69" href="#L69">69</a>  <strong class="jxr_keyword">import</strong> uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
+<a class="jxr_linenumber" name="L70" href="#L70">70</a>  <strong class="jxr_keyword">import</strong> uk.ac.manchester.cs.spinnaker.utils.ThreadUtils;
+<a class="jxr_linenumber" name="L71" href="#L71">71</a>  
+<a class="jxr_linenumber" name="L72" href="#L72">72</a>  <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L73" href="#L73">73</a>  <em class="jxr_javadoccomment"> * A process for running PyNN jobs.</em>
+<a class="jxr_linenumber" name="L74" href="#L74">74</a>  <em class="jxr_javadoccomment"> */</em>
+<a class="jxr_linenumber" name="L75" href="#L75">75</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> <a name="PyNNJobProcess" href="../../../../../../uk/ac/manchester/cs/spinnaker/jobprocess/PyNNJobProcess.html#PyNNJobProcess">PyNNJobProcess</a> <strong class="jxr_keyword">implements</strong> JobProcess&lt;PyNNJobParameters&gt; {
+<a class="jxr_linenumber" name="L76" href="#L76">76</a>  
+<a class="jxr_linenumber" name="L77" href="#L77">77</a>      <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L78" href="#L78">78</a>  <em class="jxr_javadoccomment">     * The size of buffer to use when transferring data between files.</em>
+<a class="jxr_linenumber" name="L79" href="#L79">79</a>  <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L80" href="#L80">80</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> BUFFER_SIZE = 8196;
+<a class="jxr_linenumber" name="L81" href="#L81">81</a>  
+<a class="jxr_linenumber" name="L82" href="#L82">82</a>      <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L83" href="#L83">83</a>  <em class="jxr_javadoccomment">     * The error level that represents a signal.</em>
+<a class="jxr_linenumber" name="L84" href="#L84">84</a>  <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L85" href="#L85">85</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> MIN_SIGNAL_OFFSET = 128;
+<a class="jxr_linenumber" name="L86" href="#L86">86</a>  
+<a class="jxr_linenumber" name="L87" href="#L87">87</a>      <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L88" href="#L88">88</a>  <em class="jxr_javadoccomment">     * The directory containing provenance within the reports.</em>
+<a class="jxr_linenumber" name="L89" href="#L89">89</a>  <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L90" href="#L90">90</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String PROVENANCE_DIRECTORY = <span class="jxr_string">"provenance_data"</span>;
+<a class="jxr_linenumber" name="L91" href="#L91">91</a>  
+<a class="jxr_linenumber" name="L92" href="#L92">92</a>      <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L93" href="#L93">93</a>  <em class="jxr_javadoccomment">     * The section of the config where the machine is contained.</em>
+<a class="jxr_linenumber" name="L94" href="#L94">94</a>  <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L95" href="#L95">95</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String SECTION = <span class="jxr_string">"Machine"</span>;
+<a class="jxr_linenumber" name="L96" href="#L96">96</a>  
+<a class="jxr_linenumber" name="L97" href="#L97">97</a>      <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L98" href="#L98">98</a>  <em class="jxr_javadoccomment">     * The command to call to run the process.</em>
+<a class="jxr_linenumber" name="L99" href="#L99">99</a>  <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L100" href="#L100">100</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String SUBPROCESS_RUNNER = <span class="jxr_string">"python"</span>;
+<a class="jxr_linenumber" name="L101" href="#L101">101</a> 
+<a class="jxr_linenumber" name="L102" href="#L102">102</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L103" href="#L103">103</a> <em class="jxr_javadoccomment">     * The command to call to run the setup process.</em>
+<a class="jxr_linenumber" name="L104" href="#L104">104</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L105" href="#L105">105</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String SETUP_RUNNER = <span class="jxr_string">"bash"</span>;
+<a class="jxr_linenumber" name="L106" href="#L106">106</a> 
+<a class="jxr_linenumber" name="L107" href="#L107">107</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L108" href="#L108">108</a> <em class="jxr_javadoccomment">     * The time to wait for the process to finish.</em>
+<a class="jxr_linenumber" name="L109" href="#L109">109</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L110" href="#L110">110</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> FINALIZATION_DELAY = 1000;
+<a class="jxr_linenumber" name="L111" href="#L111">111</a> 
+<a class="jxr_linenumber" name="L112" href="#L112">112</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L113" href="#L113">113</a> <em class="jxr_javadoccomment">     * The set of ignored file extensions in the outputs.</em>
+<a class="jxr_linenumber" name="L114" href="#L114">114</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L115" href="#L115">115</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> Set&lt;String&gt; IGNORED_EXTENSIONS = <strong class="jxr_keyword">new</strong> HashSet&lt;&gt;();
+<a class="jxr_linenumber" name="L116" href="#L116">116</a> 
+<a class="jxr_linenumber" name="L117" href="#L117">117</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L118" href="#L118">118</a> <em class="jxr_javadoccomment">     * The set of ignored directories in the outputs.</em>
+<a class="jxr_linenumber" name="L119" href="#L119">119</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L120" href="#L120">120</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> Set&lt;String&gt; IGNORED_DIRECTORIES = <strong class="jxr_keyword">new</strong> HashSet&lt;&gt;();
+<a class="jxr_linenumber" name="L121" href="#L121">121</a> 
+<a class="jxr_linenumber" name="L122" href="#L122">122</a>     <em class="jxr_javadoccomment">/** The timeout for running jobs, in &lt;em&gt;hours.&lt;/em&gt; */</em>
+<a class="jxr_linenumber" name="L123" href="#L123">123</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> RUN_TIMEOUT = 7 * 24;
+<a class="jxr_linenumber" name="L124" href="#L124">124</a> 
+<a class="jxr_linenumber" name="L125" href="#L125">125</a>     <em class="jxr_javadoccomment">/** The parameter to request a change in the timeout (also in hours). */</em>
+<a class="jxr_linenumber" name="L126" href="#L126">126</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String TIMEOUT_PARAMETER = <span class="jxr_string">"timeout"</span>;
+<a class="jxr_linenumber" name="L127" href="#L127">127</a> 
+<a class="jxr_linenumber" name="L128" href="#L128">128</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L129" href="#L129">129</a> <em class="jxr_javadoccomment">     * A pattern for finding arguments of the command to execute.</em>
+<a class="jxr_linenumber" name="L130" href="#L130">130</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L131" href="#L131">131</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> Pattern ARGUMENT_FINDER =
+<a class="jxr_linenumber" name="L132" href="#L132">132</a>             Pattern.compile(<span class="jxr_string">"([^\&quot;]&#92;&#92;S*|\&quot;.+?\&quot;)&#92;&#92;s*"</span>);
+<a class="jxr_linenumber" name="L133" href="#L133">133</a>     <strong class="jxr_keyword">static</strong> {
+<a class="jxr_linenumber" name="L134" href="#L134">134</a>         IGNORED_EXTENSIONS.add(<span class="jxr_string">"pyc"</span>);
+<a class="jxr_linenumber" name="L135" href="#L135">135</a>         IGNORED_DIRECTORIES.add(<span class="jxr_string">"application_generated_data_files"</span>);
+<a class="jxr_linenumber" name="L136" href="#L136">136</a>         IGNORED_DIRECTORIES.add(<span class="jxr_string">"reports"</span>);
+<a class="jxr_linenumber" name="L137" href="#L137">137</a>     };
 <a class="jxr_linenumber" name="L138" href="#L138">138</a> 
 <a class="jxr_linenumber" name="L139" href="#L139">139</a>     <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L140" href="#L140">140</a> <em class="jxr_javadoccomment">     * The directory where the process is executed.</em>
+<a class="jxr_linenumber" name="L140" href="#L140">140</a> <em class="jxr_javadoccomment">     * Provenance data items to be added to final provenance data.</em>
 <a class="jxr_linenumber" name="L141" href="#L141">141</a> <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L142" href="#L142">142</a>     <strong class="jxr_keyword">private</strong> File workingDirectory = <strong class="jxr_keyword">null</strong>;
-<a class="jxr_linenumber" name="L143" href="#L143">143</a> 
-<a class="jxr_linenumber" name="L144" href="#L144">144</a>     <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L145" href="#L145">145</a> <em class="jxr_javadoccomment">     * The current status of the process.</em>
-<a class="jxr_linenumber" name="L146" href="#L146">146</a> <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L147" href="#L147">147</a>     <strong class="jxr_keyword">private</strong> Status status = <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L142" href="#L142">142</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String[] PROVENANCE_ITEMS_TO_ADD = <strong class="jxr_keyword">new</strong> String[]{
+<a class="jxr_linenumber" name="L143" href="#L143">143</a>         <span class="jxr_string">"version_data/.*"</span>, <span class="jxr_string">"router_provenance/total_multi_cast_sent_packets"</span>,
+<a class="jxr_linenumber" name="L144" href="#L144">144</a>         <span class="jxr_string">"router_provenance/total_created_packets"</span>,
+<a class="jxr_linenumber" name="L145" href="#L145">145</a>         <span class="jxr_string">"router_provenance/total_dropped_packets"</span>,
+<a class="jxr_linenumber" name="L146" href="#L146">146</a>         <span class="jxr_string">"router_provenance/total_missed_dropped_packets"</span>,
+<a class="jxr_linenumber" name="L147" href="#L147">147</a>         <span class="jxr_string">"router_provenance/total_lost_dropped_packets"</span>};
 <a class="jxr_linenumber" name="L148" href="#L148">148</a> 
 <a class="jxr_linenumber" name="L149" href="#L149">149</a>     <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L150" href="#L150">150</a> <em class="jxr_javadoccomment">     * Any error that the process has exited with.</em>
+<a class="jxr_linenumber" name="L150" href="#L150">150</a> <em class="jxr_javadoccomment">     * The directory where the process is executed.</em>
 <a class="jxr_linenumber" name="L151" href="#L151">151</a> <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L152" href="#L152">152</a>     <strong class="jxr_keyword">private</strong> Throwable error = <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L152" href="#L152">152</a>     <strong class="jxr_keyword">private</strong> File workingDirectory = <strong class="jxr_keyword">null</strong>;
 <a class="jxr_linenumber" name="L153" href="#L153">153</a> 
 <a class="jxr_linenumber" name="L154" href="#L154">154</a>     <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L155" href="#L155">155</a> <em class="jxr_javadoccomment">     * Output files from the process.</em>
+<a class="jxr_linenumber" name="L155" href="#L155">155</a> <em class="jxr_javadoccomment">     * The current status of the process.</em>
 <a class="jxr_linenumber" name="L156" href="#L156">156</a> <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L157" href="#L157">157</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> List&lt;File&gt; outputs = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
+<a class="jxr_linenumber" name="L157" href="#L157">157</a>     <strong class="jxr_keyword">private</strong> Status status = <strong class="jxr_keyword">null</strong>;
 <a class="jxr_linenumber" name="L158" href="#L158">158</a> 
 <a class="jxr_linenumber" name="L159" href="#L159">159</a>     <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L160" href="#L160">160</a> <em class="jxr_javadoccomment">     * Provenance items of the process.</em>
+<a class="jxr_linenumber" name="L160" href="#L160">160</a> <em class="jxr_javadoccomment">     * Any error that the process has exited with.</em>
 <a class="jxr_linenumber" name="L161" href="#L161">161</a> <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L162" href="#L162">162</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> List&lt;ProvenanceItem&gt; provenance = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
+<a class="jxr_linenumber" name="L162" href="#L162">162</a>     <strong class="jxr_keyword">private</strong> Throwable error = <strong class="jxr_keyword">null</strong>;
 <a class="jxr_linenumber" name="L163" href="#L163">163</a> 
 <a class="jxr_linenumber" name="L164" href="#L164">164</a>     <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L165" href="#L165">165</a> <em class="jxr_javadoccomment">     * A thread group for the log monitoring.</em>
+<a class="jxr_linenumber" name="L165" href="#L165">165</a> <em class="jxr_javadoccomment">     * Output files from the process.</em>
 <a class="jxr_linenumber" name="L166" href="#L166">166</a> <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L167" href="#L167">167</a>     <strong class="jxr_keyword">private</strong> ThreadGroup threadGroup;
+<a class="jxr_linenumber" name="L167" href="#L167">167</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> List&lt;File&gt; outputs = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
 <a class="jxr_linenumber" name="L168" href="#L168">168</a> 
 <a class="jxr_linenumber" name="L169" href="#L169">169</a>     <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L170" href="#L170">170</a> <em class="jxr_javadoccomment">     * Gathers files in a directory and sub-directories.</em>
-<a class="jxr_linenumber" name="L171" href="#L171">171</a> <em class="jxr_javadoccomment">     *</em>
-<a class="jxr_linenumber" name="L172" href="#L172">172</a> <em class="jxr_javadoccomment">     * @param directory The directory to find files in.</em>
-<a class="jxr_linenumber" name="L173" href="#L173">173</a> <em class="jxr_javadoccomment">     * @return The set of files found.</em>
-<a class="jxr_linenumber" name="L174" href="#L174">174</a> <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L175" href="#L175">175</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> Set&lt;File&gt; gatherFiles(<strong class="jxr_keyword">final</strong> File directory) {
-<a class="jxr_linenumber" name="L176" href="#L176">176</a>         <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">new</strong> LinkedHashSet&lt;&gt;(
-<a class="jxr_linenumber" name="L177" href="#L177">177</a>                 listFiles(directory, fileFilter(), directoryFilter()));
-<a class="jxr_linenumber" name="L178" href="#L178">178</a>     }
-<a class="jxr_linenumber" name="L179" href="#L179">179</a> 
-<a class="jxr_linenumber" name="L180" href="#L180">180</a>     <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L181" href="#L181">181</a> <em class="jxr_javadoccomment">     * A filter to remove files with ignored instructions.</em>
-<a class="jxr_linenumber" name="L182" href="#L182">182</a> <em class="jxr_javadoccomment">     *</em>
-<a class="jxr_linenumber" name="L183" href="#L183">183</a> <em class="jxr_javadoccomment">     * @return The file filter</em>
+<a class="jxr_linenumber" name="L170" href="#L170">170</a> <em class="jxr_javadoccomment">     * Provenance items of the process.</em>
+<a class="jxr_linenumber" name="L171" href="#L171">171</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L172" href="#L172">172</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> List&lt;ProvenanceItem&gt; provenance = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
+<a class="jxr_linenumber" name="L173" href="#L173">173</a> 
+<a class="jxr_linenumber" name="L174" href="#L174">174</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L175" href="#L175">175</a> <em class="jxr_javadoccomment">     * A thread group for the log monitoring.</em>
+<a class="jxr_linenumber" name="L176" href="#L176">176</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L177" href="#L177">177</a>     <strong class="jxr_keyword">private</strong> ThreadGroup threadGroup;
+<a class="jxr_linenumber" name="L178" href="#L178">178</a> 
+<a class="jxr_linenumber" name="L179" href="#L179">179</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L180" href="#L180">180</a> <em class="jxr_javadoccomment">     * Gathers files in a directory and sub-directories.</em>
+<a class="jxr_linenumber" name="L181" href="#L181">181</a> <em class="jxr_javadoccomment">     *</em>
+<a class="jxr_linenumber" name="L182" href="#L182">182</a> <em class="jxr_javadoccomment">     * @param directory The directory to find files in.</em>
+<a class="jxr_linenumber" name="L183" href="#L183">183</a> <em class="jxr_javadoccomment">     * @return The set of files found.</em>
 <a class="jxr_linenumber" name="L184" href="#L184">184</a> <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L185" href="#L185">185</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> IOFileFilter fileFilter() {
-<a class="jxr_linenumber" name="L186" href="#L186">186</a>         <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">new</strong> AbstractFileFilter() {
-<a class="jxr_linenumber" name="L187" href="#L187">187</a>             @Override
-<a class="jxr_linenumber" name="L188" href="#L188">188</a>             <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">boolean</strong> accept(<strong class="jxr_keyword">final</strong> File file) {
-<a class="jxr_linenumber" name="L189" href="#L189">189</a>                 <strong class="jxr_keyword">return</strong> !IGNORED_EXTENSIONS
-<a class="jxr_linenumber" name="L190" href="#L190">190</a>                         .contains(getExtension(file.getName()));
-<a class="jxr_linenumber" name="L191" href="#L191">191</a>             }
-<a class="jxr_linenumber" name="L192" href="#L192">192</a>         };
-<a class="jxr_linenumber" name="L193" href="#L193">193</a>     }
-<a class="jxr_linenumber" name="L194" href="#L194">194</a> 
-<a class="jxr_linenumber" name="L195" href="#L195">195</a>     <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L196" href="#L196">196</a> <em class="jxr_javadoccomment">     * A filter to remove ignored directories.</em>
-<a class="jxr_linenumber" name="L197" href="#L197">197</a> <em class="jxr_javadoccomment">     *</em>
-<a class="jxr_linenumber" name="L198" href="#L198">198</a> <em class="jxr_javadoccomment">     * @return The directory filter</em>
-<a class="jxr_linenumber" name="L199" href="#L199">199</a> <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L200" href="#L200">200</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> IOFileFilter directoryFilter() {
-<a class="jxr_linenumber" name="L201" href="#L201">201</a>         <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">new</strong> AbstractFileFilter() {
-<a class="jxr_linenumber" name="L202" href="#L202">202</a>             @Override
-<a class="jxr_linenumber" name="L203" href="#L203">203</a>             <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">boolean</strong> accept(<strong class="jxr_keyword">final</strong> File file) {
-<a class="jxr_linenumber" name="L204" href="#L204">204</a>                 <strong class="jxr_keyword">return</strong> !IGNORED_DIRECTORIES.contains(file.getName());
-<a class="jxr_linenumber" name="L205" href="#L205">205</a>             }
-<a class="jxr_linenumber" name="L206" href="#L206">206</a>         };
-<a class="jxr_linenumber" name="L207" href="#L207">207</a>     }
-<a class="jxr_linenumber" name="L208" href="#L208">208</a> 
-<a class="jxr_linenumber" name="L209" href="#L209">209</a>     <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L210" href="#L210">210</a> <em class="jxr_javadoccomment">     * Executes the process.</em>
-<a class="jxr_linenumber" name="L211" href="#L211">211</a> <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L212" href="#L212">212</a>     @Override
-<a class="jxr_linenumber" name="L213" href="#L213">213</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> execute(<strong class="jxr_keyword">final</strong> String machineUrl, <strong class="jxr_keyword">final</strong> SpinnakerMachine machine,
-<a class="jxr_linenumber" name="L214" href="#L214">214</a>             <strong class="jxr_keyword">final</strong> PyNNJobParameters parameters, <strong class="jxr_keyword">final</strong> <a name="LogWriter" href="../../../../../../uk/ac/manchester/cs/spinnaker/jobprocess/LogWriter.html#LogWriter">LogWriter</a> logWriter) {
-<a class="jxr_linenumber" name="L215" href="#L215">215</a>         <strong class="jxr_keyword">try</strong> {
-<a class="jxr_linenumber" name="L216" href="#L216">216</a>             status = Running;
-<a class="jxr_linenumber" name="L217" href="#L217">217</a>             workingDirectory = <strong class="jxr_keyword">new</strong> File(parameters.getWorkingDirectory());
+<a class="jxr_linenumber" name="L185" href="#L185">185</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> Set&lt;File&gt; gatherFiles(<strong class="jxr_keyword">final</strong> File directory) {
+<a class="jxr_linenumber" name="L186" href="#L186">186</a>         <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">new</strong> LinkedHashSet&lt;&gt;(
+<a class="jxr_linenumber" name="L187" href="#L187">187</a>                 listFiles(directory, fileFilter(), directoryFilter()));
+<a class="jxr_linenumber" name="L188" href="#L188">188</a>     }
+<a class="jxr_linenumber" name="L189" href="#L189">189</a> 
+<a class="jxr_linenumber" name="L190" href="#L190">190</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L191" href="#L191">191</a> <em class="jxr_javadoccomment">     * A filter to remove files with ignored instructions.</em>
+<a class="jxr_linenumber" name="L192" href="#L192">192</a> <em class="jxr_javadoccomment">     *</em>
+<a class="jxr_linenumber" name="L193" href="#L193">193</a> <em class="jxr_javadoccomment">     * @return The file filter</em>
+<a class="jxr_linenumber" name="L194" href="#L194">194</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L195" href="#L195">195</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> IOFileFilter fileFilter() {
+<a class="jxr_linenumber" name="L196" href="#L196">196</a>         <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">new</strong> AbstractFileFilter() {
+<a class="jxr_linenumber" name="L197" href="#L197">197</a>             @Override
+<a class="jxr_linenumber" name="L198" href="#L198">198</a>             <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">boolean</strong> accept(<strong class="jxr_keyword">final</strong> File file) {
+<a class="jxr_linenumber" name="L199" href="#L199">199</a>                 <strong class="jxr_keyword">return</strong> !IGNORED_EXTENSIONS
+<a class="jxr_linenumber" name="L200" href="#L200">200</a>                         .contains(getExtension(file.getName()));
+<a class="jxr_linenumber" name="L201" href="#L201">201</a>             }
+<a class="jxr_linenumber" name="L202" href="#L202">202</a>         };
+<a class="jxr_linenumber" name="L203" href="#L203">203</a>     }
+<a class="jxr_linenumber" name="L204" href="#L204">204</a> 
+<a class="jxr_linenumber" name="L205" href="#L205">205</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L206" href="#L206">206</a> <em class="jxr_javadoccomment">     * A filter to remove ignored directories.</em>
+<a class="jxr_linenumber" name="L207" href="#L207">207</a> <em class="jxr_javadoccomment">     *</em>
+<a class="jxr_linenumber" name="L208" href="#L208">208</a> <em class="jxr_javadoccomment">     * @return The directory filter</em>
+<a class="jxr_linenumber" name="L209" href="#L209">209</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L210" href="#L210">210</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> IOFileFilter directoryFilter() {
+<a class="jxr_linenumber" name="L211" href="#L211">211</a>         <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">new</strong> AbstractFileFilter() {
+<a class="jxr_linenumber" name="L212" href="#L212">212</a>             @Override
+<a class="jxr_linenumber" name="L213" href="#L213">213</a>             <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">boolean</strong> accept(<strong class="jxr_keyword">final</strong> File file) {
+<a class="jxr_linenumber" name="L214" href="#L214">214</a>                 <strong class="jxr_keyword">return</strong> !IGNORED_DIRECTORIES.contains(file.getName());
+<a class="jxr_linenumber" name="L215" href="#L215">215</a>             }
+<a class="jxr_linenumber" name="L216" href="#L216">216</a>         };
+<a class="jxr_linenumber" name="L217" href="#L217">217</a>     }
 <a class="jxr_linenumber" name="L218" href="#L218">218</a> 
-<a class="jxr_linenumber" name="L219" href="#L219">219</a>             <em class="jxr_comment">// Run the setup</em>
-<a class="jxr_linenumber" name="L220" href="#L220">220</a>             <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> setupValue = runSetup(parameters, logWriter);
-<a class="jxr_linenumber" name="L221" href="#L221">221</a>             <strong class="jxr_keyword">if</strong> (setupValue != 0) {
-<a class="jxr_linenumber" name="L222" href="#L222">222</a>                 <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> Exception(<span class="jxr_string">"Setup exited with non-zero error code + ("</span>
-<a class="jxr_linenumber" name="L223" href="#L223">223</a>                         + setupValue + <span class="jxr_string">")"</span>);
-<a class="jxr_linenumber" name="L224" href="#L224">224</a>             }
-<a class="jxr_linenumber" name="L225" href="#L225">225</a> 
-<a class="jxr_linenumber" name="L226" href="#L226">226</a>             <em class="jxr_comment">// Create a spynnaker config file</em>
-<a class="jxr_linenumber" name="L227" href="#L227">227</a>             <strong class="jxr_keyword">final</strong> File cfgFile = <strong class="jxr_keyword">new</strong> File(workingDirectory, <span class="jxr_string">"spynnaker.cfg"</span>);
+<a class="jxr_linenumber" name="L219" href="#L219">219</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L220" href="#L220">220</a> <em class="jxr_javadoccomment">     * Executes the process.</em>
+<a class="jxr_linenumber" name="L221" href="#L221">221</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L222" href="#L222">222</a>     @Override
+<a class="jxr_linenumber" name="L223" href="#L223">223</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> execute(<strong class="jxr_keyword">final</strong> String machineUrl, <strong class="jxr_keyword">final</strong> SpinnakerMachine machine,
+<a class="jxr_linenumber" name="L224" href="#L224">224</a>             <strong class="jxr_keyword">final</strong> PyNNJobParameters parameters, <strong class="jxr_keyword">final</strong> <a name="LogWriter" href="../../../../../../uk/ac/manchester/cs/spinnaker/jobprocess/LogWriter.html#LogWriter">LogWriter</a> logWriter) {
+<a class="jxr_linenumber" name="L225" href="#L225">225</a>         <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L226" href="#L226">226</a>             status = Running;
+<a class="jxr_linenumber" name="L227" href="#L227">227</a>             workingDirectory = <strong class="jxr_keyword">new</strong> File(parameters.getWorkingDirectory());
 <a class="jxr_linenumber" name="L228" href="#L228">228</a> 
-<a class="jxr_linenumber" name="L229" href="#L229">229</a>             <em class="jxr_comment">// Add the details of the machine</em>
-<a class="jxr_linenumber" name="L230" href="#L230">230</a>             <strong class="jxr_keyword">final</strong> Ini ini = <strong class="jxr_keyword">new</strong> Ini();
-<a class="jxr_linenumber" name="L231" href="#L231">231</a>             <strong class="jxr_keyword">final</strong> Config config = ini.getConfig();
-<a class="jxr_linenumber" name="L232" href="#L232">232</a>             config.setEscape(false);
-<a class="jxr_linenumber" name="L233" href="#L233">233</a>             config.setLowerCaseSection(false);
-<a class="jxr_linenumber" name="L234" href="#L234">234</a>             config.setLowerCaseOption(false);
-<a class="jxr_linenumber" name="L235" href="#L235">235</a>             <strong class="jxr_keyword">if</strong> (cfgFile.exists()) {
-<a class="jxr_linenumber" name="L236" href="#L236">236</a>                 ini.load(cfgFile);
-<a class="jxr_linenumber" name="L237" href="#L237">237</a>             }
+<a class="jxr_linenumber" name="L229" href="#L229">229</a>             <em class="jxr_comment">// Run the setup</em>
+<a class="jxr_linenumber" name="L230" href="#L230">230</a>             <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> setupValue = runSetup(parameters, logWriter);
+<a class="jxr_linenumber" name="L231" href="#L231">231</a>             <strong class="jxr_keyword">if</strong> (setupValue != 0) {
+<a class="jxr_linenumber" name="L232" href="#L232">232</a>                 <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> Exception(<span class="jxr_string">"Setup exited with non-zero error code + ("</span>
+<a class="jxr_linenumber" name="L233" href="#L233">233</a>                         + setupValue + <span class="jxr_string">")"</span>);
+<a class="jxr_linenumber" name="L234" href="#L234">234</a>             }
+<a class="jxr_linenumber" name="L235" href="#L235">235</a> 
+<a class="jxr_linenumber" name="L236" href="#L236">236</a>             <em class="jxr_comment">// Create a spynnaker config file</em>
+<a class="jxr_linenumber" name="L237" href="#L237">237</a>             <strong class="jxr_keyword">final</strong> File cfgFile = <strong class="jxr_keyword">new</strong> File(workingDirectory, <span class="jxr_string">"spynnaker.cfg"</span>);
 <a class="jxr_linenumber" name="L238" href="#L238">238</a> 
-<a class="jxr_linenumber" name="L239" href="#L239">239</a>             <strong class="jxr_keyword">final</strong> Section section;
-<a class="jxr_linenumber" name="L240" href="#L240">240</a>             <strong class="jxr_keyword">if</strong> (!ini.containsKey(SECTION)) {
-<a class="jxr_linenumber" name="L241" href="#L241">241</a>                 section = ini.add(SECTION);
-<a class="jxr_linenumber" name="L242" href="#L242">242</a>             } <strong class="jxr_keyword">else</strong> {
-<a class="jxr_linenumber" name="L243" href="#L243">243</a>                 section = ini.get(SECTION);
-<a class="jxr_linenumber" name="L244" href="#L244">244</a>             }
-<a class="jxr_linenumber" name="L245" href="#L245">245</a>             <strong class="jxr_keyword">if</strong> (machine != <strong class="jxr_keyword">null</strong>) {
-<a class="jxr_linenumber" name="L246" href="#L246">246</a>                 section.put(<span class="jxr_string">"machine_name"</span>, machine.getMachineName());
-<a class="jxr_linenumber" name="L247" href="#L247">247</a>                 section.put(<span class="jxr_string">"version"</span>, machine.getVersion());
-<a class="jxr_linenumber" name="L248" href="#L248">248</a>                 <strong class="jxr_keyword">final</strong> String bmpDetails = machine.getBmpDetails();
-<a class="jxr_linenumber" name="L249" href="#L249">249</a>                 <strong class="jxr_keyword">if</strong> (bmpDetails != <strong class="jxr_keyword">null</strong>) {
-<a class="jxr_linenumber" name="L250" href="#L250">250</a>                     section.put(<span class="jxr_string">"bmp_names"</span>, bmpDetails);
-<a class="jxr_linenumber" name="L251" href="#L251">251</a>                 }
+<a class="jxr_linenumber" name="L239" href="#L239">239</a>             <em class="jxr_comment">// Add the details of the machine</em>
+<a class="jxr_linenumber" name="L240" href="#L240">240</a>             <strong class="jxr_keyword">final</strong> Ini ini = <strong class="jxr_keyword">new</strong> Ini();
+<a class="jxr_linenumber" name="L241" href="#L241">241</a>             <strong class="jxr_keyword">final</strong> Config config = ini.getConfig();
+<a class="jxr_linenumber" name="L242" href="#L242">242</a>             config.setEscape(false);
+<a class="jxr_linenumber" name="L243" href="#L243">243</a>             config.setLowerCaseSection(false);
+<a class="jxr_linenumber" name="L244" href="#L244">244</a>             config.setLowerCaseOption(false);
+<a class="jxr_linenumber" name="L245" href="#L245">245</a>             <strong class="jxr_keyword">if</strong> (cfgFile.exists()) {
+<a class="jxr_linenumber" name="L246" href="#L246">246</a>                 ini.load(cfgFile);
+<a class="jxr_linenumber" name="L247" href="#L247">247</a>             }
+<a class="jxr_linenumber" name="L248" href="#L248">248</a> 
+<a class="jxr_linenumber" name="L249" href="#L249">249</a>             <strong class="jxr_keyword">final</strong> Section section;
+<a class="jxr_linenumber" name="L250" href="#L250">250</a>             <strong class="jxr_keyword">if</strong> (!ini.containsKey(SECTION)) {
+<a class="jxr_linenumber" name="L251" href="#L251">251</a>                 section = ini.add(SECTION);
 <a class="jxr_linenumber" name="L252" href="#L252">252</a>             } <strong class="jxr_keyword">else</strong> {
-<a class="jxr_linenumber" name="L253" href="#L253">253</a>                 section.put(<span class="jxr_string">"remote_spinnaker_url"</span>, machineUrl);
+<a class="jxr_linenumber" name="L253" href="#L253">253</a>                 section = ini.get(SECTION);
 <a class="jxr_linenumber" name="L254" href="#L254">254</a>             }
-<a class="jxr_linenumber" name="L255" href="#L255">255</a>             ini.store(cfgFile);
-<a class="jxr_linenumber" name="L256" href="#L256">256</a> 
-<a class="jxr_linenumber" name="L257" href="#L257">257</a>             <em class="jxr_comment">// Keep existing files to compare to later</em>
-<a class="jxr_linenumber" name="L258" href="#L258">258</a>             <strong class="jxr_keyword">final</strong> Set&lt;File&gt; existingFiles = gatherFiles(workingDirectory);
-<a class="jxr_linenumber" name="L259" href="#L259">259</a> 
-<a class="jxr_linenumber" name="L260" href="#L260">260</a>             <em class="jxr_comment">// Execute the program</em>
-<a class="jxr_linenumber" name="L261" href="#L261">261</a>             <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> exitValue = runSubprocess(parameters, logWriter);
-<a class="jxr_linenumber" name="L262" href="#L262">262</a> 
-<a class="jxr_linenumber" name="L263" href="#L263">263</a>             <em class="jxr_comment">// Get the provenance data</em>
-<a class="jxr_linenumber" name="L264" href="#L264">264</a>             gatherProvenance(workingDirectory);
-<a class="jxr_linenumber" name="L265" href="#L265">265</a> 
-<a class="jxr_linenumber" name="L266" href="#L266">266</a>             <em class="jxr_comment">// Get any output files</em>
-<a class="jxr_linenumber" name="L267" href="#L267">267</a>             <strong class="jxr_keyword">final</strong> Set&lt;File&gt; allFiles = gatherFiles(workingDirectory);
-<a class="jxr_linenumber" name="L268" href="#L268">268</a>             <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">final</strong> File file : allFiles) {
-<a class="jxr_linenumber" name="L269" href="#L269">269</a>                 <strong class="jxr_keyword">if</strong> (!existingFiles.contains(file)) {
-<a class="jxr_linenumber" name="L270" href="#L270">270</a>                     outputs.add(file);
-<a class="jxr_linenumber" name="L271" href="#L271">271</a>                 }
-<a class="jxr_linenumber" name="L272" href="#L272">272</a>             }
-<a class="jxr_linenumber" name="L273" href="#L273">273</a> 
-<a class="jxr_linenumber" name="L274" href="#L274">274</a>             <em class="jxr_comment">// If the exit is an error, mark an error</em>
-<a class="jxr_linenumber" name="L275" href="#L275">275</a>             <strong class="jxr_keyword">if</strong> (exitValue &gt;= MIN_SIGNAL_OFFSET) {
-<a class="jxr_linenumber" name="L276" href="#L276">276</a>                 <em class="jxr_comment">// Useful to distinguish this case</em>
-<a class="jxr_linenumber" name="L277" href="#L277">277</a>                 <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> Exception(<span class="jxr_string">"Python exited with signal ("</span>
-<a class="jxr_linenumber" name="L278" href="#L278">278</a>                         + (exitValue - MIN_SIGNAL_OFFSET) + <span class="jxr_string">")"</span>);
-<a class="jxr_linenumber" name="L279" href="#L279">279</a>             }
-<a class="jxr_linenumber" name="L280" href="#L280">280</a>             <strong class="jxr_keyword">if</strong> (exitValue != 0) {
-<a class="jxr_linenumber" name="L281" href="#L281">281</a>                 <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> Exception(<span class="jxr_string">"Python exited with a non-zero code ("</span>
-<a class="jxr_linenumber" name="L282" href="#L282">282</a>                         + exitValue + <span class="jxr_string">")"</span>);
-<a class="jxr_linenumber" name="L283" href="#L283">283</a>             }
-<a class="jxr_linenumber" name="L284" href="#L284">284</a>             status = Finished;
-<a class="jxr_linenumber" name="L285" href="#L285">285</a>         } <strong class="jxr_keyword">catch</strong> (<strong class="jxr_keyword">final</strong> Throwable e) {
-<a class="jxr_linenumber" name="L286" href="#L286">286</a>             StringWriter stringWriter = <strong class="jxr_keyword">new</strong> StringWriter();
-<a class="jxr_linenumber" name="L287" href="#L287">287</a>             PrintWriter printWriter = <strong class="jxr_keyword">new</strong> PrintWriter(stringWriter);
-<a class="jxr_linenumber" name="L288" href="#L288">288</a>             e.printStackTrace(printWriter);
-<a class="jxr_linenumber" name="L289" href="#L289">289</a>             logWriter.append(stringWriter.toString());
-<a class="jxr_linenumber" name="L290" href="#L290">290</a>             e.printStackTrace();
-<a class="jxr_linenumber" name="L291" href="#L291">291</a>             error = e;
-<a class="jxr_linenumber" name="L292" href="#L292">292</a>             status = Error;
-<a class="jxr_linenumber" name="L293" href="#L293">293</a>         }
-<a class="jxr_linenumber" name="L294" href="#L294">294</a>     }
-<a class="jxr_linenumber" name="L295" href="#L295">295</a> 
-<a class="jxr_linenumber" name="L296" href="#L296">296</a>     <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L297" href="#L297">297</a> <em class="jxr_javadoccomment">     * Run the setup process.</em>
-<a class="jxr_linenumber" name="L298" href="#L298">298</a> <em class="jxr_javadoccomment">     *</em>
-<a class="jxr_linenumber" name="L299" href="#L299">299</a> <em class="jxr_javadoccomment">     * @param parameters</em>
-<a class="jxr_linenumber" name="L300" href="#L300">300</a> <em class="jxr_javadoccomment">     *            The parameters to the setup process.</em>
-<a class="jxr_linenumber" name="L301" href="#L301">301</a> <em class="jxr_javadoccomment">     * @param logWriter</em>
-<a class="jxr_linenumber" name="L302" href="#L302">302</a> <em class="jxr_javadoccomment">     *            Where to send log messages.</em>
-<a class="jxr_linenumber" name="L303" href="#L303">303</a> <em class="jxr_javadoccomment">     * @return</em>
-<a class="jxr_linenumber" name="L304" href="#L304">304</a> <em class="jxr_javadoccomment">     *            The exit value of the process</em>
-<a class="jxr_linenumber" name="L305" href="#L305">305</a> <em class="jxr_javadoccomment">     * @throws IOException</em>
-<a class="jxr_linenumber" name="L306" href="#L306">306</a> <em class="jxr_javadoccomment">     *            If there was an error starting the process</em>
-<a class="jxr_linenumber" name="L307" href="#L307">307</a> <em class="jxr_javadoccomment">     * @throws InterruptedException</em>
-<a class="jxr_linenumber" name="L308" href="#L308">308</a> <em class="jxr_javadoccomment">     *            If the process was interrupted before return</em>
-<a class="jxr_linenumber" name="L309" href="#L309">309</a> <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L310" href="#L310">310</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">int</strong> runSetup(<strong class="jxr_keyword">final</strong> PyNNJobParameters parameters,
-<a class="jxr_linenumber" name="L311" href="#L311">311</a>             <strong class="jxr_keyword">final</strong> <a name="LogWriter" href="../../../../../../uk/ac/manchester/cs/spinnaker/jobprocess/LogWriter.html#LogWriter">LogWriter</a> logWriter)
-<a class="jxr_linenumber" name="L312" href="#L312">312</a>             <strong class="jxr_keyword">throws</strong> IOException, InterruptedException {
-<a class="jxr_linenumber" name="L313" href="#L313">313</a>         <strong class="jxr_keyword">final</strong> List&lt;String&gt; command = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
-<a class="jxr_linenumber" name="L314" href="#L314">314</a>         command.add(SETUP_RUNNER);
-<a class="jxr_linenumber" name="L315" href="#L315">315</a>         command.add(parameters.getSetupScript());
-<a class="jxr_linenumber" name="L316" href="#L316">316</a> 
-<a class="jxr_linenumber" name="L317" href="#L317">317</a>         <em class="jxr_comment">// Build a process</em>
-<a class="jxr_linenumber" name="L318" href="#L318">318</a>         <strong class="jxr_keyword">final</strong> ProcessBuilder builder = <strong class="jxr_keyword">new</strong> ProcessBuilder(command);
-<a class="jxr_linenumber" name="L319" href="#L319">319</a>         builder.directory(workingDirectory);
-<a class="jxr_linenumber" name="L320" href="#L320">320</a>         builder.redirectErrorStream(<strong class="jxr_keyword">true</strong>);
-<a class="jxr_linenumber" name="L321" href="#L321">321</a>         ObjectMapper mapper = <strong class="jxr_keyword">new</strong> ObjectMapper();
-<a class="jxr_linenumber" name="L322" href="#L322">322</a>         <strong class="jxr_keyword">for</strong> (Entry&lt;String, Object&gt; entry
-<a class="jxr_linenumber" name="L323" href="#L323">323</a>                 : parameters.getHardwareConfiguration().entrySet()) {
-<a class="jxr_linenumber" name="L324" href="#L324">324</a>             String stringValue = <strong class="jxr_keyword">null</strong>;
-<a class="jxr_linenumber" name="L325" href="#L325">325</a>             Object value = entry.getValue();
-<a class="jxr_linenumber" name="L326" href="#L326">326</a>             <strong class="jxr_keyword">if</strong> (value instanceof String) {
-<a class="jxr_linenumber" name="L327" href="#L327">327</a>                 stringValue = (String) value;
-<a class="jxr_linenumber" name="L328" href="#L328">328</a>             } <strong class="jxr_keyword">else</strong> {
-<a class="jxr_linenumber" name="L329" href="#L329">329</a>                 stringValue = mapper.writeValueAsString(value);
-<a class="jxr_linenumber" name="L330" href="#L330">330</a>             }
-<a class="jxr_linenumber" name="L331" href="#L331">331</a>             builder.environment().put(entry.getKey(), stringValue);
-<a class="jxr_linenumber" name="L332" href="#L332">332</a>         }
-<a class="jxr_linenumber" name="L333" href="#L333">333</a>         <strong class="jxr_keyword">final</strong> Process process = builder.start();
-<a class="jxr_linenumber" name="L334" href="#L334">334</a> 
-<a class="jxr_linenumber" name="L335" href="#L335">335</a>         <em class="jxr_comment">// Run a thread to gather the log</em>
-<a class="jxr_linenumber" name="L336" href="#L336">336</a>         <strong class="jxr_keyword">try</strong> (ReaderLogWriter logger =
-<a class="jxr_linenumber" name="L337" href="#L337">337</a>                 <strong class="jxr_keyword">new</strong> ReaderLogWriter(process.getInputStream(), logWriter)) {
-<a class="jxr_linenumber" name="L338" href="#L338">338</a>             logger.start();
-<a class="jxr_linenumber" name="L339" href="#L339">339</a> 
-<a class="jxr_linenumber" name="L340" href="#L340">340</a>             <em class="jxr_comment">// Wait for the process to finish</em>
-<a class="jxr_linenumber" name="L341" href="#L341">341</a>             <strong class="jxr_keyword">return</strong> process.waitFor();
-<a class="jxr_linenumber" name="L342" href="#L342">342</a>         }
-<a class="jxr_linenumber" name="L343" href="#L343">343</a>     }
-<a class="jxr_linenumber" name="L344" href="#L344">344</a> 
-<a class="jxr_linenumber" name="L345" href="#L345">345</a>     <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L346" href="#L346">346</a> <em class="jxr_javadoccomment">     * How to actually run a subprocess.</em>
-<a class="jxr_linenumber" name="L347" href="#L347">347</a> <em class="jxr_javadoccomment">     *</em>
-<a class="jxr_linenumber" name="L348" href="#L348">348</a> <em class="jxr_javadoccomment">     * @param parameters</em>
-<a class="jxr_linenumber" name="L349" href="#L349">349</a> <em class="jxr_javadoccomment">     *            The parameters to the subprocess.</em>
-<a class="jxr_linenumber" name="L350" href="#L350">350</a> <em class="jxr_javadoccomment">     * @param logWriter</em>
-<a class="jxr_linenumber" name="L351" href="#L351">351</a> <em class="jxr_javadoccomment">     *            Where to send log messages.</em>
-<a class="jxr_linenumber" name="L352" href="#L352">352</a> <em class="jxr_javadoccomment">     * @return</em>
-<a class="jxr_linenumber" name="L353" href="#L353">353</a> <em class="jxr_javadoccomment">     *            The exit value of the process</em>
-<a class="jxr_linenumber" name="L354" href="#L354">354</a> <em class="jxr_javadoccomment">     * @throws IOException</em>
-<a class="jxr_linenumber" name="L355" href="#L355">355</a> <em class="jxr_javadoccomment">     *            If there was an error starting the process</em>
-<a class="jxr_linenumber" name="L356" href="#L356">356</a> <em class="jxr_javadoccomment">     * @throws InterruptedException</em>
-<a class="jxr_linenumber" name="L357" href="#L357">357</a> <em class="jxr_javadoccomment">     *            If the process was interrupted before return</em>
-<a class="jxr_linenumber" name="L358" href="#L358">358</a> <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L359" href="#L359">359</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">int</strong> runSubprocess(<strong class="jxr_keyword">final</strong> PyNNJobParameters parameters,
-<a class="jxr_linenumber" name="L360" href="#L360">360</a>             <strong class="jxr_keyword">final</strong> <a name="LogWriter" href="../../../../../../uk/ac/manchester/cs/spinnaker/jobprocess/LogWriter.html#LogWriter">LogWriter</a> logWriter)
-<a class="jxr_linenumber" name="L361" href="#L361">361</a>             <strong class="jxr_keyword">throws</strong> IOException, InterruptedException {
-<a class="jxr_linenumber" name="L362" href="#L362">362</a>         <strong class="jxr_keyword">final</strong> List&lt;String&gt; command = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
-<a class="jxr_linenumber" name="L363" href="#L363">363</a>         command.add(SUBPROCESS_RUNNER);
-<a class="jxr_linenumber" name="L364" href="#L364">364</a> 
-<a class="jxr_linenumber" name="L365" href="#L365">365</a>         <strong class="jxr_keyword">final</strong> Matcher scriptMatcher =
-<a class="jxr_linenumber" name="L366" href="#L366">366</a>                 ARGUMENT_FINDER.matcher(parameters.getUserScript());
-<a class="jxr_linenumber" name="L367" href="#L367">367</a>         <strong class="jxr_keyword">while</strong> (scriptMatcher.find()) {
-<a class="jxr_linenumber" name="L368" href="#L368">368</a>             command.add(
-<a class="jxr_linenumber" name="L369" href="#L369">369</a>                     scriptMatcher.group(1).replace(<span class="jxr_string">"{system}"</span>, <span class="jxr_string">"spiNNaker"</span>));
-<a class="jxr_linenumber" name="L370" href="#L370">370</a>         }
-<a class="jxr_linenumber" name="L371" href="#L371">371</a> 
-<a class="jxr_linenumber" name="L372" href="#L372">372</a>         <strong class="jxr_keyword">final</strong> ProcessBuilder builder = <strong class="jxr_keyword">new</strong> ProcessBuilder(command);
-<a class="jxr_linenumber" name="L373" href="#L373">373</a>         log(<span class="jxr_string">"Running "</span> + command + <span class="jxr_string">" in "</span> + workingDirectory);
-<a class="jxr_linenumber" name="L374" href="#L374">374</a>         builder.directory(workingDirectory);
-<a class="jxr_linenumber" name="L375" href="#L375">375</a>         builder.redirectErrorStream(<strong class="jxr_keyword">true</strong>);
-<a class="jxr_linenumber" name="L376" href="#L376">376</a>         <strong class="jxr_keyword">final</strong> Process process = builder.start();
-<a class="jxr_linenumber" name="L377" href="#L377">377</a> 
-<a class="jxr_linenumber" name="L378" href="#L378">378</a>         <em class="jxr_comment">// Run a thread to gather the log</em>
-<a class="jxr_linenumber" name="L379" href="#L379">379</a>         <strong class="jxr_keyword">try</strong> (ReaderLogWriter logger =
-<a class="jxr_linenumber" name="L380" href="#L380">380</a>                 <strong class="jxr_keyword">new</strong> ReaderLogWriter(process.getInputStream(), logWriter)) {
-<a class="jxr_linenumber" name="L381" href="#L381">381</a>             logger.start();
+<a class="jxr_linenumber" name="L255" href="#L255">255</a>             <strong class="jxr_keyword">if</strong> (machine != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L256" href="#L256">256</a>                 section.put(<span class="jxr_string">"machine_name"</span>, machine.getMachineName());
+<a class="jxr_linenumber" name="L257" href="#L257">257</a>                 section.put(<span class="jxr_string">"version"</span>, machine.getVersion());
+<a class="jxr_linenumber" name="L258" href="#L258">258</a>                 <strong class="jxr_keyword">final</strong> String bmpDetails = machine.getBmpDetails();
+<a class="jxr_linenumber" name="L259" href="#L259">259</a>                 <strong class="jxr_keyword">if</strong> (bmpDetails != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L260" href="#L260">260</a>                     section.put(<span class="jxr_string">"bmp_names"</span>, bmpDetails);
+<a class="jxr_linenumber" name="L261" href="#L261">261</a>                 }
+<a class="jxr_linenumber" name="L262" href="#L262">262</a>             } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L263" href="#L263">263</a>                 section.put(<span class="jxr_string">"remote_spinnaker_url"</span>, machineUrl);
+<a class="jxr_linenumber" name="L264" href="#L264">264</a>             }
+<a class="jxr_linenumber" name="L265" href="#L265">265</a>             ini.store(cfgFile);
+<a class="jxr_linenumber" name="L266" href="#L266">266</a> 
+<a class="jxr_linenumber" name="L267" href="#L267">267</a>             <em class="jxr_comment">// Keep existing files to compare to later</em>
+<a class="jxr_linenumber" name="L268" href="#L268">268</a>             <strong class="jxr_keyword">final</strong> Set&lt;File&gt; existingFiles = gatherFiles(workingDirectory);
+<a class="jxr_linenumber" name="L269" href="#L269">269</a> 
+<a class="jxr_linenumber" name="L270" href="#L270">270</a>             <em class="jxr_comment">// Get a lifetime if there is one</em>
+<a class="jxr_linenumber" name="L271" href="#L271">271</a>             Map&lt;String, Object&gt; hwConfig =
+<a class="jxr_linenumber" name="L272" href="#L272">272</a>                     parameters.getHardwareConfiguration();
+<a class="jxr_linenumber" name="L273" href="#L273">273</a>             <strong class="jxr_keyword">int</strong> lifetimeHours = (Integer) hwConfig.getOrDefault(
+<a class="jxr_linenumber" name="L274" href="#L274">274</a>                     TIMEOUT_PARAMETER, RUN_TIMEOUT);
+<a class="jxr_linenumber" name="L275" href="#L275">275</a> 
+<a class="jxr_linenumber" name="L276" href="#L276">276</a>             <em class="jxr_comment">// Execute the program</em>
+<a class="jxr_linenumber" name="L277" href="#L277">277</a>             <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> exitValue = runSubprocess(
+<a class="jxr_linenumber" name="L278" href="#L278">278</a>                     parameters, logWriter, lifetimeHours);
+<a class="jxr_linenumber" name="L279" href="#L279">279</a> 
+<a class="jxr_linenumber" name="L280" href="#L280">280</a>             <em class="jxr_comment">// Get the provenance data</em>
+<a class="jxr_linenumber" name="L281" href="#L281">281</a>             gatherProvenance(workingDirectory);
+<a class="jxr_linenumber" name="L282" href="#L282">282</a> 
+<a class="jxr_linenumber" name="L283" href="#L283">283</a>             <em class="jxr_comment">// Get any output files</em>
+<a class="jxr_linenumber" name="L284" href="#L284">284</a>             <strong class="jxr_keyword">final</strong> Set&lt;File&gt; allFiles = gatherFiles(workingDirectory);
+<a class="jxr_linenumber" name="L285" href="#L285">285</a>             <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">final</strong> File file : allFiles) {
+<a class="jxr_linenumber" name="L286" href="#L286">286</a>                 <strong class="jxr_keyword">if</strong> (!existingFiles.contains(file)) {
+<a class="jxr_linenumber" name="L287" href="#L287">287</a>                     outputs.add(file);
+<a class="jxr_linenumber" name="L288" href="#L288">288</a>                 }
+<a class="jxr_linenumber" name="L289" href="#L289">289</a>             }
+<a class="jxr_linenumber" name="L290" href="#L290">290</a> 
+<a class="jxr_linenumber" name="L291" href="#L291">291</a>             <em class="jxr_comment">// If the exit is an error, mark an error</em>
+<a class="jxr_linenumber" name="L292" href="#L292">292</a>             <strong class="jxr_keyword">if</strong> (exitValue &gt;= MIN_SIGNAL_OFFSET) {
+<a class="jxr_linenumber" name="L293" href="#L293">293</a>                 <em class="jxr_comment">// Useful to distinguish this case</em>
+<a class="jxr_linenumber" name="L294" href="#L294">294</a>                 <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> Exception(<span class="jxr_string">"Python exited with signal ("</span>
+<a class="jxr_linenumber" name="L295" href="#L295">295</a>                         + (exitValue - MIN_SIGNAL_OFFSET) + <span class="jxr_string">")"</span>);
+<a class="jxr_linenumber" name="L296" href="#L296">296</a>             }
+<a class="jxr_linenumber" name="L297" href="#L297">297</a>             <strong class="jxr_keyword">if</strong> (exitValue != 0) {
+<a class="jxr_linenumber" name="L298" href="#L298">298</a>                 <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> Exception(<span class="jxr_string">"Python exited with a non-zero code ("</span>
+<a class="jxr_linenumber" name="L299" href="#L299">299</a>                         + exitValue + <span class="jxr_string">")"</span>);
+<a class="jxr_linenumber" name="L300" href="#L300">300</a>             }
+<a class="jxr_linenumber" name="L301" href="#L301">301</a>             status = Finished;
+<a class="jxr_linenumber" name="L302" href="#L302">302</a>         } <strong class="jxr_keyword">catch</strong> (<strong class="jxr_keyword">final</strong> Throwable e) {
+<a class="jxr_linenumber" name="L303" href="#L303">303</a>             StringWriter stringWriter = <strong class="jxr_keyword">new</strong> StringWriter();
+<a class="jxr_linenumber" name="L304" href="#L304">304</a>             PrintWriter printWriter = <strong class="jxr_keyword">new</strong> PrintWriter(stringWriter);
+<a class="jxr_linenumber" name="L305" href="#L305">305</a>             e.printStackTrace(printWriter);
+<a class="jxr_linenumber" name="L306" href="#L306">306</a>             logWriter.append(stringWriter.toString());
+<a class="jxr_linenumber" name="L307" href="#L307">307</a>             e.printStackTrace();
+<a class="jxr_linenumber" name="L308" href="#L308">308</a>             error = e;
+<a class="jxr_linenumber" name="L309" href="#L309">309</a>             status = Error;
+<a class="jxr_linenumber" name="L310" href="#L310">310</a>         }
+<a class="jxr_linenumber" name="L311" href="#L311">311</a>     }
+<a class="jxr_linenumber" name="L312" href="#L312">312</a> 
+<a class="jxr_linenumber" name="L313" href="#L313">313</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L314" href="#L314">314</a> <em class="jxr_javadoccomment">     * Run the setup process.</em>
+<a class="jxr_linenumber" name="L315" href="#L315">315</a> <em class="jxr_javadoccomment">     *</em>
+<a class="jxr_linenumber" name="L316" href="#L316">316</a> <em class="jxr_javadoccomment">     * @param parameters</em>
+<a class="jxr_linenumber" name="L317" href="#L317">317</a> <em class="jxr_javadoccomment">     *            The parameters to the setup process.</em>
+<a class="jxr_linenumber" name="L318" href="#L318">318</a> <em class="jxr_javadoccomment">     * @param logWriter</em>
+<a class="jxr_linenumber" name="L319" href="#L319">319</a> <em class="jxr_javadoccomment">     *            Where to send log messages.</em>
+<a class="jxr_linenumber" name="L320" href="#L320">320</a> <em class="jxr_javadoccomment">     * @return</em>
+<a class="jxr_linenumber" name="L321" href="#L321">321</a> <em class="jxr_javadoccomment">     *            The exit value of the process</em>
+<a class="jxr_linenumber" name="L322" href="#L322">322</a> <em class="jxr_javadoccomment">     * @throws IOException</em>
+<a class="jxr_linenumber" name="L323" href="#L323">323</a> <em class="jxr_javadoccomment">     *            If there was an error starting the process</em>
+<a class="jxr_linenumber" name="L324" href="#L324">324</a> <em class="jxr_javadoccomment">     * @throws InterruptedException</em>
+<a class="jxr_linenumber" name="L325" href="#L325">325</a> <em class="jxr_javadoccomment">     *            If the process was interrupted before return</em>
+<a class="jxr_linenumber" name="L326" href="#L326">326</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L327" href="#L327">327</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">int</strong> runSetup(<strong class="jxr_keyword">final</strong> PyNNJobParameters parameters,
+<a class="jxr_linenumber" name="L328" href="#L328">328</a>             <strong class="jxr_keyword">final</strong> <a name="LogWriter" href="../../../../../../uk/ac/manchester/cs/spinnaker/jobprocess/LogWriter.html#LogWriter">LogWriter</a> logWriter)
+<a class="jxr_linenumber" name="L329" href="#L329">329</a>             <strong class="jxr_keyword">throws</strong> IOException, InterruptedException {
+<a class="jxr_linenumber" name="L330" href="#L330">330</a>         <strong class="jxr_keyword">final</strong> List&lt;String&gt; command = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
+<a class="jxr_linenumber" name="L331" href="#L331">331</a>         command.add(SETUP_RUNNER);
+<a class="jxr_linenumber" name="L332" href="#L332">332</a>         command.add(parameters.getSetupScript());
+<a class="jxr_linenumber" name="L333" href="#L333">333</a> 
+<a class="jxr_linenumber" name="L334" href="#L334">334</a>         <em class="jxr_comment">// Build a process</em>
+<a class="jxr_linenumber" name="L335" href="#L335">335</a>         <strong class="jxr_keyword">final</strong> ProcessBuilder builder = <strong class="jxr_keyword">new</strong> ProcessBuilder(command);
+<a class="jxr_linenumber" name="L336" href="#L336">336</a>         builder.directory(workingDirectory);
+<a class="jxr_linenumber" name="L337" href="#L337">337</a>         builder.redirectErrorStream(<strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L338" href="#L338">338</a>         ObjectMapper mapper = <strong class="jxr_keyword">new</strong> ObjectMapper();
+<a class="jxr_linenumber" name="L339" href="#L339">339</a>         <strong class="jxr_keyword">for</strong> (Entry&lt;String, Object&gt; entry
+<a class="jxr_linenumber" name="L340" href="#L340">340</a>                 : parameters.getHardwareConfiguration().entrySet()) {
+<a class="jxr_linenumber" name="L341" href="#L341">341</a>             String stringValue = <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L342" href="#L342">342</a>             Object value = entry.getValue();
+<a class="jxr_linenumber" name="L343" href="#L343">343</a>             <strong class="jxr_keyword">if</strong> (value instanceof String) {
+<a class="jxr_linenumber" name="L344" href="#L344">344</a>                 stringValue = (String) value;
+<a class="jxr_linenumber" name="L345" href="#L345">345</a>             } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L346" href="#L346">346</a>                 stringValue = mapper.writeValueAsString(value);
+<a class="jxr_linenumber" name="L347" href="#L347">347</a>             }
+<a class="jxr_linenumber" name="L348" href="#L348">348</a>             builder.environment().put(entry.getKey(), stringValue);
+<a class="jxr_linenumber" name="L349" href="#L349">349</a>         }
+<a class="jxr_linenumber" name="L350" href="#L350">350</a>         <strong class="jxr_keyword">final</strong> Process process = builder.start();
+<a class="jxr_linenumber" name="L351" href="#L351">351</a> 
+<a class="jxr_linenumber" name="L352" href="#L352">352</a>         <em class="jxr_comment">// Run a thread to gather the log</em>
+<a class="jxr_linenumber" name="L353" href="#L353">353</a>         <strong class="jxr_keyword">try</strong> (ReaderLogWriter logger =
+<a class="jxr_linenumber" name="L354" href="#L354">354</a>                 <strong class="jxr_keyword">new</strong> ReaderLogWriter(process.getInputStream(), logWriter)) {
+<a class="jxr_linenumber" name="L355" href="#L355">355</a>             logger.start();
+<a class="jxr_linenumber" name="L356" href="#L356">356</a> 
+<a class="jxr_linenumber" name="L357" href="#L357">357</a>             <em class="jxr_comment">// Wait for the process to finish; 1 hour is very generous!</em>
+<a class="jxr_linenumber" name="L358" href="#L358">358</a>             <strong class="jxr_keyword">return</strong> runProcess(process, 1, HOURS);
+<a class="jxr_linenumber" name="L359" href="#L359">359</a>         }
+<a class="jxr_linenumber" name="L360" href="#L360">360</a>     }
+<a class="jxr_linenumber" name="L361" href="#L361">361</a> 
+<a class="jxr_linenumber" name="L362" href="#L362">362</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L363" href="#L363">363</a> <em class="jxr_javadoccomment">     * How to actually run a subprocess.</em>
+<a class="jxr_linenumber" name="L364" href="#L364">364</a> <em class="jxr_javadoccomment">     *</em>
+<a class="jxr_linenumber" name="L365" href="#L365">365</a> <em class="jxr_javadoccomment">     * @param parameters</em>
+<a class="jxr_linenumber" name="L366" href="#L366">366</a> <em class="jxr_javadoccomment">     *            The parameters to the subprocess.</em>
+<a class="jxr_linenumber" name="L367" href="#L367">367</a> <em class="jxr_javadoccomment">     * @param logWriter</em>
+<a class="jxr_linenumber" name="L368" href="#L368">368</a> <em class="jxr_javadoccomment">     *            Where to send log messages.</em>
+<a class="jxr_linenumber" name="L369" href="#L369">369</a> <em class="jxr_javadoccomment">     * @param lifetime</em>
+<a class="jxr_linenumber" name="L370" href="#L370">370</a> <em class="jxr_javadoccomment">     *            How long to wait for the subprocess to run, in hours.</em>
+<a class="jxr_linenumber" name="L371" href="#L371">371</a> <em class="jxr_javadoccomment">     * @return The exit value of the process</em>
+<a class="jxr_linenumber" name="L372" href="#L372">372</a> <em class="jxr_javadoccomment">     * @throws IOException</em>
+<a class="jxr_linenumber" name="L373" href="#L373">373</a> <em class="jxr_javadoccomment">     *             If there was an error starting the process</em>
+<a class="jxr_linenumber" name="L374" href="#L374">374</a> <em class="jxr_javadoccomment">     * @throws InterruptedException</em>
+<a class="jxr_linenumber" name="L375" href="#L375">375</a> <em class="jxr_javadoccomment">     *             If the process was interrupted before return</em>
+<a class="jxr_linenumber" name="L376" href="#L376">376</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L377" href="#L377">377</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">int</strong> runSubprocess(<strong class="jxr_keyword">final</strong> PyNNJobParameters parameters,
+<a class="jxr_linenumber" name="L378" href="#L378">378</a>             <strong class="jxr_keyword">final</strong> <a name="LogWriter" href="../../../../../../uk/ac/manchester/cs/spinnaker/jobprocess/LogWriter.html#LogWriter">LogWriter</a> logWriter, <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> lifetime)
+<a class="jxr_linenumber" name="L379" href="#L379">379</a>             <strong class="jxr_keyword">throws</strong> IOException, InterruptedException {
+<a class="jxr_linenumber" name="L380" href="#L380">380</a>         <strong class="jxr_keyword">final</strong> List&lt;String&gt; command = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
+<a class="jxr_linenumber" name="L381" href="#L381">381</a>         command.add(SUBPROCESS_RUNNER);
 <a class="jxr_linenumber" name="L382" href="#L382">382</a> 
-<a class="jxr_linenumber" name="L383" href="#L383">383</a>             <em class="jxr_comment">// Wait for the process to finish</em>
-<a class="jxr_linenumber" name="L384" href="#L384">384</a>             <strong class="jxr_keyword">return</strong> process.waitFor();
-<a class="jxr_linenumber" name="L385" href="#L385">385</a>         }
-<a class="jxr_linenumber" name="L386" href="#L386">386</a>     }
-<a class="jxr_linenumber" name="L387" href="#L387">387</a> 
-<a class="jxr_linenumber" name="L388" href="#L388">388</a>     <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L389" href="#L389">389</a> <em class="jxr_javadoccomment">     * Enter some provenance into the provenance map.</em>
-<a class="jxr_linenumber" name="L390" href="#L390">390</a> <em class="jxr_javadoccomment">     *</em>
-<a class="jxr_linenumber" name="L391" href="#L391">391</a> <em class="jxr_javadoccomment">     * @param items</em>
-<a class="jxr_linenumber" name="L392" href="#L392">392</a> <em class="jxr_javadoccomment">     *            The items to insert.</em>
-<a class="jxr_linenumber" name="L393" href="#L393">393</a> <em class="jxr_javadoccomment">     * @param path</em>
-<a class="jxr_linenumber" name="L394" href="#L394">394</a> <em class="jxr_javadoccomment">     *            Where to insert these items relative to the current node, as a</em>
-<a class="jxr_linenumber" name="L395" href="#L395">395</a> <em class="jxr_javadoccomment">     *            string.</em>
-<a class="jxr_linenumber" name="L396" href="#L396">396</a> <em class="jxr_javadoccomment">     * @param pathList</em>
-<a class="jxr_linenumber" name="L397" href="#L397">397</a> <em class="jxr_javadoccomment">     *            Where to insert these items relative to the current node, as a</em>
-<a class="jxr_linenumber" name="L398" href="#L398">398</a> <em class="jxr_javadoccomment">     *            list.</em>
-<a class="jxr_linenumber" name="L399" href="#L399">399</a> <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L400" href="#L400">400</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> putProvenanceInMap(<strong class="jxr_keyword">final</strong> <a name="ProvenanceDataItems" href="../../../../../../uk/ac/manchester/cs/spinnaker/jobprocess/ProvenanceDataItems.html#ProvenanceDataItems">ProvenanceDataItems</a> items,
-<a class="jxr_linenumber" name="L401" href="#L401">401</a>             <strong class="jxr_keyword">final</strong> String path, <strong class="jxr_keyword">final</strong> LinkedList&lt;String&gt; pathList) {
-<a class="jxr_linenumber" name="L402" href="#L402">402</a> 
-<a class="jxr_linenumber" name="L403" href="#L403">403</a>         <em class="jxr_comment">// Create a path for this level in the tree</em>
-<a class="jxr_linenumber" name="L404" href="#L404">404</a>         <strong class="jxr_keyword">final</strong> String myPath = path + items.getName();
-<a class="jxr_linenumber" name="L405" href="#L405">405</a>         pathList.addLast(items.getName());
-<a class="jxr_linenumber" name="L406" href="#L406">406</a> 
-<a class="jxr_linenumber" name="L407" href="#L407">407</a>         <em class="jxr_comment">// Add all nested items</em>
-<a class="jxr_linenumber" name="L408" href="#L408">408</a>         <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">final</strong> <a name="ProvenanceDataItems" href="../../../../../../uk/ac/manchester/cs/spinnaker/jobprocess/ProvenanceDataItems.html#ProvenanceDataItems">ProvenanceDataItems</a> subItems : items
-<a class="jxr_linenumber" name="L409" href="#L409">409</a>                 .getProvenanceDataItems()) {
-<a class="jxr_linenumber" name="L410" href="#L410">410</a>             putProvenanceInMap(subItems, myPath + <span class="jxr_string">"/"</span>, pathList);
-<a class="jxr_linenumber" name="L411" href="#L411">411</a>         }
-<a class="jxr_linenumber" name="L412" href="#L412">412</a> 
-<a class="jxr_linenumber" name="L413" href="#L413">413</a>         <em class="jxr_comment">// Add items from this level</em>
-<a class="jxr_linenumber" name="L414" href="#L414">414</a>         <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">final</strong> <a name="ProvenanceDataItem" href="../../../../../../uk/ac/manchester/cs/spinnaker/jobprocess/ProvenanceDataItem.html#ProvenanceDataItem">ProvenanceDataItem</a> subItem : items.getProvenanceDataItem()) {
-<a class="jxr_linenumber" name="L415" href="#L415">415</a>             <strong class="jxr_keyword">final</strong> String itemPath = myPath + <span class="jxr_string">"/"</span> + subItem.getName();
-<a class="jxr_linenumber" name="L416" href="#L416">416</a>             pathList.addLast(subItem.getName());
-<a class="jxr_linenumber" name="L417" href="#L417">417</a>             <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">final</strong> String item : PROVENANCE_ITEMS_TO_ADD) {
-<a class="jxr_linenumber" name="L418" href="#L418">418</a>                 <strong class="jxr_keyword">if</strong> (itemPath.matches(item)) {
-<a class="jxr_linenumber" name="L419" href="#L419">419</a>                     provenance.add(<strong class="jxr_keyword">new</strong> <a name="ProvenanceItem" href="../../../../../../uk/ac/manchester/cs/spinnaker/jobprocess/ProvenanceItem.html#ProvenanceItem">ProvenanceItem</a>(
-<a class="jxr_linenumber" name="L420" href="#L420">420</a>                         <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;(pathList), subItem.getValue()));
-<a class="jxr_linenumber" name="L421" href="#L421">421</a>                 }
-<a class="jxr_linenumber" name="L422" href="#L422">422</a>             }
-<a class="jxr_linenumber" name="L423" href="#L423">423</a>             pathList.removeLast();
-<a class="jxr_linenumber" name="L424" href="#L424">424</a>         }
-<a class="jxr_linenumber" name="L425" href="#L425">425</a>         pathList.removeLast();
-<a class="jxr_linenumber" name="L426" href="#L426">426</a>     }
-<a class="jxr_linenumber" name="L427" href="#L427">427</a> 
-<a class="jxr_linenumber" name="L428" href="#L428">428</a>     <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L429" href="#L429">429</a> <em class="jxr_javadoccomment">     * Add the provenance contained in the files in the given directory.</em>
-<a class="jxr_linenumber" name="L430" href="#L430">430</a> <em class="jxr_javadoccomment">     *</em>
-<a class="jxr_linenumber" name="L431" href="#L431">431</a> <em class="jxr_javadoccomment">     * @param provenanceDirectory</em>
-<a class="jxr_linenumber" name="L432" href="#L432">432</a> <em class="jxr_javadoccomment">     *            Where to look for XML files.</em>
-<a class="jxr_linenumber" name="L433" href="#L433">433</a> <em class="jxr_javadoccomment">     * @throws JAXBException</em>
-<a class="jxr_linenumber" name="L434" href="#L434">434</a> <em class="jxr_javadoccomment">     *             If things go wrong in deserialisation.</em>
-<a class="jxr_linenumber" name="L435" href="#L435">435</a> <em class="jxr_javadoccomment">     * @throws IOException</em>
-<a class="jxr_linenumber" name="L436" href="#L436">436</a> <em class="jxr_javadoccomment">     *             If anything goes wrong with I/O.</em>
-<a class="jxr_linenumber" name="L437" href="#L437">437</a> <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L438" href="#L438">438</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> addProvenance(<strong class="jxr_keyword">final</strong> File provenanceDirectory)
-<a class="jxr_linenumber" name="L439" href="#L439">439</a>             <strong class="jxr_keyword">throws</strong> IOException, JAXBException {
-<a class="jxr_linenumber" name="L440" href="#L440">440</a> 
-<a class="jxr_linenumber" name="L441" href="#L441">441</a>         <em class="jxr_comment">// Get provenance data from files</em>
-<a class="jxr_linenumber" name="L442" href="#L442">442</a>         <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">final</strong> File file : provenanceDirectory.listFiles()) {
-<a class="jxr_linenumber" name="L443" href="#L443">443</a> 
-<a class="jxr_linenumber" name="L444" href="#L444">444</a>             <em class="jxr_comment">// Only process XML files</em>
-<a class="jxr_linenumber" name="L445" href="#L445">445</a>             <strong class="jxr_keyword">if</strong> (file.getName().endsWith(<span class="jxr_string">".xml"</span>)) {
-<a class="jxr_linenumber" name="L446" href="#L446">446</a>                 <strong class="jxr_keyword">final</strong> JAXBContext jaxbContext =
-<a class="jxr_linenumber" name="L447" href="#L447">447</a>                         JAXBContext.newInstance(ProvenanceDataItems.<strong class="jxr_keyword">class</strong>);
-<a class="jxr_linenumber" name="L448" href="#L448">448</a>                 <strong class="jxr_keyword">final</strong> Unmarshaller jaxbUnmarshaller =
-<a class="jxr_linenumber" name="L449" href="#L449">449</a>                         jaxbContext.createUnmarshaller();
-<a class="jxr_linenumber" name="L450" href="#L450">450</a>                 <strong class="jxr_keyword">final</strong> Source source = <strong class="jxr_keyword">new</strong> StreamSource(file);
-<a class="jxr_linenumber" name="L451" href="#L451">451</a>                 <strong class="jxr_keyword">final</strong> <a name="ProvenanceDataItems" href="../../../../../../uk/ac/manchester/cs/spinnaker/jobprocess/ProvenanceDataItems.html#ProvenanceDataItems">ProvenanceDataItems</a> items =
-<a class="jxr_linenumber" name="L452" href="#L452">452</a>                         (<a name="ProvenanceDataItems" href="../../../../../../uk/ac/manchester/cs/spinnaker/jobprocess/ProvenanceDataItems.html#ProvenanceDataItems">ProvenanceDataItems</a>) jaxbUnmarshaller
-<a class="jxr_linenumber" name="L453" href="#L453">453</a>                                 .unmarshal(source);
-<a class="jxr_linenumber" name="L454" href="#L454">454</a>                 putProvenanceInMap(items, <span class="jxr_string">""</span>, <strong class="jxr_keyword">new</strong> LinkedList&lt;String&gt;());
-<a class="jxr_linenumber" name="L455" href="#L455">455</a>             }
-<a class="jxr_linenumber" name="L456" href="#L456">456</a>         }
-<a class="jxr_linenumber" name="L457" href="#L457">457</a>     }
-<a class="jxr_linenumber" name="L458" href="#L458">458</a> 
-<a class="jxr_linenumber" name="L459" href="#L459">459</a>     <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L460" href="#L460">460</a> <em class="jxr_javadoccomment">     * Used for creating a ZIP of the provenance.</em>
-<a class="jxr_linenumber" name="L461" href="#L461">461</a> <em class="jxr_javadoccomment">     *</em>
-<a class="jxr_linenumber" name="L462" href="#L462">462</a> <em class="jxr_javadoccomment">     * @param reportsZip</em>
-<a class="jxr_linenumber" name="L463" href="#L463">463</a> <em class="jxr_javadoccomment">     *            Open handle to the ZIP being created.</em>
-<a class="jxr_linenumber" name="L464" href="#L464">464</a> <em class="jxr_javadoccomment">     * @param directory</em>
-<a class="jxr_linenumber" name="L465" href="#L465">465</a> <em class="jxr_javadoccomment">     *            Where to get provenance data from.</em>
-<a class="jxr_linenumber" name="L466" href="#L466">466</a> <em class="jxr_javadoccomment">     * @param path</em>
-<a class="jxr_linenumber" name="L467" href="#L467">467</a> <em class="jxr_javadoccomment">     *            The path within the ZIP.</em>
-<a class="jxr_linenumber" name="L468" href="#L468">468</a> <em class="jxr_javadoccomment">     * @throws IOException</em>
-<a class="jxr_linenumber" name="L469" href="#L469">469</a> <em class="jxr_javadoccomment">     *             If anything goes wrong with I/O.</em>
-<a class="jxr_linenumber" name="L470" href="#L470">470</a> <em class="jxr_javadoccomment">     * @throws JAXBException</em>
-<a class="jxr_linenumber" name="L471" href="#L471">471</a> <em class="jxr_javadoccomment">     *             If anything goes wrong with deserialisation of the XML.</em>
-<a class="jxr_linenumber" name="L472" href="#L472">472</a> <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L473" href="#L473">473</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> zipProvenance(<strong class="jxr_keyword">final</strong> ZipOutputStream reportsZip,
-<a class="jxr_linenumber" name="L474" href="#L474">474</a>             <strong class="jxr_keyword">final</strong> File directory, <strong class="jxr_keyword">final</strong> String path)
-<a class="jxr_linenumber" name="L475" href="#L475">475</a>             <strong class="jxr_keyword">throws</strong> IOException, JAXBException {
-<a class="jxr_linenumber" name="L476" href="#L476">476</a> 
-<a class="jxr_linenumber" name="L477" href="#L477">477</a>         <em class="jxr_comment">// Go through the report files and zip them up</em>
-<a class="jxr_linenumber" name="L478" href="#L478">478</a>         <strong class="jxr_keyword">final</strong> byte[] buffer = <strong class="jxr_keyword">new</strong> byte[BUFFER_SIZE];
-<a class="jxr_linenumber" name="L479" href="#L479">479</a>         <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">final</strong> File file : directory.listFiles()) {
-<a class="jxr_linenumber" name="L480" href="#L480">480</a>             <strong class="jxr_keyword">if</strong> (file.isDirectory()) {
-<a class="jxr_linenumber" name="L481" href="#L481">481</a>                 zipProvenance(reportsZip, file, path + <span class="jxr_string">"/"</span> + file.getName());
-<a class="jxr_linenumber" name="L482" href="#L482">482</a> 
-<a class="jxr_linenumber" name="L483" href="#L483">483</a>                 <em class="jxr_comment">// If the directory is the provenance directory, process it</em>
-<a class="jxr_linenumber" name="L484" href="#L484">484</a>                 <strong class="jxr_keyword">if</strong> (file.getName().equals(PROVENANCE_DIRECTORY)) {
-<a class="jxr_linenumber" name="L485" href="#L485">485</a>                     addProvenance(file);
-<a class="jxr_linenumber" name="L486" href="#L486">486</a>                 }
-<a class="jxr_linenumber" name="L487" href="#L487">487</a>             } <strong class="jxr_keyword">else</strong> {
-<a class="jxr_linenumber" name="L488" href="#L488">488</a>                 <strong class="jxr_keyword">final</strong> ZipEntry entry =
-<a class="jxr_linenumber" name="L489" href="#L489">489</a>                         <strong class="jxr_keyword">new</strong> ZipEntry(path + <span class="jxr_string">"/"</span> + file.getName());
-<a class="jxr_linenumber" name="L490" href="#L490">490</a>                 reportsZip.putNextEntry(entry);
-<a class="jxr_linenumber" name="L491" href="#L491">491</a>                 <strong class="jxr_keyword">try</strong> (FileInputStream in = <strong class="jxr_keyword">new</strong> FileInputStream(file)) {
-<a class="jxr_linenumber" name="L492" href="#L492">492</a>                     <strong class="jxr_keyword">int</strong> bytesRead = in.read(buffer);
-<a class="jxr_linenumber" name="L493" href="#L493">493</a>                     <strong class="jxr_keyword">while</strong> (bytesRead &gt;= 0) {
-<a class="jxr_linenumber" name="L494" href="#L494">494</a>                         reportsZip.write(buffer, 0, bytesRead);
-<a class="jxr_linenumber" name="L495" href="#L495">495</a>                         bytesRead = in.read(buffer);
-<a class="jxr_linenumber" name="L496" href="#L496">496</a>                     }
-<a class="jxr_linenumber" name="L497" href="#L497">497</a>                 }
-<a class="jxr_linenumber" name="L498" href="#L498">498</a>             }
-<a class="jxr_linenumber" name="L499" href="#L499">499</a>         }
-<a class="jxr_linenumber" name="L500" href="#L500">500</a>     }
-<a class="jxr_linenumber" name="L501" href="#L501">501</a> 
-<a class="jxr_linenumber" name="L502" href="#L502">502</a>     <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L503" href="#L503">503</a> <em class="jxr_javadoccomment">     * Gather the provenance information from the job's reports directory.</em>
-<a class="jxr_linenumber" name="L504" href="#L504">504</a> <em class="jxr_javadoccomment">     *</em>
-<a class="jxr_linenumber" name="L505" href="#L505">505</a> <em class="jxr_javadoccomment">     * @param workingDirectoryParam</em>
-<a class="jxr_linenumber" name="L506" href="#L506">506</a> <em class="jxr_javadoccomment">     *            The job's working directory.</em>
-<a class="jxr_linenumber" name="L507" href="#L507">507</a> <em class="jxr_javadoccomment">     * @throws IOException</em>
-<a class="jxr_linenumber" name="L508" href="#L508">508</a> <em class="jxr_javadoccomment">     *             If anything goes wrong with I/O.</em>
-<a class="jxr_linenumber" name="L509" href="#L509">509</a> <em class="jxr_javadoccomment">     * @throws JAXBException</em>
-<a class="jxr_linenumber" name="L510" href="#L510">510</a> <em class="jxr_javadoccomment">     *             If anything goes wrong with deserialisation of XML.</em>
-<a class="jxr_linenumber" name="L511" href="#L511">511</a> <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L512" href="#L512">512</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> gatherProvenance(<strong class="jxr_keyword">final</strong> File workingDirectoryParam)
-<a class="jxr_linenumber" name="L513" href="#L513">513</a>             <strong class="jxr_keyword">throws</strong> IOException, JAXBException {
-<a class="jxr_linenumber" name="L514" href="#L514">514</a> 
-<a class="jxr_linenumber" name="L515" href="#L515">515</a>         <em class="jxr_comment">// Find the reports folder</em>
-<a class="jxr_linenumber" name="L516" href="#L516">516</a>         <strong class="jxr_keyword">final</strong> File reportsFolder = <strong class="jxr_keyword">new</strong> File(workingDirectoryParam, <span class="jxr_string">"reports"</span>);
-<a class="jxr_linenumber" name="L517" href="#L517">517</a>         <strong class="jxr_keyword">if</strong> (reportsFolder.isDirectory()) {
-<a class="jxr_linenumber" name="L518" href="#L518">518</a> 
-<a class="jxr_linenumber" name="L519" href="#L519">519</a>             <em class="jxr_comment">// Create a zip file of the reports</em>
-<a class="jxr_linenumber" name="L520" href="#L520">520</a>             <strong class="jxr_keyword">try</strong> (ZipOutputStream reportsZip =
-<a class="jxr_linenumber" name="L521" href="#L521">521</a>                     <strong class="jxr_keyword">new</strong> ZipOutputStream(<strong class="jxr_keyword">new</strong> FileOutputStream(
-<a class="jxr_linenumber" name="L522" href="#L522">522</a>                             <strong class="jxr_keyword">new</strong> File(workingDirectoryParam, <span class="jxr_string">"reports.zip"</span>)))) {
-<a class="jxr_linenumber" name="L523" href="#L523">523</a>                 <em class="jxr_comment">// Gather items into the reports zip, keeping an eye out for</em>
-<a class="jxr_linenumber" name="L524" href="#L524">524</a>                 <em class="jxr_comment">// the "provenance data" folder</em>
-<a class="jxr_linenumber" name="L525" href="#L525">525</a>                 zipProvenance(reportsZip, reportsFolder, <span class="jxr_string">"reports"</span>);
-<a class="jxr_linenumber" name="L526" href="#L526">526</a>             }
-<a class="jxr_linenumber" name="L527" href="#L527">527</a>         }
-<a class="jxr_linenumber" name="L528" href="#L528">528</a>     }
-<a class="jxr_linenumber" name="L529" href="#L529">529</a> 
-<a class="jxr_linenumber" name="L530" href="#L530">530</a>     <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L531" href="#L531">531</a> <em class="jxr_javadoccomment">     * Get the status of the process.</em>
-<a class="jxr_linenumber" name="L532" href="#L532">532</a> <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L533" href="#L533">533</a>     @Override
-<a class="jxr_linenumber" name="L534" href="#L534">534</a>     <strong class="jxr_keyword">public</strong> Status getStatus() {
-<a class="jxr_linenumber" name="L535" href="#L535">535</a>         <strong class="jxr_keyword">return</strong> status;
-<a class="jxr_linenumber" name="L536" href="#L536">536</a>     }
-<a class="jxr_linenumber" name="L537" href="#L537">537</a> 
-<a class="jxr_linenumber" name="L538" href="#L538">538</a>     <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L539" href="#L539">539</a> <em class="jxr_javadoccomment">     * Get the process error.</em>
-<a class="jxr_linenumber" name="L540" href="#L540">540</a> <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L541" href="#L541">541</a>     @Override
-<a class="jxr_linenumber" name="L542" href="#L542">542</a>     <strong class="jxr_keyword">public</strong> Throwable getError() {
-<a class="jxr_linenumber" name="L543" href="#L543">543</a>         <strong class="jxr_keyword">return</strong> error;
+<a class="jxr_linenumber" name="L383" href="#L383">383</a>         <strong class="jxr_keyword">final</strong> Matcher scriptMatcher =
+<a class="jxr_linenumber" name="L384" href="#L384">384</a>                 ARGUMENT_FINDER.matcher(parameters.getUserScript());
+<a class="jxr_linenumber" name="L385" href="#L385">385</a>         <strong class="jxr_keyword">while</strong> (scriptMatcher.find()) {
+<a class="jxr_linenumber" name="L386" href="#L386">386</a>             command.add(
+<a class="jxr_linenumber" name="L387" href="#L387">387</a>                     scriptMatcher.group(1).replace(<span class="jxr_string">"{system}"</span>, <span class="jxr_string">"spiNNaker"</span>));
+<a class="jxr_linenumber" name="L388" href="#L388">388</a>         }
+<a class="jxr_linenumber" name="L389" href="#L389">389</a> 
+<a class="jxr_linenumber" name="L390" href="#L390">390</a>         <strong class="jxr_keyword">final</strong> ProcessBuilder builder = <strong class="jxr_keyword">new</strong> ProcessBuilder(command);
+<a class="jxr_linenumber" name="L391" href="#L391">391</a>         log(<span class="jxr_string">"Running "</span> + command + <span class="jxr_string">" in "</span> + workingDirectory);
+<a class="jxr_linenumber" name="L392" href="#L392">392</a>         builder.directory(workingDirectory);
+<a class="jxr_linenumber" name="L393" href="#L393">393</a>         builder.redirectErrorStream(<strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L394" href="#L394">394</a>         <strong class="jxr_keyword">final</strong> Process process = builder.start();
+<a class="jxr_linenumber" name="L395" href="#L395">395</a> 
+<a class="jxr_linenumber" name="L396" href="#L396">396</a>         <em class="jxr_comment">// Run a thread to gather the log</em>
+<a class="jxr_linenumber" name="L397" href="#L397">397</a>         <strong class="jxr_keyword">try</strong> (ReaderLogWriter logger =
+<a class="jxr_linenumber" name="L398" href="#L398">398</a>                 <strong class="jxr_keyword">new</strong> ReaderLogWriter(process.getInputStream(), logWriter)) {
+<a class="jxr_linenumber" name="L399" href="#L399">399</a>             logger.start();
+<a class="jxr_linenumber" name="L400" href="#L400">400</a> 
+<a class="jxr_linenumber" name="L401" href="#L401">401</a>             <em class="jxr_comment">// Wait for the process to finish</em>
+<a class="jxr_linenumber" name="L402" href="#L402">402</a>             <strong class="jxr_keyword">return</strong> runProcess(process, lifetime, HOURS);
+<a class="jxr_linenumber" name="L403" href="#L403">403</a>         }
+<a class="jxr_linenumber" name="L404" href="#L404">404</a>     }
+<a class="jxr_linenumber" name="L405" href="#L405">405</a> 
+<a class="jxr_linenumber" name="L406" href="#L406">406</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L407" href="#L407">407</a> <em class="jxr_javadoccomment">     * Run a subprocess until timeout or completion (whichever comes first). If</em>
+<a class="jxr_linenumber" name="L408" href="#L408">408</a> <em class="jxr_javadoccomment">     * timeout happens, the subprocess will be killed.</em>
+<a class="jxr_linenumber" name="L409" href="#L409">409</a> <em class="jxr_javadoccomment">     *</em>
+<a class="jxr_linenumber" name="L410" href="#L410">410</a> <em class="jxr_javadoccomment">     * @param process</em>
+<a class="jxr_linenumber" name="L411" href="#L411">411</a> <em class="jxr_javadoccomment">     *            The subprocess.</em>
+<a class="jxr_linenumber" name="L412" href="#L412">412</a> <em class="jxr_javadoccomment">     * @param lifetime</em>
+<a class="jxr_linenumber" name="L413" href="#L413">413</a> <em class="jxr_javadoccomment">     *            How long to wait.</em>
+<a class="jxr_linenumber" name="L414" href="#L414">414</a> <em class="jxr_javadoccomment">     * @param lifetimeUnits</em>
+<a class="jxr_linenumber" name="L415" href="#L415">415</a> <em class="jxr_javadoccomment">     *            The units for &lt;em&gt;lifetime&lt;/em&gt;.</em>
+<a class="jxr_linenumber" name="L416" href="#L416">416</a> <em class="jxr_javadoccomment">     * @return The exit code of the subprocess</em>
+<a class="jxr_linenumber" name="L417" href="#L417">417</a> <em class="jxr_javadoccomment">     * @throws InterruptedException</em>
+<a class="jxr_linenumber" name="L418" href="#L418">418</a> <em class="jxr_javadoccomment">     *             If the process was interrupted before return</em>
+<a class="jxr_linenumber" name="L419" href="#L419">419</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L420" href="#L420">420</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">int</strong> runProcess(<strong class="jxr_keyword">final</strong> Process process, <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> lifetime,
+<a class="jxr_linenumber" name="L421" href="#L421">421</a>             <strong class="jxr_keyword">final</strong> TimeUnit lifetimeUnits) <strong class="jxr_keyword">throws</strong> InterruptedException {
+<a class="jxr_linenumber" name="L422" href="#L422">422</a>         <strong class="jxr_keyword">if</strong> (!process.waitFor(lifetime, lifetimeUnits)) {
+<a class="jxr_linenumber" name="L423" href="#L423">423</a>             process.destroy();
+<a class="jxr_linenumber" name="L424" href="#L424">424</a>             <strong class="jxr_keyword">if</strong> (!process.waitFor(FINALIZATION_DELAY, MILLISECONDS)) {
+<a class="jxr_linenumber" name="L425" href="#L425">425</a>                 process.destroyForcibly();
+<a class="jxr_linenumber" name="L426" href="#L426">426</a>                 Thread.sleep(FINALIZATION_DELAY);
+<a class="jxr_linenumber" name="L427" href="#L427">427</a>             }
+<a class="jxr_linenumber" name="L428" href="#L428">428</a>         }
+<a class="jxr_linenumber" name="L429" href="#L429">429</a>         <strong class="jxr_keyword">return</strong> process.exitValue();
+<a class="jxr_linenumber" name="L430" href="#L430">430</a>     }
+<a class="jxr_linenumber" name="L431" href="#L431">431</a> 
+<a class="jxr_linenumber" name="L432" href="#L432">432</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L433" href="#L433">433</a> <em class="jxr_javadoccomment">     * Enter some provenance into the provenance map.</em>
+<a class="jxr_linenumber" name="L434" href="#L434">434</a> <em class="jxr_javadoccomment">     *</em>
+<a class="jxr_linenumber" name="L435" href="#L435">435</a> <em class="jxr_javadoccomment">     * @param items</em>
+<a class="jxr_linenumber" name="L436" href="#L436">436</a> <em class="jxr_javadoccomment">     *            The items to insert.</em>
+<a class="jxr_linenumber" name="L437" href="#L437">437</a> <em class="jxr_javadoccomment">     * @param path</em>
+<a class="jxr_linenumber" name="L438" href="#L438">438</a> <em class="jxr_javadoccomment">     *            Where to insert these items relative to the current node, as a</em>
+<a class="jxr_linenumber" name="L439" href="#L439">439</a> <em class="jxr_javadoccomment">     *            string.</em>
+<a class="jxr_linenumber" name="L440" href="#L440">440</a> <em class="jxr_javadoccomment">     * @param pathList</em>
+<a class="jxr_linenumber" name="L441" href="#L441">441</a> <em class="jxr_javadoccomment">     *            Where to insert these items relative to the current node, as a</em>
+<a class="jxr_linenumber" name="L442" href="#L442">442</a> <em class="jxr_javadoccomment">     *            list.</em>
+<a class="jxr_linenumber" name="L443" href="#L443">443</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L444" href="#L444">444</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> putProvenanceInMap(<strong class="jxr_keyword">final</strong> <a name="ProvenanceDataItems" href="../../../../../../uk/ac/manchester/cs/spinnaker/jobprocess/ProvenanceDataItems.html#ProvenanceDataItems">ProvenanceDataItems</a> items,
+<a class="jxr_linenumber" name="L445" href="#L445">445</a>             <strong class="jxr_keyword">final</strong> String path, <strong class="jxr_keyword">final</strong> LinkedList&lt;String&gt; pathList) {
+<a class="jxr_linenumber" name="L446" href="#L446">446</a> 
+<a class="jxr_linenumber" name="L447" href="#L447">447</a>         <em class="jxr_comment">// Create a path for this level in the tree</em>
+<a class="jxr_linenumber" name="L448" href="#L448">448</a>         <strong class="jxr_keyword">final</strong> String myPath = path + items.getName();
+<a class="jxr_linenumber" name="L449" href="#L449">449</a>         pathList.addLast(items.getName());
+<a class="jxr_linenumber" name="L450" href="#L450">450</a> 
+<a class="jxr_linenumber" name="L451" href="#L451">451</a>         <em class="jxr_comment">// Add all nested items</em>
+<a class="jxr_linenumber" name="L452" href="#L452">452</a>         <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">final</strong> <a name="ProvenanceDataItems" href="../../../../../../uk/ac/manchester/cs/spinnaker/jobprocess/ProvenanceDataItems.html#ProvenanceDataItems">ProvenanceDataItems</a> subItems : items
+<a class="jxr_linenumber" name="L453" href="#L453">453</a>                 .getProvenanceDataItems()) {
+<a class="jxr_linenumber" name="L454" href="#L454">454</a>             putProvenanceInMap(subItems, myPath + <span class="jxr_string">"/"</span>, pathList);
+<a class="jxr_linenumber" name="L455" href="#L455">455</a>         }
+<a class="jxr_linenumber" name="L456" href="#L456">456</a> 
+<a class="jxr_linenumber" name="L457" href="#L457">457</a>         <em class="jxr_comment">// Add items from this level</em>
+<a class="jxr_linenumber" name="L458" href="#L458">458</a>         <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">final</strong> <a name="ProvenanceDataItem" href="../../../../../../uk/ac/manchester/cs/spinnaker/jobprocess/ProvenanceDataItem.html#ProvenanceDataItem">ProvenanceDataItem</a> subItem : items.getProvenanceDataItem()) {
+<a class="jxr_linenumber" name="L459" href="#L459">459</a>             <strong class="jxr_keyword">final</strong> String itemPath = myPath + <span class="jxr_string">"/"</span> + subItem.getName();
+<a class="jxr_linenumber" name="L460" href="#L460">460</a>             pathList.addLast(subItem.getName());
+<a class="jxr_linenumber" name="L461" href="#L461">461</a>             <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">final</strong> String item : PROVENANCE_ITEMS_TO_ADD) {
+<a class="jxr_linenumber" name="L462" href="#L462">462</a>                 <strong class="jxr_keyword">if</strong> (itemPath.matches(item)) {
+<a class="jxr_linenumber" name="L463" href="#L463">463</a>                     provenance.add(<strong class="jxr_keyword">new</strong> <a name="ProvenanceItem" href="../../../../../../uk/ac/manchester/cs/spinnaker/jobprocess/ProvenanceItem.html#ProvenanceItem">ProvenanceItem</a>(
+<a class="jxr_linenumber" name="L464" href="#L464">464</a>                         <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;(pathList), subItem.getValue()));
+<a class="jxr_linenumber" name="L465" href="#L465">465</a>                 }
+<a class="jxr_linenumber" name="L466" href="#L466">466</a>             }
+<a class="jxr_linenumber" name="L467" href="#L467">467</a>             pathList.removeLast();
+<a class="jxr_linenumber" name="L468" href="#L468">468</a>         }
+<a class="jxr_linenumber" name="L469" href="#L469">469</a>         pathList.removeLast();
+<a class="jxr_linenumber" name="L470" href="#L470">470</a>     }
+<a class="jxr_linenumber" name="L471" href="#L471">471</a> 
+<a class="jxr_linenumber" name="L472" href="#L472">472</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L473" href="#L473">473</a> <em class="jxr_javadoccomment">     * Add the provenance contained in the files in the given directory.</em>
+<a class="jxr_linenumber" name="L474" href="#L474">474</a> <em class="jxr_javadoccomment">     *</em>
+<a class="jxr_linenumber" name="L475" href="#L475">475</a> <em class="jxr_javadoccomment">     * @param provenanceDirectory</em>
+<a class="jxr_linenumber" name="L476" href="#L476">476</a> <em class="jxr_javadoccomment">     *            Where to look for XML files.</em>
+<a class="jxr_linenumber" name="L477" href="#L477">477</a> <em class="jxr_javadoccomment">     * @throws JAXBException</em>
+<a class="jxr_linenumber" name="L478" href="#L478">478</a> <em class="jxr_javadoccomment">     *             If things go wrong in deserialisation.</em>
+<a class="jxr_linenumber" name="L479" href="#L479">479</a> <em class="jxr_javadoccomment">     * @throws IOException</em>
+<a class="jxr_linenumber" name="L480" href="#L480">480</a> <em class="jxr_javadoccomment">     *             If anything goes wrong with I/O.</em>
+<a class="jxr_linenumber" name="L481" href="#L481">481</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L482" href="#L482">482</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> addProvenance(<strong class="jxr_keyword">final</strong> File provenanceDirectory)
+<a class="jxr_linenumber" name="L483" href="#L483">483</a>             <strong class="jxr_keyword">throws</strong> IOException, JAXBException {
+<a class="jxr_linenumber" name="L484" href="#L484">484</a> 
+<a class="jxr_linenumber" name="L485" href="#L485">485</a>         <em class="jxr_comment">// Get provenance data from files</em>
+<a class="jxr_linenumber" name="L486" href="#L486">486</a>         <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">final</strong> File file : provenanceDirectory.listFiles()) {
+<a class="jxr_linenumber" name="L487" href="#L487">487</a> 
+<a class="jxr_linenumber" name="L488" href="#L488">488</a>             <em class="jxr_comment">// Only process XML files</em>
+<a class="jxr_linenumber" name="L489" href="#L489">489</a>             <strong class="jxr_keyword">if</strong> (file.getName().endsWith(<span class="jxr_string">".xml"</span>)) {
+<a class="jxr_linenumber" name="L490" href="#L490">490</a>                 <strong class="jxr_keyword">final</strong> JAXBContext jaxbContext =
+<a class="jxr_linenumber" name="L491" href="#L491">491</a>                         JAXBContext.newInstance(ProvenanceDataItems.<strong class="jxr_keyword">class</strong>);
+<a class="jxr_linenumber" name="L492" href="#L492">492</a>                 <strong class="jxr_keyword">final</strong> Unmarshaller jaxbUnmarshaller =
+<a class="jxr_linenumber" name="L493" href="#L493">493</a>                         jaxbContext.createUnmarshaller();
+<a class="jxr_linenumber" name="L494" href="#L494">494</a>                 <strong class="jxr_keyword">final</strong> Source source = <strong class="jxr_keyword">new</strong> StreamSource(file);
+<a class="jxr_linenumber" name="L495" href="#L495">495</a>                 <strong class="jxr_keyword">final</strong> <a name="ProvenanceDataItems" href="../../../../../../uk/ac/manchester/cs/spinnaker/jobprocess/ProvenanceDataItems.html#ProvenanceDataItems">ProvenanceDataItems</a> items =
+<a class="jxr_linenumber" name="L496" href="#L496">496</a>                         (<a name="ProvenanceDataItems" href="../../../../../../uk/ac/manchester/cs/spinnaker/jobprocess/ProvenanceDataItems.html#ProvenanceDataItems">ProvenanceDataItems</a>) jaxbUnmarshaller
+<a class="jxr_linenumber" name="L497" href="#L497">497</a>                                 .unmarshal(source);
+<a class="jxr_linenumber" name="L498" href="#L498">498</a>                 putProvenanceInMap(items, <span class="jxr_string">""</span>, <strong class="jxr_keyword">new</strong> LinkedList&lt;String&gt;());
+<a class="jxr_linenumber" name="L499" href="#L499">499</a>             }
+<a class="jxr_linenumber" name="L500" href="#L500">500</a>         }
+<a class="jxr_linenumber" name="L501" href="#L501">501</a>     }
+<a class="jxr_linenumber" name="L502" href="#L502">502</a> 
+<a class="jxr_linenumber" name="L503" href="#L503">503</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L504" href="#L504">504</a> <em class="jxr_javadoccomment">     * Used for creating a ZIP of the provenance.</em>
+<a class="jxr_linenumber" name="L505" href="#L505">505</a> <em class="jxr_javadoccomment">     *</em>
+<a class="jxr_linenumber" name="L506" href="#L506">506</a> <em class="jxr_javadoccomment">     * @param reportsZip</em>
+<a class="jxr_linenumber" name="L507" href="#L507">507</a> <em class="jxr_javadoccomment">     *            Open handle to the ZIP being created.</em>
+<a class="jxr_linenumber" name="L508" href="#L508">508</a> <em class="jxr_javadoccomment">     * @param directory</em>
+<a class="jxr_linenumber" name="L509" href="#L509">509</a> <em class="jxr_javadoccomment">     *            Where to get provenance data from.</em>
+<a class="jxr_linenumber" name="L510" href="#L510">510</a> <em class="jxr_javadoccomment">     * @param path</em>
+<a class="jxr_linenumber" name="L511" href="#L511">511</a> <em class="jxr_javadoccomment">     *            The path within the ZIP.</em>
+<a class="jxr_linenumber" name="L512" href="#L512">512</a> <em class="jxr_javadoccomment">     * @throws IOException</em>
+<a class="jxr_linenumber" name="L513" href="#L513">513</a> <em class="jxr_javadoccomment">     *             If anything goes wrong with I/O.</em>
+<a class="jxr_linenumber" name="L514" href="#L514">514</a> <em class="jxr_javadoccomment">     * @throws JAXBException</em>
+<a class="jxr_linenumber" name="L515" href="#L515">515</a> <em class="jxr_javadoccomment">     *             If anything goes wrong with deserialisation of the XML.</em>
+<a class="jxr_linenumber" name="L516" href="#L516">516</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L517" href="#L517">517</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> zipProvenance(<strong class="jxr_keyword">final</strong> ZipOutputStream reportsZip,
+<a class="jxr_linenumber" name="L518" href="#L518">518</a>             <strong class="jxr_keyword">final</strong> File directory, <strong class="jxr_keyword">final</strong> String path)
+<a class="jxr_linenumber" name="L519" href="#L519">519</a>             <strong class="jxr_keyword">throws</strong> IOException, JAXBException {
+<a class="jxr_linenumber" name="L520" href="#L520">520</a> 
+<a class="jxr_linenumber" name="L521" href="#L521">521</a>         <em class="jxr_comment">// Go through the report files and zip them up</em>
+<a class="jxr_linenumber" name="L522" href="#L522">522</a>         <strong class="jxr_keyword">final</strong> byte[] buffer = <strong class="jxr_keyword">new</strong> byte[BUFFER_SIZE];
+<a class="jxr_linenumber" name="L523" href="#L523">523</a>         <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">final</strong> File file : directory.listFiles()) {
+<a class="jxr_linenumber" name="L524" href="#L524">524</a>             <strong class="jxr_keyword">if</strong> (file.isDirectory()) {
+<a class="jxr_linenumber" name="L525" href="#L525">525</a>                 zipProvenance(reportsZip, file, path + <span class="jxr_string">"/"</span> + file.getName());
+<a class="jxr_linenumber" name="L526" href="#L526">526</a> 
+<a class="jxr_linenumber" name="L527" href="#L527">527</a>                 <em class="jxr_comment">// If the directory is the provenance directory, process it</em>
+<a class="jxr_linenumber" name="L528" href="#L528">528</a>                 <strong class="jxr_keyword">if</strong> (file.getName().equals(PROVENANCE_DIRECTORY)) {
+<a class="jxr_linenumber" name="L529" href="#L529">529</a>                     addProvenance(file);
+<a class="jxr_linenumber" name="L530" href="#L530">530</a>                 }
+<a class="jxr_linenumber" name="L531" href="#L531">531</a>             } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L532" href="#L532">532</a>                 <strong class="jxr_keyword">final</strong> ZipEntry entry =
+<a class="jxr_linenumber" name="L533" href="#L533">533</a>                         <strong class="jxr_keyword">new</strong> ZipEntry(path + <span class="jxr_string">"/"</span> + file.getName());
+<a class="jxr_linenumber" name="L534" href="#L534">534</a>                 reportsZip.putNextEntry(entry);
+<a class="jxr_linenumber" name="L535" href="#L535">535</a>                 <strong class="jxr_keyword">try</strong> (FileInputStream in = <strong class="jxr_keyword">new</strong> FileInputStream(file)) {
+<a class="jxr_linenumber" name="L536" href="#L536">536</a>                     <strong class="jxr_keyword">int</strong> bytesRead = in.read(buffer);
+<a class="jxr_linenumber" name="L537" href="#L537">537</a>                     <strong class="jxr_keyword">while</strong> (bytesRead &gt;= 0) {
+<a class="jxr_linenumber" name="L538" href="#L538">538</a>                         reportsZip.write(buffer, 0, bytesRead);
+<a class="jxr_linenumber" name="L539" href="#L539">539</a>                         bytesRead = in.read(buffer);
+<a class="jxr_linenumber" name="L540" href="#L540">540</a>                     }
+<a class="jxr_linenumber" name="L541" href="#L541">541</a>                 }
+<a class="jxr_linenumber" name="L542" href="#L542">542</a>             }
+<a class="jxr_linenumber" name="L543" href="#L543">543</a>         }
 <a class="jxr_linenumber" name="L544" href="#L544">544</a>     }
 <a class="jxr_linenumber" name="L545" href="#L545">545</a> 
 <a class="jxr_linenumber" name="L546" href="#L546">546</a>     <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L547" href="#L547">547</a> <em class="jxr_javadoccomment">     * Get the outputs of the process.</em>
-<a class="jxr_linenumber" name="L548" href="#L548">548</a> <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L549" href="#L549">549</a>     @Override
-<a class="jxr_linenumber" name="L550" href="#L550">550</a>     <strong class="jxr_keyword">public</strong> List&lt;File&gt; getOutputs() {
-<a class="jxr_linenumber" name="L551" href="#L551">551</a>         <strong class="jxr_keyword">return</strong> outputs;
-<a class="jxr_linenumber" name="L552" href="#L552">552</a>     }
-<a class="jxr_linenumber" name="L553" href="#L553">553</a> 
-<a class="jxr_linenumber" name="L554" href="#L554">554</a>     <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L555" href="#L555">555</a> <em class="jxr_javadoccomment">     * Get the provenance of the process.</em>
-<a class="jxr_linenumber" name="L556" href="#L556">556</a> <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L557" href="#L557">557</a>     @Override
-<a class="jxr_linenumber" name="L558" href="#L558">558</a>     <strong class="jxr_keyword">public</strong> List&lt;ProvenanceItem&gt; getProvenance() {
-<a class="jxr_linenumber" name="L559" href="#L559">559</a>         <strong class="jxr_keyword">return</strong> provenance;
-<a class="jxr_linenumber" name="L560" href="#L560">560</a>     }
-<a class="jxr_linenumber" name="L561" href="#L561">561</a> 
-<a class="jxr_linenumber" name="L562" href="#L562">562</a>     <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L563" href="#L563">563</a> <em class="jxr_javadoccomment">     * Clean up the process after exit.</em>
-<a class="jxr_linenumber" name="L564" href="#L564">564</a> <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L565" href="#L565">565</a>     @Override
-<a class="jxr_linenumber" name="L566" href="#L566">566</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> cleanup() {
-<a class="jxr_linenumber" name="L567" href="#L567">567</a>         <em class="jxr_comment">// Does Nothing</em>
-<a class="jxr_linenumber" name="L568" href="#L568">568</a>     }
-<a class="jxr_linenumber" name="L569" href="#L569">569</a> 
-<a class="jxr_linenumber" name="L570" href="#L570">570</a>     <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L571" href="#L571">571</a> <em class="jxr_javadoccomment">     * Thread for copying a {@link Reader} to a {@link LogWriter}.</em>
-<a class="jxr_linenumber" name="L572" href="#L572">572</a> <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L573" href="#L573">573</a>     <strong class="jxr_keyword">class</strong> ReaderLogWriter <strong class="jxr_keyword">extends</strong> Thread <strong class="jxr_keyword">implements</strong> AutoCloseable {
-<a class="jxr_linenumber" name="L574" href="#L574">574</a> 
-<a class="jxr_linenumber" name="L575" href="#L575">575</a>         <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L576" href="#L576">576</a> <em class="jxr_javadoccomment">         * The reader to read from.</em>
-<a class="jxr_linenumber" name="L577" href="#L577">577</a> <em class="jxr_javadoccomment">         */</em>
-<a class="jxr_linenumber" name="L578" href="#L578">578</a>         <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> BufferedReader reader;
-<a class="jxr_linenumber" name="L579" href="#L579">579</a> 
-<a class="jxr_linenumber" name="L580" href="#L580">580</a>         <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L581" href="#L581">581</a> <em class="jxr_javadoccomment">         * The writer to write to.</em>
-<a class="jxr_linenumber" name="L582" href="#L582">582</a> <em class="jxr_javadoccomment">         */</em>
-<a class="jxr_linenumber" name="L583" href="#L583">583</a>         <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> <a name="LogWriter" href="../../../../../../uk/ac/manchester/cs/spinnaker/jobprocess/LogWriter.html#LogWriter">LogWriter</a> writer;
-<a class="jxr_linenumber" name="L584" href="#L584">584</a> 
-<a class="jxr_linenumber" name="L585" href="#L585">585</a>         <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L586" href="#L586">586</a> <em class="jxr_javadoccomment">         * True when running, False to stop.</em>
-<a class="jxr_linenumber" name="L587" href="#L587">587</a> <em class="jxr_javadoccomment">         */</em>
-<a class="jxr_linenumber" name="L588" href="#L588">588</a>         <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">boolean</strong> running;
+<a class="jxr_linenumber" name="L547" href="#L547">547</a> <em class="jxr_javadoccomment">     * Gather the provenance information from the job's reports directory.</em>
+<a class="jxr_linenumber" name="L548" href="#L548">548</a> <em class="jxr_javadoccomment">     *</em>
+<a class="jxr_linenumber" name="L549" href="#L549">549</a> <em class="jxr_javadoccomment">     * @param workingDirectoryParam</em>
+<a class="jxr_linenumber" name="L550" href="#L550">550</a> <em class="jxr_javadoccomment">     *            The job's working directory.</em>
+<a class="jxr_linenumber" name="L551" href="#L551">551</a> <em class="jxr_javadoccomment">     * @throws IOException</em>
+<a class="jxr_linenumber" name="L552" href="#L552">552</a> <em class="jxr_javadoccomment">     *             If anything goes wrong with I/O.</em>
+<a class="jxr_linenumber" name="L553" href="#L553">553</a> <em class="jxr_javadoccomment">     * @throws JAXBException</em>
+<a class="jxr_linenumber" name="L554" href="#L554">554</a> <em class="jxr_javadoccomment">     *             If anything goes wrong with deserialisation of XML.</em>
+<a class="jxr_linenumber" name="L555" href="#L555">555</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L556" href="#L556">556</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> gatherProvenance(<strong class="jxr_keyword">final</strong> File workingDirectoryParam)
+<a class="jxr_linenumber" name="L557" href="#L557">557</a>             <strong class="jxr_keyword">throws</strong> IOException, JAXBException {
+<a class="jxr_linenumber" name="L558" href="#L558">558</a> 
+<a class="jxr_linenumber" name="L559" href="#L559">559</a>         <em class="jxr_comment">// Find the reports folder</em>
+<a class="jxr_linenumber" name="L560" href="#L560">560</a>         <strong class="jxr_keyword">final</strong> File reportsFolder = <strong class="jxr_keyword">new</strong> File(workingDirectoryParam, <span class="jxr_string">"reports"</span>);
+<a class="jxr_linenumber" name="L561" href="#L561">561</a>         <strong class="jxr_keyword">if</strong> (reportsFolder.isDirectory()) {
+<a class="jxr_linenumber" name="L562" href="#L562">562</a> 
+<a class="jxr_linenumber" name="L563" href="#L563">563</a>             <em class="jxr_comment">// Create a zip file of the reports</em>
+<a class="jxr_linenumber" name="L564" href="#L564">564</a>             <strong class="jxr_keyword">try</strong> (ZipOutputStream reportsZip =
+<a class="jxr_linenumber" name="L565" href="#L565">565</a>                     <strong class="jxr_keyword">new</strong> ZipOutputStream(<strong class="jxr_keyword">new</strong> FileOutputStream(
+<a class="jxr_linenumber" name="L566" href="#L566">566</a>                             <strong class="jxr_keyword">new</strong> File(workingDirectoryParam, <span class="jxr_string">"reports.zip"</span>)))) {
+<a class="jxr_linenumber" name="L567" href="#L567">567</a>                 <em class="jxr_comment">// Gather items into the reports zip, keeping an eye out for</em>
+<a class="jxr_linenumber" name="L568" href="#L568">568</a>                 <em class="jxr_comment">// the "provenance data" folder</em>
+<a class="jxr_linenumber" name="L569" href="#L569">569</a>                 zipProvenance(reportsZip, reportsFolder, <span class="jxr_string">"reports"</span>);
+<a class="jxr_linenumber" name="L570" href="#L570">570</a>             }
+<a class="jxr_linenumber" name="L571" href="#L571">571</a>         }
+<a class="jxr_linenumber" name="L572" href="#L572">572</a>     }
+<a class="jxr_linenumber" name="L573" href="#L573">573</a> 
+<a class="jxr_linenumber" name="L574" href="#L574">574</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L575" href="#L575">575</a> <em class="jxr_javadoccomment">     * Get the status of the process.</em>
+<a class="jxr_linenumber" name="L576" href="#L576">576</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L577" href="#L577">577</a>     @Override
+<a class="jxr_linenumber" name="L578" href="#L578">578</a>     <strong class="jxr_keyword">public</strong> Status getStatus() {
+<a class="jxr_linenumber" name="L579" href="#L579">579</a>         <strong class="jxr_keyword">return</strong> status;
+<a class="jxr_linenumber" name="L580" href="#L580">580</a>     }
+<a class="jxr_linenumber" name="L581" href="#L581">581</a> 
+<a class="jxr_linenumber" name="L582" href="#L582">582</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L583" href="#L583">583</a> <em class="jxr_javadoccomment">     * Get the process error.</em>
+<a class="jxr_linenumber" name="L584" href="#L584">584</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L585" href="#L585">585</a>     @Override
+<a class="jxr_linenumber" name="L586" href="#L586">586</a>     <strong class="jxr_keyword">public</strong> Throwable getError() {
+<a class="jxr_linenumber" name="L587" href="#L587">587</a>         <strong class="jxr_keyword">return</strong> error;
+<a class="jxr_linenumber" name="L588" href="#L588">588</a>     }
 <a class="jxr_linenumber" name="L589" href="#L589">589</a> 
-<a class="jxr_linenumber" name="L590" href="#L590">590</a>         <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L591" href="#L591">591</a> <em class="jxr_javadoccomment">         * Creates a new ReaderLogWriter with another reader.</em>
-<a class="jxr_linenumber" name="L592" href="#L592">592</a> <em class="jxr_javadoccomment">         *</em>
-<a class="jxr_linenumber" name="L593" href="#L593">593</a> <em class="jxr_javadoccomment">         * @param readerParam</em>
-<a class="jxr_linenumber" name="L594" href="#L594">594</a> <em class="jxr_javadoccomment">         *            The reader to read from</em>
-<a class="jxr_linenumber" name="L595" href="#L595">595</a> <em class="jxr_javadoccomment">         * @param writerParam</em>
-<a class="jxr_linenumber" name="L596" href="#L596">596</a> <em class="jxr_javadoccomment">         *            The writer to write to</em>
-<a class="jxr_linenumber" name="L597" href="#L597">597</a> <em class="jxr_javadoccomment">         */</em>
-<a class="jxr_linenumber" name="L598" href="#L598">598</a>         ReaderLogWriter(
-<a class="jxr_linenumber" name="L599" href="#L599">599</a>                 <strong class="jxr_keyword">final</strong> Reader readerParam, <strong class="jxr_keyword">final</strong> <a name="LogWriter" href="../../../../../../uk/ac/manchester/cs/spinnaker/jobprocess/LogWriter.html#LogWriter">LogWriter</a> writerParam) {
-<a class="jxr_linenumber" name="L600" href="#L600">600</a>             <strong class="jxr_keyword">super</strong>(threadGroup, <span class="jxr_string">"Reader Log Writer"</span>);
-<a class="jxr_linenumber" name="L601" href="#L601">601</a>             requireNonNull(readerParam);
-<a class="jxr_linenumber" name="L602" href="#L602">602</a>             <strong class="jxr_keyword">if</strong> (readerParam instanceof BufferedReader) {
-<a class="jxr_linenumber" name="L603" href="#L603">603</a>                 <strong class="jxr_keyword">this</strong>.reader = (BufferedReader) readerParam;
-<a class="jxr_linenumber" name="L604" href="#L604">604</a>             } <strong class="jxr_keyword">else</strong> {
-<a class="jxr_linenumber" name="L605" href="#L605">605</a>                 <strong class="jxr_keyword">this</strong>.reader = <strong class="jxr_keyword">new</strong> BufferedReader(readerParam);
-<a class="jxr_linenumber" name="L606" href="#L606">606</a>             }
-<a class="jxr_linenumber" name="L607" href="#L607">607</a>             <strong class="jxr_keyword">this</strong>.writer = requireNonNull(writerParam);
-<a class="jxr_linenumber" name="L608" href="#L608">608</a>             setDaemon(<strong class="jxr_keyword">true</strong>);
-<a class="jxr_linenumber" name="L609" href="#L609">609</a>         }
-<a class="jxr_linenumber" name="L610" href="#L610">610</a> 
-<a class="jxr_linenumber" name="L611" href="#L611">611</a>         <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L612" href="#L612">612</a> <em class="jxr_javadoccomment">         * Creates a new ReaderLogWriter with an input stream. This will be</em>
-<a class="jxr_linenumber" name="L613" href="#L613">613</a> <em class="jxr_javadoccomment">         * treated as a text stream using the system encoding.</em>
-<a class="jxr_linenumber" name="L614" href="#L614">614</a> <em class="jxr_javadoccomment">         *</em>
-<a class="jxr_linenumber" name="L615" href="#L615">615</a> <em class="jxr_javadoccomment">         * @param input</em>
-<a class="jxr_linenumber" name="L616" href="#L616">616</a> <em class="jxr_javadoccomment">         *            The input stream to read from.</em>
-<a class="jxr_linenumber" name="L617" href="#L617">617</a> <em class="jxr_javadoccomment">         * @param writerParam</em>
-<a class="jxr_linenumber" name="L618" href="#L618">618</a> <em class="jxr_javadoccomment">         *            The writer to write to.</em>
-<a class="jxr_linenumber" name="L619" href="#L619">619</a> <em class="jxr_javadoccomment">         */</em>
-<a class="jxr_linenumber" name="L620" href="#L620">620</a>         ReaderLogWriter(<strong class="jxr_keyword">final</strong> InputStream input,
-<a class="jxr_linenumber" name="L621" href="#L621">621</a>                 <strong class="jxr_keyword">final</strong> <a name="LogWriter" href="../../../../../../uk/ac/manchester/cs/spinnaker/jobprocess/LogWriter.html#LogWriter">LogWriter</a> writerParam) {
-<a class="jxr_linenumber" name="L622" href="#L622">622</a>             <strong class="jxr_keyword">this</strong>(<strong class="jxr_keyword">new</strong> InputStreamReader(input), writerParam);
-<a class="jxr_linenumber" name="L623" href="#L623">623</a>         }
-<a class="jxr_linenumber" name="L624" href="#L624">624</a> 
-<a class="jxr_linenumber" name="L625" href="#L625">625</a>         @Override
-<a class="jxr_linenumber" name="L626" href="#L626">626</a>         <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> run() {
-<a class="jxr_linenumber" name="L627" href="#L627">627</a>             <strong class="jxr_keyword">try</strong> {
-<a class="jxr_linenumber" name="L628" href="#L628">628</a>                 copyStream();
-<a class="jxr_linenumber" name="L629" href="#L629">629</a>             } <strong class="jxr_keyword">catch</strong> (IOException | RuntimeException e) {
-<a class="jxr_linenumber" name="L630" href="#L630">630</a>                 <strong class="jxr_keyword">return</strong>;
-<a class="jxr_linenumber" name="L631" href="#L631">631</a>             } <strong class="jxr_keyword">finally</strong> {
-<a class="jxr_linenumber" name="L632" href="#L632">632</a>                 <strong class="jxr_keyword">synchronized</strong> (<strong class="jxr_keyword">this</strong>) {
-<a class="jxr_linenumber" name="L633" href="#L633">633</a>                     running = false;
-<a class="jxr_linenumber" name="L634" href="#L634">634</a>                     notifyAll();
-<a class="jxr_linenumber" name="L635" href="#L635">635</a>                 }
-<a class="jxr_linenumber" name="L636" href="#L636">636</a>             }
-<a class="jxr_linenumber" name="L637" href="#L637">637</a>         }
-<a class="jxr_linenumber" name="L638" href="#L638">638</a> 
-<a class="jxr_linenumber" name="L639" href="#L639">639</a>         @Override
-<a class="jxr_linenumber" name="L640" href="#L640">640</a>         <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> start() {
-<a class="jxr_linenumber" name="L641" href="#L641">641</a>             running = <strong class="jxr_keyword">true</strong>;
-<a class="jxr_linenumber" name="L642" href="#L642">642</a>             <strong class="jxr_keyword">super</strong>.start();
-<a class="jxr_linenumber" name="L643" href="#L643">643</a>         }
-<a class="jxr_linenumber" name="L644" href="#L644">644</a> 
-<a class="jxr_linenumber" name="L645" href="#L645">645</a>         <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L646" href="#L646">646</a> <em class="jxr_javadoccomment">         * Perform the copying of the stream.</em>
-<a class="jxr_linenumber" name="L647" href="#L647">647</a> <em class="jxr_javadoccomment">         *</em>
-<a class="jxr_linenumber" name="L648" href="#L648">648</a> <em class="jxr_javadoccomment">         * @throws IOException If there is an error copying</em>
-<a class="jxr_linenumber" name="L649" href="#L649">649</a> <em class="jxr_javadoccomment">         */</em>
-<a class="jxr_linenumber" name="L650" href="#L650">650</a>         <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> copyStream() <strong class="jxr_keyword">throws</strong> IOException {
-<a class="jxr_linenumber" name="L651" href="#L651">651</a>             <strong class="jxr_keyword">while</strong> (!interrupted()) {
-<a class="jxr_linenumber" name="L652" href="#L652">652</a>                 <strong class="jxr_keyword">final</strong> String line = reader.readLine();
-<a class="jxr_linenumber" name="L653" href="#L653">653</a>                 <strong class="jxr_keyword">if</strong> (line == <strong class="jxr_keyword">null</strong>) {
-<a class="jxr_linenumber" name="L654" href="#L654">654</a>                     <strong class="jxr_keyword">return</strong>;
-<a class="jxr_linenumber" name="L655" href="#L655">655</a>                 }
-<a class="jxr_linenumber" name="L656" href="#L656">656</a>                 writer.append(line + <span class="jxr_string">"\n"</span>);
-<a class="jxr_linenumber" name="L657" href="#L657">657</a>             }
-<a class="jxr_linenumber" name="L658" href="#L658">658</a>         }
-<a class="jxr_linenumber" name="L659" href="#L659">659</a> 
-<a class="jxr_linenumber" name="L660" href="#L660">660</a>         <em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="L661" href="#L661">661</a> <em class="jxr_javadoccomment">         * Closes the reader/writer.</em>
-<a class="jxr_linenumber" name="L662" href="#L662">662</a> <em class="jxr_javadoccomment">         */</em>
-<a class="jxr_linenumber" name="L663" href="#L663">663</a>         @Override
-<a class="jxr_linenumber" name="L664" href="#L664">664</a>         <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> close() {
-<a class="jxr_linenumber" name="L665" href="#L665">665</a>             log(<span class="jxr_string">"Waiting for log writer to exit..."</span>);
-<a class="jxr_linenumber" name="L666" href="#L666">666</a> 
-<a class="jxr_linenumber" name="L667" href="#L667">667</a>             <strong class="jxr_keyword">synchronized</strong> (<strong class="jxr_keyword">this</strong>) {
-<a class="jxr_linenumber" name="L668" href="#L668">668</a>                 <strong class="jxr_keyword">try</strong> {
-<a class="jxr_linenumber" name="L669" href="#L669">669</a>                     <strong class="jxr_keyword">while</strong> (running) {
-<a class="jxr_linenumber" name="L670" href="#L670">670</a>                         wait();
-<a class="jxr_linenumber" name="L671" href="#L671">671</a>                     }
-<a class="jxr_linenumber" name="L672" href="#L672">672</a>                 } <strong class="jxr_keyword">catch</strong> (<strong class="jxr_keyword">final</strong> InterruptedException e) {
-<a class="jxr_linenumber" name="L673" href="#L673">673</a>                     <em class="jxr_comment">// Does Nothing</em>
-<a class="jxr_linenumber" name="L674" href="#L674">674</a>                 }
-<a class="jxr_linenumber" name="L675" href="#L675">675</a>             }
-<a class="jxr_linenumber" name="L676" href="#L676">676</a> 
-<a class="jxr_linenumber" name="L677" href="#L677">677</a>             log(<span class="jxr_string">"Log writer has exited"</span>);
-<a class="jxr_linenumber" name="L678" href="#L678">678</a>             <strong class="jxr_keyword">try</strong> {
-<a class="jxr_linenumber" name="L679" href="#L679">679</a>                 reader.close();
-<a class="jxr_linenumber" name="L680" href="#L680">680</a>             } <strong class="jxr_keyword">catch</strong> (IOException | RuntimeException e) {
-<a class="jxr_linenumber" name="L681" href="#L681">681</a>                 <em class="jxr_comment">// Do nothing</em>
-<a class="jxr_linenumber" name="L682" href="#L682">682</a>             }
-<a class="jxr_linenumber" name="L683" href="#L683">683</a>             ThreadUtils.sleep(FINALIZATION_DELAY);
-<a class="jxr_linenumber" name="L684" href="#L684">684</a>         }
-<a class="jxr_linenumber" name="L685" href="#L685">685</a>     }
-<a class="jxr_linenumber" name="L686" href="#L686">686</a> }
+<a class="jxr_linenumber" name="L590" href="#L590">590</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L591" href="#L591">591</a> <em class="jxr_javadoccomment">     * Get the outputs of the process.</em>
+<a class="jxr_linenumber" name="L592" href="#L592">592</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L593" href="#L593">593</a>     @Override
+<a class="jxr_linenumber" name="L594" href="#L594">594</a>     <strong class="jxr_keyword">public</strong> List&lt;File&gt; getOutputs() {
+<a class="jxr_linenumber" name="L595" href="#L595">595</a>         <strong class="jxr_keyword">return</strong> outputs;
+<a class="jxr_linenumber" name="L596" href="#L596">596</a>     }
+<a class="jxr_linenumber" name="L597" href="#L597">597</a> 
+<a class="jxr_linenumber" name="L598" href="#L598">598</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L599" href="#L599">599</a> <em class="jxr_javadoccomment">     * Get the provenance of the process.</em>
+<a class="jxr_linenumber" name="L600" href="#L600">600</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L601" href="#L601">601</a>     @Override
+<a class="jxr_linenumber" name="L602" href="#L602">602</a>     <strong class="jxr_keyword">public</strong> List&lt;ProvenanceItem&gt; getProvenance() {
+<a class="jxr_linenumber" name="L603" href="#L603">603</a>         <strong class="jxr_keyword">return</strong> provenance;
+<a class="jxr_linenumber" name="L604" href="#L604">604</a>     }
+<a class="jxr_linenumber" name="L605" href="#L605">605</a> 
+<a class="jxr_linenumber" name="L606" href="#L606">606</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L607" href="#L607">607</a> <em class="jxr_javadoccomment">     * Clean up the process after exit.</em>
+<a class="jxr_linenumber" name="L608" href="#L608">608</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L609" href="#L609">609</a>     @Override
+<a class="jxr_linenumber" name="L610" href="#L610">610</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> cleanup() {
+<a class="jxr_linenumber" name="L611" href="#L611">611</a>         <em class="jxr_comment">// Does Nothing</em>
+<a class="jxr_linenumber" name="L612" href="#L612">612</a>     }
+<a class="jxr_linenumber" name="L613" href="#L613">613</a> 
+<a class="jxr_linenumber" name="L614" href="#L614">614</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L615" href="#L615">615</a> <em class="jxr_javadoccomment">     * Thread for copying a {@link Reader} to a {@link LogWriter}.</em>
+<a class="jxr_linenumber" name="L616" href="#L616">616</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L617" href="#L617">617</a>     <strong class="jxr_keyword">class</strong> ReaderLogWriter <strong class="jxr_keyword">extends</strong> Thread <strong class="jxr_keyword">implements</strong> AutoCloseable {
+<a class="jxr_linenumber" name="L618" href="#L618">618</a> 
+<a class="jxr_linenumber" name="L619" href="#L619">619</a>         <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L620" href="#L620">620</a> <em class="jxr_javadoccomment">         * The reader to read from.</em>
+<a class="jxr_linenumber" name="L621" href="#L621">621</a> <em class="jxr_javadoccomment">         */</em>
+<a class="jxr_linenumber" name="L622" href="#L622">622</a>         <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> BufferedReader reader;
+<a class="jxr_linenumber" name="L623" href="#L623">623</a> 
+<a class="jxr_linenumber" name="L624" href="#L624">624</a>         <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L625" href="#L625">625</a> <em class="jxr_javadoccomment">         * The writer to write to.</em>
+<a class="jxr_linenumber" name="L626" href="#L626">626</a> <em class="jxr_javadoccomment">         */</em>
+<a class="jxr_linenumber" name="L627" href="#L627">627</a>         <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> <a name="LogWriter" href="../../../../../../uk/ac/manchester/cs/spinnaker/jobprocess/LogWriter.html#LogWriter">LogWriter</a> writer;
+<a class="jxr_linenumber" name="L628" href="#L628">628</a> 
+<a class="jxr_linenumber" name="L629" href="#L629">629</a>         <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L630" href="#L630">630</a> <em class="jxr_javadoccomment">         * True when running, False to stop.</em>
+<a class="jxr_linenumber" name="L631" href="#L631">631</a> <em class="jxr_javadoccomment">         */</em>
+<a class="jxr_linenumber" name="L632" href="#L632">632</a>         <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">boolean</strong> running;
+<a class="jxr_linenumber" name="L633" href="#L633">633</a> 
+<a class="jxr_linenumber" name="L634" href="#L634">634</a>         <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L635" href="#L635">635</a> <em class="jxr_javadoccomment">         * Creates a new ReaderLogWriter with another reader.</em>
+<a class="jxr_linenumber" name="L636" href="#L636">636</a> <em class="jxr_javadoccomment">         *</em>
+<a class="jxr_linenumber" name="L637" href="#L637">637</a> <em class="jxr_javadoccomment">         * @param readerParam</em>
+<a class="jxr_linenumber" name="L638" href="#L638">638</a> <em class="jxr_javadoccomment">         *            The reader to read from</em>
+<a class="jxr_linenumber" name="L639" href="#L639">639</a> <em class="jxr_javadoccomment">         * @param writerParam</em>
+<a class="jxr_linenumber" name="L640" href="#L640">640</a> <em class="jxr_javadoccomment">         *            The writer to write to</em>
+<a class="jxr_linenumber" name="L641" href="#L641">641</a> <em class="jxr_javadoccomment">         */</em>
+<a class="jxr_linenumber" name="L642" href="#L642">642</a>         ReaderLogWriter(
+<a class="jxr_linenumber" name="L643" href="#L643">643</a>                 <strong class="jxr_keyword">final</strong> Reader readerParam, <strong class="jxr_keyword">final</strong> <a name="LogWriter" href="../../../../../../uk/ac/manchester/cs/spinnaker/jobprocess/LogWriter.html#LogWriter">LogWriter</a> writerParam) {
+<a class="jxr_linenumber" name="L644" href="#L644">644</a>             <strong class="jxr_keyword">super</strong>(threadGroup, <span class="jxr_string">"Reader Log Writer"</span>);
+<a class="jxr_linenumber" name="L645" href="#L645">645</a>             requireNonNull(readerParam);
+<a class="jxr_linenumber" name="L646" href="#L646">646</a>             <strong class="jxr_keyword">if</strong> (readerParam instanceof BufferedReader) {
+<a class="jxr_linenumber" name="L647" href="#L647">647</a>                 <strong class="jxr_keyword">this</strong>.reader = (BufferedReader) readerParam;
+<a class="jxr_linenumber" name="L648" href="#L648">648</a>             } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L649" href="#L649">649</a>                 <strong class="jxr_keyword">this</strong>.reader = <strong class="jxr_keyword">new</strong> BufferedReader(readerParam);
+<a class="jxr_linenumber" name="L650" href="#L650">650</a>             }
+<a class="jxr_linenumber" name="L651" href="#L651">651</a>             <strong class="jxr_keyword">this</strong>.writer = requireNonNull(writerParam);
+<a class="jxr_linenumber" name="L652" href="#L652">652</a>             setDaemon(<strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L653" href="#L653">653</a>         }
+<a class="jxr_linenumber" name="L654" href="#L654">654</a> 
+<a class="jxr_linenumber" name="L655" href="#L655">655</a>         <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L656" href="#L656">656</a> <em class="jxr_javadoccomment">         * Creates a new ReaderLogWriter with an input stream. This will be</em>
+<a class="jxr_linenumber" name="L657" href="#L657">657</a> <em class="jxr_javadoccomment">         * treated as a text stream using the system encoding.</em>
+<a class="jxr_linenumber" name="L658" href="#L658">658</a> <em class="jxr_javadoccomment">         *</em>
+<a class="jxr_linenumber" name="L659" href="#L659">659</a> <em class="jxr_javadoccomment">         * @param input</em>
+<a class="jxr_linenumber" name="L660" href="#L660">660</a> <em class="jxr_javadoccomment">         *            The input stream to read from.</em>
+<a class="jxr_linenumber" name="L661" href="#L661">661</a> <em class="jxr_javadoccomment">         * @param writerParam</em>
+<a class="jxr_linenumber" name="L662" href="#L662">662</a> <em class="jxr_javadoccomment">         *            The writer to write to.</em>
+<a class="jxr_linenumber" name="L663" href="#L663">663</a> <em class="jxr_javadoccomment">         */</em>
+<a class="jxr_linenumber" name="L664" href="#L664">664</a>         ReaderLogWriter(<strong class="jxr_keyword">final</strong> InputStream input,
+<a class="jxr_linenumber" name="L665" href="#L665">665</a>                 <strong class="jxr_keyword">final</strong> <a name="LogWriter" href="../../../../../../uk/ac/manchester/cs/spinnaker/jobprocess/LogWriter.html#LogWriter">LogWriter</a> writerParam) {
+<a class="jxr_linenumber" name="L666" href="#L666">666</a>             <strong class="jxr_keyword">this</strong>(<strong class="jxr_keyword">new</strong> InputStreamReader(input), writerParam);
+<a class="jxr_linenumber" name="L667" href="#L667">667</a>         }
+<a class="jxr_linenumber" name="L668" href="#L668">668</a> 
+<a class="jxr_linenumber" name="L669" href="#L669">669</a>         @Override
+<a class="jxr_linenumber" name="L670" href="#L670">670</a>         <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> run() {
+<a class="jxr_linenumber" name="L671" href="#L671">671</a>             <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L672" href="#L672">672</a>                 copyStream();
+<a class="jxr_linenumber" name="L673" href="#L673">673</a>             } <strong class="jxr_keyword">catch</strong> (IOException | RuntimeException e) {
+<a class="jxr_linenumber" name="L674" href="#L674">674</a>                 <strong class="jxr_keyword">return</strong>;
+<a class="jxr_linenumber" name="L675" href="#L675">675</a>             } <strong class="jxr_keyword">finally</strong> {
+<a class="jxr_linenumber" name="L676" href="#L676">676</a>                 <strong class="jxr_keyword">synchronized</strong> (<strong class="jxr_keyword">this</strong>) {
+<a class="jxr_linenumber" name="L677" href="#L677">677</a>                     running = false;
+<a class="jxr_linenumber" name="L678" href="#L678">678</a>                     notifyAll();
+<a class="jxr_linenumber" name="L679" href="#L679">679</a>                 }
+<a class="jxr_linenumber" name="L680" href="#L680">680</a>             }
+<a class="jxr_linenumber" name="L681" href="#L681">681</a>         }
+<a class="jxr_linenumber" name="L682" href="#L682">682</a> 
+<a class="jxr_linenumber" name="L683" href="#L683">683</a>         @Override
+<a class="jxr_linenumber" name="L684" href="#L684">684</a>         <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> start() {
+<a class="jxr_linenumber" name="L685" href="#L685">685</a>             running = <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L686" href="#L686">686</a>             <strong class="jxr_keyword">super</strong>.start();
+<a class="jxr_linenumber" name="L687" href="#L687">687</a>         }
+<a class="jxr_linenumber" name="L688" href="#L688">688</a> 
+<a class="jxr_linenumber" name="L689" href="#L689">689</a>         <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L690" href="#L690">690</a> <em class="jxr_javadoccomment">         * Perform the copying of the stream.</em>
+<a class="jxr_linenumber" name="L691" href="#L691">691</a> <em class="jxr_javadoccomment">         *</em>
+<a class="jxr_linenumber" name="L692" href="#L692">692</a> <em class="jxr_javadoccomment">         * @throws IOException If there is an error copying</em>
+<a class="jxr_linenumber" name="L693" href="#L693">693</a> <em class="jxr_javadoccomment">         */</em>
+<a class="jxr_linenumber" name="L694" href="#L694">694</a>         <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> copyStream() <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L695" href="#L695">695</a>             <strong class="jxr_keyword">while</strong> (!interrupted()) {
+<a class="jxr_linenumber" name="L696" href="#L696">696</a>                 <strong class="jxr_keyword">final</strong> String line = reader.readLine();
+<a class="jxr_linenumber" name="L697" href="#L697">697</a>                 <strong class="jxr_keyword">if</strong> (line == <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L698" href="#L698">698</a>                     <strong class="jxr_keyword">return</strong>;
+<a class="jxr_linenumber" name="L699" href="#L699">699</a>                 }
+<a class="jxr_linenumber" name="L700" href="#L700">700</a>                 writer.append(line + <span class="jxr_string">"\n"</span>);
+<a class="jxr_linenumber" name="L701" href="#L701">701</a>             }
+<a class="jxr_linenumber" name="L702" href="#L702">702</a>         }
+<a class="jxr_linenumber" name="L703" href="#L703">703</a> 
+<a class="jxr_linenumber" name="L704" href="#L704">704</a>         <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L705" href="#L705">705</a> <em class="jxr_javadoccomment">         * Closes the reader/writer.</em>
+<a class="jxr_linenumber" name="L706" href="#L706">706</a> <em class="jxr_javadoccomment">         */</em>
+<a class="jxr_linenumber" name="L707" href="#L707">707</a>         @Override
+<a class="jxr_linenumber" name="L708" href="#L708">708</a>         <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> close() {
+<a class="jxr_linenumber" name="L709" href="#L709">709</a>             log(<span class="jxr_string">"Waiting for log writer to exit..."</span>);
+<a class="jxr_linenumber" name="L710" href="#L710">710</a> 
+<a class="jxr_linenumber" name="L711" href="#L711">711</a>             <strong class="jxr_keyword">synchronized</strong> (<strong class="jxr_keyword">this</strong>) {
+<a class="jxr_linenumber" name="L712" href="#L712">712</a>                 <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L713" href="#L713">713</a>                     <strong class="jxr_keyword">while</strong> (running) {
+<a class="jxr_linenumber" name="L714" href="#L714">714</a>                         wait();
+<a class="jxr_linenumber" name="L715" href="#L715">715</a>                     }
+<a class="jxr_linenumber" name="L716" href="#L716">716</a>                 } <strong class="jxr_keyword">catch</strong> (<strong class="jxr_keyword">final</strong> InterruptedException e) {
+<a class="jxr_linenumber" name="L717" href="#L717">717</a>                     <em class="jxr_comment">// Does Nothing</em>
+<a class="jxr_linenumber" name="L718" href="#L718">718</a>                 }
+<a class="jxr_linenumber" name="L719" href="#L719">719</a>             }
+<a class="jxr_linenumber" name="L720" href="#L720">720</a> 
+<a class="jxr_linenumber" name="L721" href="#L721">721</a>             log(<span class="jxr_string">"Log writer has exited"</span>);
+<a class="jxr_linenumber" name="L722" href="#L722">722</a>             <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L723" href="#L723">723</a>                 reader.close();
+<a class="jxr_linenumber" name="L724" href="#L724">724</a>             } <strong class="jxr_keyword">catch</strong> (IOException | RuntimeException e) {
+<a class="jxr_linenumber" name="L725" href="#L725">725</a>                 <em class="jxr_comment">// Do nothing</em>
+<a class="jxr_linenumber" name="L726" href="#L726">726</a>             }
+<a class="jxr_linenumber" name="L727" href="#L727">727</a>             ThreadUtils.sleep(FINALIZATION_DELAY);
+<a class="jxr_linenumber" name="L728" href="#L728">728</a>         }
+<a class="jxr_linenumber" name="L729" href="#L729">729</a>     }
+<a class="jxr_linenumber" name="L730" href="#L730">730</a> }
 </pre>
 <hr/>
 <div id="footer">Copyright &#169; 2014&#x2013;2021 <a href="http://apt.cs.manchester.ac.uk/projects/SpiNNaker/">SpiNNaker Team @ University of Manchester</a>. All rights reserved.</div>
