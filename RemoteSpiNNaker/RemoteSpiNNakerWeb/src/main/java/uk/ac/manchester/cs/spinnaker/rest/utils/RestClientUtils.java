@@ -17,7 +17,6 @@
 package uk.ac.manchester.cs.spinnaker.rest.utils;
 
 import static org.apache.http.auth.AUTH.WWW_AUTH_RESP;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,6 +27,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.concurrent.TimeUnit;
 
+import javax.net.ssl.SSLContext;
 import javax.ws.rs.client.ClientRequestContext;
 import javax.ws.rs.client.ClientRequestFilter;
 
@@ -38,7 +38,6 @@ import org.apache.http.util.EncodingUtils;
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder.HostnameVerificationPolicy;
-import org.slf4j.Logger;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
@@ -78,11 +77,6 @@ public abstract class RestClientUtils {
     private static final long TIMEOUT = 60;
 
     /**
-     * Logging.
-     */
-    private static Logger log = getLogger(RestClientUtils.class);
-
-    /**
      * Manufacture a client.
      *
      * @param url
@@ -90,25 +84,7 @@ public abstract class RestClientUtils {
      * @return the client
      */
     protected static ResteasyClient createRestClient(final URL url) {
-
         try {
-            SSLContextBuilder builder = new SSLContextBuilder();
-            builder.loadTrustMaterial(new TrustSelfSignedStrategy());
-            String trustStore = System.getProperty(
-                    "remotespinnaker.keystore", null);
-            if (trustStore != null) {
-                String password = System.getProperty(
-                        "remotespinnaker.keystore.password", "");
-                try {
-                    builder.loadTrustMaterial(new File(trustStore),
-                            password.toCharArray());
-                } catch (IOException | CertificateException e) {
-                    log.error("Error loading certificates", e);
-                    throw new RuntimeException(
-                            "Unexpected error loading certificates", e);
-                }
-            }
-
             // Create and return a client
             final ResteasyClient client = new ResteasyClientBuilder()
                     .connectTimeout(TIMEOUT, TimeUnit.SECONDS)
@@ -116,16 +92,42 @@ public abstract class RestClientUtils {
                     .connectionPoolSize(MAX_CONNECTIONS)
                     .maxPooledPerRoute(MAX_CONNECTIONS_PER_ROUTE)
                     .hostnameVerification(HostnameVerificationPolicy.ANY)
-                    .sslContext(builder.build())
+                    .sslContext(getSSLContext())
                     .build();
             client.register(new ErrorCaptureResponseFilter());
             return client;
         } catch (NoSuchAlgorithmException | KeyManagementException
                 | KeyStoreException e) {
-            log.error("Cannot find basic SSL algorithms - "
-                    + "this suggests a broken Java installation...");
-            throw new RuntimeException("unexpectedly broken security", e);
+            throw new RuntimeException("Unexpectedly broken security", e);
         }
+    }
+
+    /**
+     * Create an SSL context with appropriate key store and management
+     *
+     * @return The created context
+     * @throws NoSuchAlgorithmException If the key store can't be read
+     * @throws KeyStoreException If the key store can't be read
+     * @throws KeyManagementException If the key store can't be read
+     */
+    private static SSLContext getSSLContext() throws NoSuchAlgorithmException,
+            KeyStoreException, KeyManagementException {
+        SSLContextBuilder builder = new SSLContextBuilder();
+        builder.loadTrustMaterial(new TrustSelfSignedStrategy());
+        String trustStore = System.getProperty(
+                "remotespinnaker.keystore", null);
+        if (trustStore != null) {
+            String password = System.getProperty(
+                    "remotespinnaker.keystore.password", "");
+            try {
+                builder.loadTrustMaterial(new File(trustStore),
+                        password.toCharArray());
+            } catch (IOException | CertificateException e) {
+                throw new RuntimeException(
+                        "Unexpected error loading certificates", e);
+            }
+        }
+        return builder.build();
     }
 
     /**
