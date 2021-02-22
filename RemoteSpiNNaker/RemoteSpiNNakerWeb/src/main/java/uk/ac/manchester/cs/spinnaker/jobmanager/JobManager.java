@@ -382,7 +382,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         SpinnakerMachine machine = null;
         for (int i = 0; i < machines.size(); i++) {
             machine = machines.get(i);
-            if (machine.getMachineName() == machineName) {
+            if (machine.getMachineName().equals(machineName)) {
                 return i;
             }
         }
