@@ -29,7 +29,6 @@ import static org.apache.commons.io.FileUtils.listFiles;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -369,14 +368,16 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
      * Searches the list for the machine with the given name.
      *
      * @param id
-     *            The job id
+     *            The job id.
      * @param machineName
      *            The name of the machine to find.
+     * @param remove
+     *            Whether the machine found should be removed or not.
      * @return The machine found
      * @throws WebApplicationException if machine not found
      */
     private SpinnakerMachine findMachine(final int id,
-            final String machineName, boolean remove) {
+            final String machineName, final boolean remove) {
         List<SpinnakerMachine> machines = allocatedMachines.get(id);
         if (machines == null) {
             throw new WebApplicationException(
