@@ -103,7 +103,7 @@ public abstract class RestClientUtils {
     }
 
     /**
-     * Create an SSL context with appropriate key store and management
+     * Create an SSL context with appropriate key store and management.
      *
      * @return The created context
      * @throws NoSuchAlgorithmException If the key store can't be read
