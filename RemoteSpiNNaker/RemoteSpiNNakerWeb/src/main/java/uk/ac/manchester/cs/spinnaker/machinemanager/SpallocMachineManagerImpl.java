@@ -516,19 +516,20 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
         public <T> T sendRequest(final Command<?> request,
                 final Class<T> responseType) throws IOException {
             synchronized (SpallocMachineManagerImpl.this) {
-                IOException lastError = null;
-                for (int i = 0; i < N_RETRIES; i++) {
+                int count = 0;
+                while (true) {
                     try {
                         waitForConnection();
                         writeRequest(request);
                         return getNextResponse(responseType);
-                    } catch (IOException e) {
+                    } catch (final IOException e) {
                         // Disconnect on an error to force reconnection
                         disconnect();
-                        lastError = e;
+                        if (++count >= N_RETRIES) {
+                            throw e;
+                        }
                     }
                 }
-                throw lastError;
             }
         }
 
