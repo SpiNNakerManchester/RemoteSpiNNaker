@@ -292,7 +292,12 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
 
             private static final long serialVersionUID = 1L;
 
-            public TimeoutException(String message) {
+            /**
+             * Create an exception indicating a timeout happened.
+             *
+             * @param message The message of the exception
+             */
+            TimeoutException(final String message) {
                 super(message);
             }
         }
