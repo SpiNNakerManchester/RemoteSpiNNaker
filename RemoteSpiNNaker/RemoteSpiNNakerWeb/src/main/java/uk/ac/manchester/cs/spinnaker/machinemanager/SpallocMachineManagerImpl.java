@@ -518,7 +518,8 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
                         writeRequest(request);
                         return getNextResponse(responseType);
                     } catch (IOException e) {
-                        connected = false;
+                        // Disconnect on an error to force reconnection
+                        disconnect();
                         lastError = e;
                     }
                 }
