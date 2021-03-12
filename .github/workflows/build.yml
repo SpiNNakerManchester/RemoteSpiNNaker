@@ -64,6 +64,7 @@ jobs:
         CI_BUILD_NUMBER: ${{ github.run_id }}
         CI_BUILD_URL: https://github.com/${{ github.repository }}/commit/${{ github.event.after }}/checks
         COVERALLS_SECRET: ${{ secrets.GITHUB_TOKEN }}
+      working-directory: RemoteSpiNNaker
 
     - name: "Post-Run: Purge SNAPSHOTs"
       # Do not cache SNAPSHOT dependencies; we don't use external snapshots
