@@ -28,12 +28,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Set dynamic information
-      id: refs
       env:
         BRANCH_NAME_OR_REF: ${{ github.head_ref || github.ref }}
       run: |
-        echo "::set-output name=branch_name::${BRANCH_NAME_OR_REF#refs/heads/}"
-        echo "::set-output name=pr_number::$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")"
+        echo "CI_BRANCH=${BRANCH_NAME_OR_REF#refs/heads/}" >> $GITHUB_ENV
+        echo "CI_PULL_REQUEST=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")" >> $GITHUB_ENV
         echo "SETTINGS_FILE=$PWD/.github/settings.xml" >> $GITHUB_ENV
     - name: Set up JDK ${{ matrix.java }}
       uses: actions/setup-java@v1
@@ -57,15 +56,15 @@ jobs:
       id: test
       run: mvn verify --settings $SETTINGS_FILE -Dmaven.javadoc.skip=true jacoco:report
       working-directory: RemoteSpiNNaker
-    - name: "Report Coverage via coveralls.io"
-      run: mvn coveralls:report --settings $SETTINGS_FILE --no-transfer-progress -DrepoToken=$COVERALLS_SECRET
-      working-directory: RemoteSpiNNaker
+    - name: "Report: Coverage via coveralls.io"
+      run: |
+        mvn coveralls:report --settings $SETTINGS_FILE --no-transfer-progress -DrepoToken=$COVERALLS_SECRET
       env:
+        CI_NAME: github
         CI_BUILD_NUMBER: ${{ github.run_id }}
         CI_BUILD_URL: https://github.com/${{ github.repository }}/commit/${{ github.event.after }}/checks
-        CI_BRANCH: ${{ steps.refs.outputs.branch_name }}
-        CI_PULL_REQUEST: ${{ steps.refs.outputs.pr_number }}
-        COVERALLS_SECRET: ${{ secrets.COVERALLS_REPO_TOKEN }}
+        COVERALLS_SECRET: ${{ secrets.GITHUB_TOKEN }}
+      working-directory: RemoteSpiNNaker
 
     - name: "Post-Run: Purge SNAPSHOTs"
       # Do not cache SNAPSHOT dependencies; we don't use external snapshots
@@ -83,12 +82,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Set dynamic information
-      id: refs
-      env:
-        BRANCH_NAME_OR_REF: ${{ github.head_ref || github.ref }}
       run: |
-        echo "::set-output name=branch_name::${BRANCH_NAME_OR_REF#refs/heads/}"
-        echo "::set-output name=pr_number::$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")"
         echo "SETTINGS_FILE=$PWD/.github/settings.xml" >> $GITHUB_ENV
     - name: Set up JDK ${{ matrix.java }}
       uses: actions/setup-java@v1
