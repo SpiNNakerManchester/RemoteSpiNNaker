@@ -218,16 +218,26 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     private Map<Integer, String> logsToUpdate = new HashMap<>();
 
     /**
+     * The action to take when the log update happens.
+     *
+     * Use this to synchronise on log updates actually happening.
+     */
+    private final ActionListener logTimerAction = new ActionListener() {
+
+        @Override
+        public void actionPerformed(final ActionEvent event) {
+            sendLogs();
+        }
+    };
+
+    /**
      * The timer to do log sending.
+     *
+     * Use this to synchronise on the updating of the log strings map.
      */
     private final Timer logUpdateTimer = new Timer(LOG_UPDATE_DELAY,
-            new ActionListener() {
+            logTimerAction);
 
-                @Override
-                public void actionPerformed(final ActionEvent event) {
-                    sendLogs();
-                }
-            });
 
     /**
      * Thread group for the executor.
@@ -562,34 +572,39 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
      * Performs the actual sending of logs; activated on a timer.
      */
     private void sendLogs() {
-        // Take a copy of the logs to update to allow processing to continue
-        Map<Integer, String> localLogsToUpdate;
-        synchronized (logUpdateTimer) {
-            localLogsToUpdate = logsToUpdate;
-            logsToUpdate = new HashMap<>();
-            logUpdateTimer.stop();
-        }
+        // Synchronise the running of this action to 1. avoid doing it twice and
+        // 2. To allow other things to wait for the update to complete before
+        // changing the log any other way.
+        synchronized (logTimerAction) {
+            // Take a copy of the logs to update to allow processing to continue
+            Map<Integer, String> localLogsToUpdate;
+            synchronized (logUpdateTimer) {
+                localLogsToUpdate = logsToUpdate;
+                logsToUpdate = new HashMap<>();
+                logUpdateTimer.stop();
+            }
 
-        // Perform the updates using the local copy
-        for (int jobId : localLogsToUpdate.keySet()) {
-            String message = localLogsToUpdate.get(jobId);
-            try {
-                logger.debug("Updating log for " + jobId);
-                queueManager.appendJobLog(jobId, message);
-            } catch (Exception e) {
-                logger.debug("Error updating log - will be retried", e);
-                // On failure, re-prepend the message to the logs to be updated
-                // again later.
-                synchronized (logUpdateTimer) {
-                    String existing = logsToUpdate.getOrDefault(jobId, "");
-                    logsToUpdate.put(jobId, message + existing);
+            // Perform the updates using the local copy
+            for (int jobId : localLogsToUpdate.keySet()) {
+                String message = localLogsToUpdate.get(jobId);
+                try {
+                    logger.debug("Updating log for " + jobId);
+                    queueManager.appendJobLog(jobId, message);
+                } catch (Exception e) {
+                    logger.debug("Error updating log - will be retried", e);
+                    // On failure, re-prepend the message to the logs to be
+                    // updated again later.
+                    synchronized (logUpdateTimer) {
+                        String existing = logsToUpdate.getOrDefault(jobId, "");
+                        logsToUpdate.put(jobId, message + existing);
+                    }
                 }
             }
-        }
 
-        // Restart the timer after the attempts have been done to avoid
-        // thrashing
-        logUpdateTimer.start();
+            // Restart the timer after the attempts have been done to avoid
+            // thrashing
+            logUpdateTimer.start();
+        }
     }
 
     @Override
@@ -739,9 +754,10 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         // Do these before anything that can throw
         final long resourceUsage = getResourceUsage(id);
         final ObjectNode prov = getProvenance(id);
+        final String finalLog = makeFinalLog(id, logToAppend);
 
         try {
-            queueManager.setJobFinished(id, logToAppend,
+            queueManager.setJobFinished(id, finalLog,
                     getOutputFiles(projectId, id, baseDirectory, outputs),
                     resourceUsage, prov);
         } catch (final IOException e) {
@@ -768,6 +784,28 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         }
     }
 
+    /**
+     * Make a final log message to be appended.
+     *
+     * @param id The ID of the job to get the log for.
+     * @param logToAppend The final log message to be appended.
+     * @return All log messages to be appended.
+     */
+    private String makeFinalLog(final int id, final String logToAppend) {
+        // Synchronise this against the action actually happening now, to avoid
+        // odd looking logs!
+        synchronized (logTimerAction) {
+            // Also synchronise against changes actually happening to the log
+            // cache
+            synchronized (logUpdateTimer) {
+                final String finalLog = logsToUpdate.getOrDefault(id, "")
+                        + logToAppend;
+                logsToUpdate.remove(id);
+                return finalLog;
+            }
+        }
+    }
+
     @Override
     public void setJobError(final String projectId, final int id,
             final String error, final String logToAppend,
@@ -783,14 +821,15 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         logger.info("Marking job " + id + " as error");
         releaseAllocatedMachines(id);
 
-        final Exception exception =
-                reconstructRemoteException(error, stackTrace);
         // Do these before anything that can throw
         final long resourceUsage = getResourceUsage(id);
         final ObjectNode prov = getProvenance(id);
+        final Exception exception =
+                reconstructRemoteException(error, stackTrace);
+        final String finalLog = makeFinalLog(id, logToAppend);
 
         try {
-            queueManager.setJobError(id, logToAppend,
+            queueManager.setJobError(id, finalLog,
                     getOutputFiles(projectId, id, baseDirectory, outputs),
                     exception, resourceUsage, prov);
         } catch (final IOException e) {
