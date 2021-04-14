@@ -217,11 +217,14 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
      */
     private Map<Integer, String> logsToUpdate = new HashMap<>();
 
+    /**
+     * The timer to do log sending.
+     */
     private final Timer logUpdateTimer = new Timer(LOG_UPDATE_DELAY,
             new ActionListener() {
 
                 @Override
-                public void actionPerformed(ActionEvent arg0) {
+                public void actionPerformed(final ActionEvent event) {
                     sendLogs();
                 }
             });
