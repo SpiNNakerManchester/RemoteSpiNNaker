@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
         <resteasy.version>3.12.1.Final</resteasy.version>
         <jackson.version>2.11.0</jackson.version>
-        <httpclient.version>4.5.12</httpclient.version>
+        <httpclient.version>4.5.13</httpclient.version>
         <xen.version>6.2.0-3.1</xen.version>
         <ini4j.version>0.5.4</ini4j.version>
         <jgit.version>5.7.0.202003110725-r</jgit.version>
