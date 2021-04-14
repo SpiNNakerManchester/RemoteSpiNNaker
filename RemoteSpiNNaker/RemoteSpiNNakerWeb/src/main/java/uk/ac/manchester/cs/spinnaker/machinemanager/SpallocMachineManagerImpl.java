@@ -107,6 +107,16 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
     private static final int MACHINE_HEIGHT_FACTOR = 12;
 
     /**
+     * The number of times to retry a spalloc request.
+     */
+    private static final int N_RETRIES = 3;
+
+    /**
+     * The time to wait for a response from spalloc.
+     */
+    private static final long TIMEOUT_SECONDS = 1;
+
+    /**
      * Used for callbacks about machines.
      */
     public interface MachineNotificationReceiver {
@@ -276,6 +286,23 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
     class Comms {
 
         /**
+         * Internal exception for a timeout.
+         */
+        class TimeoutException extends IOException {
+
+            private static final long serialVersionUID = 1L;
+
+            /**
+             * Create an exception indicating a timeout happened.
+             *
+             * @param message The message of the exception
+             */
+            TimeoutException(final String message) {
+                super(message);
+            }
+        }
+
+        /**
          * The responses from spalloc to be read.
          */
         private final BlockingQueue<Response> responses =
@@ -319,7 +346,11 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
                 throws IOException {
             Response response;
             try {
-                response = responses.take();
+                response = responses.poll(TIMEOUT_SECONDS, SECONDS);
+                if (response == null) {
+                    throw new TimeoutException(
+                            "No response from spalloc server");
+                }
             } catch (final InterruptedException e) {
                 return null;
             }
@@ -485,9 +516,20 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
         public <T> T sendRequest(final Command<?> request,
                 final Class<T> responseType) throws IOException {
             synchronized (SpallocMachineManagerImpl.this) {
-                waitForConnection();
-                writeRequest(request);
-                return getNextResponse(responseType);
+                int count = 0;
+                while (true) {
+                    try {
+                        waitForConnection();
+                        writeRequest(request);
+                        return getNextResponse(responseType);
+                    } catch (final IOException e) {
+                        // Disconnect on an error to force reconnection
+                        disconnect();
+                        if (++count >= N_RETRIES) {
+                            throw e;
+                        }
+                    }
+                }
             }
         }
 
@@ -501,11 +543,7 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
          *             If anything goes wrong
          */
         public void sendRequest(final Command<?> request) throws IOException {
-            synchronized (SpallocMachineManagerImpl.this) {
-                waitForConnection();
-                writeRequest(request);
-                getNextResponse(null);
-            }
+            sendRequest(request, null);
         }
 
         /**
