@@ -60,7 +60,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import jdk.internal.jline.internal.Log;
 import uk.ac.manchester.cs.spinnaker.job.JobMachineAllocated;
 import uk.ac.manchester.cs.spinnaker.job.JobManagerInterface;
 import uk.ac.manchester.cs.spinnaker.job.RemoteStackTrace;
