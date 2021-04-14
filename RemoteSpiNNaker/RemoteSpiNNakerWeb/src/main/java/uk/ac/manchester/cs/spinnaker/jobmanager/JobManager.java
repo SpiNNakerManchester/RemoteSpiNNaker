@@ -28,6 +28,8 @@ import static org.apache.commons.io.FileUtils.forceMkdirParent;
 import static org.apache.commons.io.FileUtils.listFiles;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,6 +46,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
+import javax.swing.Timer;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -107,6 +110,11 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
      * Seconds between status updates.
      */
     private static final int STATUS_UPDATE_PERIOD = 10;
+
+    /**
+     * Milliseconds between log updates.
+     */
+    private static final int LOG_UPDATE_DELAY = 10000;
 
     /**
      * The name of the JAR containing the job process manager implementation.
@@ -203,6 +211,22 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     private final Map<Integer, ObjectNode> jobProvenance = new HashMap<>();
 
     /**
+     * Job ID -> Log messages to be updated.
+     *
+     * Note this will be copied and replaced during execution.
+     */
+    private Map<Integer, String> logsToUpdate = new HashMap<>();
+
+    private final Timer logUpdateTimer = new Timer(LOG_UPDATE_DELAY,
+            new ActionListener() {
+
+                @Override
+                public void actionPerformed(ActionEvent arg0) {
+                    sendLogs();
+                }
+            });
+
+    /**
      * Thread group for the executor.
      */
     private ThreadGroup threadGroup;
@@ -230,6 +254,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
                 Executors.newScheduledThreadPool(1);
         scheduler.scheduleAtFixedRate(new StatusUpdater(),
                 0, STATUS_UPDATE_PERIOD, TimeUnit.SECONDS);
+        logUpdateTimer.start();
     }
 
     @Override
@@ -523,9 +548,45 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
 
     @Override
     public void appendLog(final int id, final String logToAppend) {
-        logger.debug("Updating log for " + id);
-        logger.trace(id + ": " + logToAppend);
-        queueManager.appendJobLog(id, requireNonNull(logToAppend));
+        synchronized (logUpdateTimer) {
+            logger.trace(id + ": " + logToAppend);
+            String existing = logsToUpdate.getOrDefault(id, "");
+            logsToUpdate.put(id, existing + logToAppend);
+        }
+    }
+
+    /**
+     * Performs the actual sending of logs; activated on a timer.
+     */
+    private void sendLogs() {
+        // Take a copy of the logs to update to allow processing to continue
+        Map<Integer, String> localLogsToUpdate;
+        synchronized (logUpdateTimer) {
+            localLogsToUpdate = logsToUpdate;
+            logsToUpdate = new HashMap<>();
+            logUpdateTimer.stop();
+        }
+
+        // Perform the updates using the local copy
+        for (int jobId : localLogsToUpdate.keySet()) {
+            String message = localLogsToUpdate.get(jobId);
+            try {
+                logger.debug("Updating log for " + jobId);
+                queueManager.appendJobLog(jobId, message);
+            } catch (Exception e) {
+                logger.debug("Error updating log - will be retried", e);
+                // On failure, re-prepend the message to the logs to be updated
+                // again later.
+                synchronized (logUpdateTimer) {
+                    String existing = logsToUpdate.getOrDefault(jobId, "");
+                    logsToUpdate.put(jobId, message + existing);
+                }
+            }
+        }
+
+        // Restart the timer after the attempts have been done to avoid
+        // thrashing
+        logUpdateTimer.start();
     }
 
     @Override

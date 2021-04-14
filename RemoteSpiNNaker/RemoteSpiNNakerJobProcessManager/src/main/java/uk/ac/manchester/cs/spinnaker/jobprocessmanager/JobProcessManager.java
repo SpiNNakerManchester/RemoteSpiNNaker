@@ -100,11 +100,6 @@ public class JobProcessManager {
         private final Timer sendTimer;
 
         /**
-         * An object to synchronise on when sending data.
-         */
-        private final Integer sendSync = new Integer(0);
-
-        /**
          * Make a log writer that uploads the log every half second.
          */
         UploadingJobManagerLogWriter() {
@@ -120,12 +115,10 @@ public class JobProcessManager {
          * Send the log now if changed.
          */
         private void sendLog() {
-            synchronized (sendSync) {
+            synchronized (this) {
                 String toWrite = null;
-                synchronized (this) {
-                    if (isPopulated()) {
-                        toWrite = takeCache();
-                    }
+                if (isPopulated()) {
+                    toWrite = takeCache();
                 }
                 if (toWrite != null && !toWrite.isEmpty()) {
                     log("Sending cached data to job manager");
@@ -148,7 +141,7 @@ public class JobProcessManager {
 
         @Override
         public void stop() {
-            synchronized (sendSync) {
+            synchronized (this) {
                 sendTimer.stop();
             }
         }
