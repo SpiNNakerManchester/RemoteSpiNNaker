@@ -60,6 +60,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import jdk.internal.jline.internal.Log;
 import uk.ac.manchester.cs.spinnaker.job.JobMachineAllocated;
 import uk.ac.manchester.cs.spinnaker.job.JobManagerInterface;
 import uk.ac.manchester.cs.spinnaker.job.RemoteStackTrace;
@@ -578,10 +579,13 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         synchronized (logTimerAction) {
             // Take a copy of the logs to update to allow processing to continue
             Map<Integer, String> localLogsToUpdate;
+            logUpdateTimer.stop();
             synchronized (logUpdateTimer) {
                 localLogsToUpdate = logsToUpdate;
                 logsToUpdate = new HashMap<>();
-                logUpdateTimer.stop();
+                if (localLogsToUpdate.size() > 0) {
+                    logger.info("Job log update in progress");
+                }
             }
 
             // Perform the updates using the local copy
@@ -604,6 +608,9 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
             // Restart the timer after the attempts have been done to avoid
             // thrashing
             logUpdateTimer.start();
+            if (localLogsToUpdate.size() > 0) {
+                logger.info("Log update complete");
+            }
         }
     }
 
