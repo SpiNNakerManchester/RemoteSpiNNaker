@@ -593,7 +593,10 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
                 try {
                     logger.debug("Updating log for " + jobId);
                     queueManager.appendJobLog(jobId, message);
-                } catch (Exception e) {
+
+                // We catch throwable here because we really don't want this
+                // to stop it working in the future
+                } catch (Throwable e) {
                     logger.debug("Error updating log - will be retried", e);
                     // On failure, re-prepend the message to the logs to be
                     // updated again later.
