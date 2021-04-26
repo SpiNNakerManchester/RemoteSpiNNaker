@@ -35,7 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <xen.version>6.2.0-3.1</xen.version>
         <ini4j.version>0.5.4</ini4j.version>
         <jgit.version>5.7.0.202003110725-r</jgit.version>
-        <jarchivelib.version>1.0.0</jarchivelib.version>
+        <jarchivelib.version>1.1.0</jarchivelib.version>
         <springsecurity.version>5.4.6</springsecurity.version>
         <spring.version>5.2.6.RELEASE</spring.version>
         <cxf.version>3.3.6</cxf.version>
