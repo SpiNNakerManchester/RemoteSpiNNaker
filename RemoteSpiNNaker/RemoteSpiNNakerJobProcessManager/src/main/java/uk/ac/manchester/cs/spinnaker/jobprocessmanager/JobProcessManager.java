@@ -19,6 +19,7 @@ package uk.ac.manchester.cs.spinnaker.jobprocessmanager;
 import static java.lang.String.format;
 import static java.lang.System.exit;
 import static java.util.Objects.requireNonNull;
+import static java.io.File.createTempFile;
 import static org.apache.commons.io.FileUtils.deleteQuietly;
 import static org.eclipse.jgit.util.FileUtils.createTempDir;
 import static uk.ac.manchester.cs.spinnaker.jobprocessmanager.RemoteSpiNNakerAPI.createJobManager;
@@ -30,6 +31,7 @@ import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -70,9 +72,9 @@ public class JobProcessManager {
     private static final int UPDATE_INTERVAL = 500;
 
     /**
-     * The maximum size of cached log messages before a forced send is done.
+     * The maximum size of the log before the log is simply saved to a file.
      */
-    private static final int MAX_LOG_CACHED = 1000000;
+    private static final int MAX_LOG_STREAMED = 1000000;
 
     /**
      * Default parameters for getting a machine.
@@ -100,15 +102,34 @@ public class JobProcessManager {
         private final Timer sendTimer;
 
         /**
-         * Make a log writer that uploads the log every half second.
+         * The size of the log so far.
          */
-        UploadingJobManagerLogWriter() {
+        private int logSize;
+
+        /**
+         * The file that the log is being written to locally.
+         */
+        private final File logFile;
+
+        /**
+         * The log file to store logs in as well.
+         */
+        private final FileWriter logFileWriter;
+
+        /**
+         * Make a log writer that uploads the log every half second.
+         * @throws IOException If there is an error creating a log file.
+         */
+        UploadingJobManagerLogWriter() throws IOException {
             sendTimer = new Timer(UPDATE_INTERVAL, new ActionListener() {
                 @Override
                 public void actionPerformed(final ActionEvent e) {
                     sendLog();
                 }
             });
+            logFile = createTempFile("output_", ".log", workingDirectory);
+            logFileWriter = new FileWriter(logFile);
+            log("Output will be written to " + logFile.getName());
         }
 
         /**
@@ -121,21 +142,43 @@ public class JobProcessManager {
                     toWrite = takeCache();
                 }
                 if (toWrite != null && !toWrite.isEmpty()) {
-                    log("Sending cached data to job manager");
-                    jobManager.appendLog(job.getId(), toWrite);
+                    try {
+                        jobManager.appendLog(job.getId(), toWrite);
+                    } catch (Throwable e) {
+                        log("Error sending log");
+                        log(e);
+                    }
                 }
             }
         }
 
         @Override
-        public void append(final String logMsg) {
-            log("Process Output: " + logMsg);
-            synchronized (this) {
-                sendTimer.restart();
-                appendCache(logMsg);
-                if (cacheSize() >= MAX_LOG_CACHED) {
-                    sendLog();
+        public void append(final String logMsg) throws IOException {
+            logFileWriter.append(logMsg);
+            if (logSize < MAX_LOG_STREAMED) {
+                int nextSize = logSize + logMsg.length();
+                if (nextSize < MAX_LOG_STREAMED) {
+                    // The log is still small enough after adding the new
+                    // message, add it to the streamed data
+                    synchronized (this) {
+                        sendTimer.restart();
+                        appendCache(logMsg);
+                    }
+                } else {
+                    // The log has only just become too big so report it now
+                    log("Output has become too large to be streamed.  The rest "
+                        + "of the log will be available in "
+                        + logFile.getName());
+                    // Still send things that have been done up to this point
+                    synchronized (this) {
+                        sendTimer.stop();
+                        sendLog();
+                    }
                 }
+
+                // We can update in the if statement as we don't need this once
+                // it is too big
+                logSize = nextSize;
             }
         }
 
@@ -203,6 +246,11 @@ public class JobProcessManager {
     private String projectId;
 
     /**
+     * The working directory of the job.
+     */
+    private File workingDirectory;
+
+    /**
      * Create an object that manages the running of a single job.
      *
      * @param serverUrlParam
@@ -247,7 +295,7 @@ public class JobProcessManager {
             projectId = new File(job.getCollabId()).getName();
 
             // Create a temporary location for the job
-            final File workingDirectory = createTempDir("job", ".tmp", null);
+            workingDirectory = createTempDir("job", ".tmp", null);
 
             // Download the setup script
             String downloadUrl = serverUrl + JobManagerInterface.PATH
@@ -430,7 +478,7 @@ public class JobProcessManager {
      *
      * @return The log writer
      */
-    private JobManagerLogWriter getLogWriter() {
+    private JobManagerLogWriter getLogWriter() throws IOException {
         if (!liveUploadOutput) {
             return new SimpleJobManagerLogWriter();
         }
