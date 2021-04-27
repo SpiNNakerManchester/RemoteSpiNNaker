@@ -437,8 +437,6 @@ public class JobProcessManager {
      * Sort out the parameters to a job. Includes downloading any necessary
      * files.
      *
-     * @param workingDirectory
-     *            The working directory for the job, used to write files.
      * @param setupScript
      *            The setup script
      * @return Description of the parameters.
@@ -489,7 +487,6 @@ public class JobProcessManager {
     /**
      * Process the outcome of the job execution.
      *
-     * @param workingDirectory The directory where the job was run
      * @param process The process of the job
      * @param log The log message of the job
      * @throws IOException If there is an error reading or writing files
