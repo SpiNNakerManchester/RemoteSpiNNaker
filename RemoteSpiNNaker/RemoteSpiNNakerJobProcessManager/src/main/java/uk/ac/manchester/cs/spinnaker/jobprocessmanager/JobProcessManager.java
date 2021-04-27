@@ -306,7 +306,7 @@ public class JobProcessManager {
 
 
             final JobParameters parameters = getJobParameters(
-                    workingDirectory, setupScript.getAbsolutePath());
+                    setupScript.getAbsolutePath());
 
             // Create a process to process the request
             log("Creating process from parameters");
@@ -325,7 +325,7 @@ public class JobProcessManager {
             logWriter.stop();
 
             // Get the exit status
-            processOutcome(workingDirectory, process, logWriter.getLog());
+            processOutcome(process, logWriter.getLog());
         } catch (final Exception error) {
             log(error);
             reportFailure(error);
@@ -447,8 +447,8 @@ public class JobProcessManager {
      *             unreadable or the job being unsupported on the current
      *             architectural configuration.
      */
-    private JobParameters getJobParameters(final File workingDirectory,
-            final String setupScript) throws IOException {
+    private JobParameters getJobParameters(final String setupScript)
+            throws IOException {
         final Map<String, JobParametersFactoryException> errors =
                 new HashMap<>();
         final JobParameters parameters = JobParametersFactory
@@ -477,6 +477,7 @@ public class JobProcessManager {
      * Get the log writer.
      *
      * @return The log writer
+     * @throws IOException if there is an error opening the log writer
      */
     private JobManagerLogWriter getLogWriter() throws IOException {
         if (!liveUploadOutput) {
@@ -493,8 +494,7 @@ public class JobProcessManager {
      * @param log The log message of the job
      * @throws IOException If there is an error reading or writing files
      */
-    private void processOutcome(final File workingDirectory,
-            final JobProcess<?> process, final String log)
+    private void processOutcome(final JobProcess<?> process, final String log)
             throws IOException {
         final Status status = process.getStatus();
         log("Process has finished with status " + status);
