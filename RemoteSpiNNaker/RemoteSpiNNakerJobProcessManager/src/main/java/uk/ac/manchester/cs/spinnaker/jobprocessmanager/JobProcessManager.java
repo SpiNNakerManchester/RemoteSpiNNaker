@@ -155,6 +155,7 @@ public class JobProcessManager {
         @Override
         public void append(final String logMsg) throws IOException {
             logFileWriter.append(logMsg);
+            logFileWriter.flush();
             if (logSize < MAX_LOG_STREAMED) {
                 int nextSize = logSize + logMsg.length();
                 if (nextSize < MAX_LOG_STREAMED) {
@@ -166,9 +167,10 @@ public class JobProcessManager {
                     }
                 } else {
                     // The log has only just become too big so report it now
-                    log("Output has become too large to be streamed.  The rest "
-                        + "of the log will be available in "
-                        + logFile.getName());
+                    appendCache("Output has become too large to be streamed."
+                        + " The rest of the log will be available in "
+                        + logFile.getName()
+                        + " when the run has completed.");
                     // Still send things that have been done up to this point
                     synchronized (this) {
                         sendTimer.stop();
