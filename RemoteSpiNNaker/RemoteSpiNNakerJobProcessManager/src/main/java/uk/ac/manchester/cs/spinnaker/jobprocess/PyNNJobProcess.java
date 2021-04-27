@@ -303,7 +303,11 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             StringWriter stringWriter = new StringWriter();
             PrintWriter printWriter = new PrintWriter(stringWriter);
             e.printStackTrace(printWriter);
-            logWriter.append(stringWriter.toString());
+            try {
+                logWriter.append(stringWriter.toString());
+            } catch (IOException ioEx) {
+                ioEx.printStackTrace();
+            }
             e.printStackTrace();
             error = e;
             status = Error;
