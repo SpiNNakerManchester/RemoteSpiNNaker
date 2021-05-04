@@ -14,12 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package uk.ac.manchester.cs.spinnaker.job.pynn;
+package uk.ac.manchester.cs.spinnaker.job_parameters;
 
 import java.util.Map;
-
-import uk.ac.manchester.cs.spinnaker.job.JobParameters;
-import uk.ac.manchester.cs.spinnaker.job.JobParametersTypeName;
 
 /**
  * Represents the parameters required for a PyNN job.

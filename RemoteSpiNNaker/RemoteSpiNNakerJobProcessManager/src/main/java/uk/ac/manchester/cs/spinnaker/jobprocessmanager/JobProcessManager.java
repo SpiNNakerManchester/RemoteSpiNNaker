@@ -45,14 +45,14 @@ import java.util.Map;
 import javax.swing.Timer;
 
 import uk.ac.manchester.cs.spinnaker.job.JobManagerInterface;
-import uk.ac.manchester.cs.spinnaker.job.JobParameters;
 import uk.ac.manchester.cs.spinnaker.job.RemoteStackTrace;
 import uk.ac.manchester.cs.spinnaker.job.Status;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.DataItem;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
-import uk.ac.manchester.cs.spinnaker.job.pynn.PyNNJobParameters;
+import uk.ac.manchester.cs.spinnaker.job_parameters.JobParameters;
 import uk.ac.manchester.cs.spinnaker.job_parameters.JobParametersFactory;
 import uk.ac.manchester.cs.spinnaker.job_parameters.JobParametersFactoryException;
+import uk.ac.manchester.cs.spinnaker.job_parameters.PyNNJobParameters;
 import uk.ac.manchester.cs.spinnaker.jobprocess.JobProcess;
 import uk.ac.manchester.cs.spinnaker.jobprocess.JobProcessFactory;
 import uk.ac.manchester.cs.spinnaker.jobprocess.LogWriter;

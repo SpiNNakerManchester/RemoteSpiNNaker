@@ -65,7 +65,7 @@ import org.ini4j.Profile.Section;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import uk.ac.manchester.cs.spinnaker.job.Status;
-import uk.ac.manchester.cs.spinnaker.job.pynn.PyNNJobParameters;
+import uk.ac.manchester.cs.spinnaker.job_parameters.PyNNJobParameters;
 import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
 import uk.ac.manchester.cs.spinnaker.utils.ThreadUtils;
 

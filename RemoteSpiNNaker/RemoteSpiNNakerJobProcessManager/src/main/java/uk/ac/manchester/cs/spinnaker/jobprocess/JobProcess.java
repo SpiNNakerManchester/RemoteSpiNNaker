@@ -19,8 +19,8 @@ package uk.ac.manchester.cs.spinnaker.jobprocess;
 import java.io.File;
 import java.util.List;
 
-import uk.ac.manchester.cs.spinnaker.job.JobParameters;
 import uk.ac.manchester.cs.spinnaker.job.Status;
+import uk.ac.manchester.cs.spinnaker.job_parameters.JobParameters;
 import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
 
 /**

@@ -14,7 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+package uk.ac.manchester.cs.spinnaker.job_parameters;
+
 /**
- * The description of parameters for SpiNNaker jobs that use PyNN.
+ * A type of Job to be executed. Note that the implementation must be annotated
+ * with {@link JobParametersTypeName} if it is to be serialized or deserialized.
  */
-package uk.ac.manchester.cs.spinnaker.job.pynn;
+public interface JobParameters {
+    // No methods defined
+}
