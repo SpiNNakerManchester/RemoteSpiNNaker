@@ -189,6 +189,20 @@ public class JobProcessManager {
             synchronized (this) {
                 sendTimer.stop();
             }
+            try {
+                logFileWriter.close();
+            } catch (IOException e) {
+                log("Error closing log file");
+                log(e);
+            }
+        }
+
+        /**
+         * Get the log file written to.
+         * @return The log file written to.
+         */
+        public File getLogFile() {
+            return logFile;
         }
     }
 
@@ -502,6 +516,10 @@ public class JobProcessManager {
 
         final List<File> outputs = process.getOutputs();
         final List<String> outputsAsStrings = new ArrayList<>();
+        if (logWriter instanceof UploadingJobManagerLogWriter) {
+            outputs.add(((UploadingJobManagerLogWriter) logWriter)
+                    .getLogFile());
+        }
         for (final File output : outputs) {
             if (isLocal) {
                 outputsAsStrings.add(output.getAbsolutePath());
