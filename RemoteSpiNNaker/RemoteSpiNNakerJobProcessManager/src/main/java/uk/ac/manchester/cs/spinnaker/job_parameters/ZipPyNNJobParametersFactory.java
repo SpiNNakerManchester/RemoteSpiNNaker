@@ -197,7 +197,7 @@ class ZipPyNNJobParametersFactory extends JobParametersFactory {
             script = command;
         }
 
-        return new PyNNJobParameters(workingDirectory.getAbsolutePath(),
-                setupScript, script, job.getHardwareConfig());
+        return new PyNNJobParameters(workingDirectory, setupScript, script,
+                job.getHardwareConfig());
     }
 }

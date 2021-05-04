@@ -463,6 +463,8 @@ public class JobProcessManager {
                     "The job did not appear to be supported on this system");
         }
 
+        workingDirectory = parameters.getWorkingDirectory();
+
         // Get any requested input files
         if (job.getInputData() != null) {
             for (final DataItem input : job.getInputData()) {

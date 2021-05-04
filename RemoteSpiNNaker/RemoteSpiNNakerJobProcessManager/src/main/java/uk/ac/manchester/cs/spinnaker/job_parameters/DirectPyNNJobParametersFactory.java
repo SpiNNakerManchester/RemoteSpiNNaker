@@ -71,8 +71,7 @@ class DirectPyNNJobParametersFactory extends JobParametersFactory {
             writer.print(job.getCode());
         }
 
-        return new PyNNJobParameters(workingDirectory.getAbsolutePath(),
-                setupScript, DEFAULT_SCRIPT_NAME + SYSTEM_ARG,
-                job.getHardwareConfig());
+        return new PyNNJobParameters(workingDirectory, setupScript,
+                DEFAULT_SCRIPT_NAME + SYSTEM_ARG, job.getHardwareConfig());
     }
 }

@@ -224,7 +224,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             final PyNNJobParameters parameters, final LogWriter logWriter) {
         try {
             status = Running;
-            workingDirectory = new File(parameters.getWorkingDirectory());
+            workingDirectory = parameters.getWorkingDirectory();
 
             // Run the setup
             final int setupValue = runSetup(parameters, logWriter);

@@ -110,7 +110,7 @@ class GitPyNNJobParametersFactory extends JobParametersFactory {
             script = command;
         }
 
-        return new PyNNJobParameters(cloneDir.getAbsolutePath(),
-                setupScript, script, job.getHardwareConfig());
+        return new PyNNJobParameters(cloneDir, setupScript, script,
+                job.getHardwareConfig());
     }
 }
