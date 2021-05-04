@@ -127,7 +127,7 @@ public class JobProcessManager {
                     sendLog();
                 }
             });
-            logFile = createTempFile("output_", ".log", workingDirectory);
+            logFile = createTempFile("output_", ".txt", workingDirectory);
             logFileWriter = new FileWriter(logFile);
             log("Output will be written to " + logFile.getName());
         }
