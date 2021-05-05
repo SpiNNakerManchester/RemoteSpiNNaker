@@ -236,8 +236,10 @@ public interface JobManagerInterface {
      *            The ID of the project owning the job.
      * @param id
      *            The job ID
+     * @param baseDirectory
+     *            The directory containing the file.
      * @param output
-     *            The name of the file to write to.
+     *            The full path of the file to write to.
      * @param input
      *            The contents of the file, streamed.
      */
