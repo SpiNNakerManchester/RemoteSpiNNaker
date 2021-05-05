@@ -17,7 +17,6 @@
 package uk.ac.manchester.cs.spinnaker.output;
 
 import static java.lang.System.currentTimeMillis;
-import static java.nio.file.Files.move;
 import static java.nio.file.Files.probeContentType;
 import static java.util.concurrent.Executors.newScheduledThreadPool;
 import static java.util.concurrent.TimeUnit.DAYS;
@@ -25,6 +24,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static org.apache.commons.io.FileUtils.copyInputStreamToFile;
 import static org.slf4j.LoggerFactory.getLogger;
 import static uk.ac.manchester.cs.spinnaker.rest.utils.RestClientUtils.createBearerClient;
 
@@ -32,13 +32,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -243,44 +241,33 @@ public class OutputManagerImpl implements OutputManager {
     }
 
     @Override
-    public List<DataItem> addOutputs(final String projectId, final int id,
-            final File baseDirectory, final Collection<File> outputs)
-            throws IOException {
-        if (outputs == null) {
-            return null;
-        }
-
+    public DataItem addOutput(final String projectId, final int id,
+            final String baseDirectory, final String output,
+            final InputStream input) throws IOException {
         final String pId = new File(projectId).getName();
-        final int pathStart = baseDirectory.getAbsolutePath().length();
+        final int pathStart = baseDirectory.length();
         final File projectDirectory = getProjectDirectory(projectId);
         final File idDirectory = new File(projectDirectory, String.valueOf(id));
 
         try (JobLock op = new JobLock(idDirectory)) {
-            final List<DataItem> outputData = new ArrayList<>();
-            for (final File output : outputs) {
-                if (!output.getAbsolutePath()
-                        .startsWith(baseDirectory.getAbsolutePath())) {
-                    throw new IOException("Output file " + output
-                            + " is outside base directory " + baseDirectory);
-                }
-
-                String outputPath = output.getAbsolutePath()
-                        .substring(pathStart).replace('\\', '/');
-                if (outputPath.startsWith("/")) {
-                    outputPath = outputPath.substring(1);
-                }
-
-                final File newOutput = new File(idDirectory, outputPath);
-                newOutput.getParentFile().mkdirs();
-                move(output.toPath(), newOutput.toPath());
-                final URL outputUrl = new URL(baseServerUrl,
-                        "output/" + pId + "/" + id + "/" + outputPath);
-                outputData.add(new DataItem(outputUrl.toExternalForm()));
-                logger.debug(
-                        "New output " + newOutput + " mapped to " + outputUrl);
+            if (!output.startsWith(baseDirectory)) {
+                throw new IOException("Output file " + output
+                        + " is outside base directory " + baseDirectory);
             }
 
-            return outputData;
+            String outputPath = output.substring(pathStart).replace('\\', '/');
+            if (outputPath.startsWith("/")) {
+                outputPath = outputPath.substring(1);
+            }
+
+            final File newOutput = new File(idDirectory, outputPath);
+            newOutput.getParentFile().mkdirs();
+            copyInputStreamToFile(input, newOutput);
+            final URL outputUrl = new URL(baseServerUrl,
+                    "output/" + pId + "/" + id + "/" + outputPath);
+            logger.debug("New output " + newOutput + " mapped to " + outputUrl);
+
+            return new DataItem(outputUrl.toExternalForm());
         }
     }
 

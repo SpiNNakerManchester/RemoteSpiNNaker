@@ -16,21 +16,13 @@
  */
 package uk.ac.manchester.cs.spinnaker.jobmanager;
 
-import static java.io.File.createTempFile;
 import static java.lang.Math.ceil;
 import static java.util.Objects.requireNonNull;
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
-import static org.apache.commons.io.FileUtils.copyInputStreamToFile;
-import static org.apache.commons.io.FileUtils.forceDelete;
-import static org.apache.commons.io.FileUtils.forceMkdir;
-import static org.apache.commons.io.FileUtils.forceMkdirParent;
-import static org.apache.commons.io.FileUtils.listFiles;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -191,9 +183,9 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     private final Map<String, Job> executorJobId = new HashMap<>();
 
     /**
-     * Job ID -> Directory of temporary output files.
+     * Job ID -> Output data items.
      */
-    private final Map<Integer, File> jobOutputTempFiles = new HashMap<>();
+    private final Map<Integer, List<DataItem>> jobOutputData = new HashMap<>();
 
     /**
      * Job ID -> number of cores needed by job.
@@ -618,61 +610,24 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
 
     @Override
     public void addOutput(final String projectId, final int id,
-            final String output, final InputStream input) {
+            final String baseDirectory, final String output,
+            final InputStream input) {
         requireNonNull(output);
         requireNonNull(input);
         try {
-            if (!jobOutputTempFiles.containsKey(id)) {
-                final File tempOutputDir = createTempFile("jobOutput", ".tmp");
-                forceDelete(tempOutputDir);
-                forceMkdir(tempOutputDir);
-                jobOutputTempFiles.put(id, tempOutputDir);
+            DataItem item = outputManager.addOutput(
+                    projectId, id, baseDirectory, output, input);
+            synchronized (jobOutputData) {
+                List<DataItem> items = jobOutputData.get(id);
+                if (items == null) {
+                    items = new ArrayList<>();
+                    jobOutputData.put(id, items);
+                }
+                items.add(item);
             }
-        } catch (final IOException e) {
-            logger.error("Error creating temporary output directory for " + id,
-                    e);
-            throw new WebApplicationException(INTERNAL_SERVER_ERROR);
+        } catch (IOException e) {
+            throw new WebApplicationException(e, Status.INTERNAL_SERVER_ERROR);
         }
-
-        final File outputFile = new File(jobOutputTempFiles.get(id), output);
-        try {
-            forceMkdirParent(outputFile);
-            copyInputStreamToFile(input, outputFile);
-        } catch (final IOException e) {
-            logger.error("Error writing file " + outputFile + " for job " + id,
-                    e);
-            throw new WebApplicationException(INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    /**
-     * Get the output data items for a job from a list of outputs.
-     *
-     * @param projectId The ID of the project of the job
-     * @param id The ID of the job
-     * @param baseFile The base file location for the files
-     * @param outputs The output files
-     * @return The list of data items.
-     * @throws IOException If there was an error dealing with a file.
-     */
-    private List<DataItem> getOutputFiles(final String projectId, final int id,
-            final String baseFile, final List<String> outputs)
-            throws IOException {
-        final List<DataItem> outputItems = new ArrayList<>();
-        if (outputs != null) {
-            final List<File> outputFiles = new ArrayList<>();
-            for (final String filename : outputs) {
-                outputFiles.add(new File(filename));
-            }
-            outputItems.addAll(outputManager.addOutputs(projectId, id,
-                    new File(baseFile), outputFiles));
-        }
-        final File directory = jobOutputTempFiles.remove(id);
-        if (directory != null) {
-            outputItems.addAll(outputManager.addOutputs(projectId, id,
-                    directory, listFiles(directory, null, true)));
-        }
-        return outputItems;
     }
 
     @Override
@@ -732,6 +687,21 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     }
 
     /**
+     * Get the output data items for a job.
+     *
+     * @param id The ID of the job
+     * @return The list of data items stored for the job
+     */
+    private List<DataItem> getDataItems(final int id) {
+        synchronized (jobOutputData) {
+            if (jobOutputData.containsKey(id)) {
+                return jobOutputData.remove(id);
+            }
+            return new ArrayList<>();
+        }
+    }
+
+    /**
      * Get the resources used by a job.
      *
      * @param id The ID of a job
@@ -750,28 +720,18 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     }
 
     @Override
-    public void setJobFinished(final String projectId, final int id,
-            final String logToAppend, final String baseDirectory,
-            final List<String> outputs) {
-        requireNonNull(projectId);
+    public void setJobFinished(final int id, final String logToAppend) {
         requireNonNull(logToAppend);
-        requireNonNull(baseDirectory);
-        requireNonNull(outputs);
         logger.info("Marking job " + id + " as finished");
         releaseAllocatedMachines(id);
 
         // Do these before anything that can throw
         final long resourceUsage = getResourceUsage(id);
         final ObjectNode prov = getProvenance(id);
+        final List<DataItem> data = getDataItems(id);
         final String finalLog = makeFinalLog(id, logToAppend);
 
-        try {
-            queueManager.setJobFinished(id, finalLog,
-                    getOutputFiles(projectId, id, baseDirectory, outputs),
-                    resourceUsage, prov);
-        } catch (final IOException e) {
-            logger.error("Error creating URLs while updating job", e);
-        }
+        queueManager.setJobFinished(id, finalLog, data, resourceUsage, prov);
     }
 
     /**
@@ -816,15 +776,11 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     }
 
     @Override
-    public void setJobError(final String projectId, final int id,
+    public void setJobError(final int id,
             final String error, final String logToAppend,
-            final String baseDirectory, final List<String> outputs,
             final RemoteStackTrace stackTrace) {
-        requireNonNull(projectId);
         requireNonNull(error);
         requireNonNull(logToAppend);
-        requireNonNull(baseDirectory);
-        requireNonNull(outputs);
         requireNonNull(stackTrace);
 
         logger.info("Marking job " + id + " as error");
@@ -835,15 +791,11 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         final ObjectNode prov = getProvenance(id);
         final Exception exception =
                 reconstructRemoteException(error, stackTrace);
+        final List<DataItem> data = getDataItems(id);
         final String finalLog = makeFinalLog(id, logToAppend);
 
-        try {
-            queueManager.setJobError(id, finalLog,
-                    getOutputFiles(projectId, id, baseDirectory, outputs),
-                    exception, resourceUsage, prov);
-        } catch (final IOException e) {
-            logger.error("Error creating URLs while updating job", e);
-        }
+        queueManager.setJobError(id, finalLog, data, exception, resourceUsage,
+                prov);
     }
 
     /**
@@ -898,20 +850,10 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
                 releaseAllocatedMachines(id);
                 final long resourceUsage = getResourceUsage(id);
                 final ObjectNode prov = getProvenance(id);
-                try {
-                    final String projectId =
-                        new File(job.getCollabId()).getName();
-                    queueManager.setJobError(id, logToAppend,
-                            getOutputFiles(projectId, id, null, null),
-                            new Exception("Job did not finish cleanly"),
-                            resourceUsage, prov);
-                } catch (final IOException e) {
-                    logger.error("Error creating URLs while updating job", e);
-                    queueManager.setJobError(id, logToAppend,
-                            new ArrayList<DataItem>(),
-                            new Exception("Job did not finish cleanly"),
-                            resourceUsage, prov);
-                }
+                final List<DataItem> data = getDataItems(id);
+                queueManager.setJobError(id, logToAppend, data,
+                        new Exception("Job did not finish cleanly"),
+                        resourceUsage, prov);
             }
         } else {
             logger.error(

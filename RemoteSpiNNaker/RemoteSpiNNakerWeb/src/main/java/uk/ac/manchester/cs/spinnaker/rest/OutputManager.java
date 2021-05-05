@@ -19,10 +19,8 @@ package uk.ac.manchester.cs.spinnaker.rest;
 import static javax.ws.rs.core.MediaType.MEDIA_TYPE_WILDCARD;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
+import java.io.InputStream;
 
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -40,24 +38,27 @@ import uk.ac.manchester.cs.spinnaker.job.nmpi.DataItem;
  */
 @Path("/output")
 public interface OutputManager {
+
     /**
-     * Adds outputs to be hosted for a given id, returning a matching list of
-     * URLs on which the files are hosted.
+     * Adds an output to be hosted within the given id, return a URL on which
+     * the file is hosted.
      *
      * @param projectId
      *            The id of the project
      * @param id
      *            The id of the job
-     * @param rootFile
-     *            The root directory containing all the files
-     * @param outputs
-     *            The files to add
-     * @return A list of DataItem instances for adding to the job
+     * @param baseDirectory
+     *            The root directory containing all the files at the source
+     * @param output
+     *            The absolute path of the file including the baseDirectory
+     * @param input
+     *            The input stream containing the data to be stored
+     * @return A DataItem instance to be added to the job
      * @throws IOException
      *            If anything goes wrong.
      */
-    List<DataItem> addOutputs(String projectId, int id, File rootFile,
-            Collection<File> outputs) throws IOException;
+    DataItem addOutput(String projectId, int id, String baseDirectory,
+            String output, InputStream input) throws IOException;
 
     /**
      * Gets a results file.

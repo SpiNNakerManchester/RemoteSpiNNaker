@@ -37,7 +37,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,7 +73,7 @@ public class JobProcessManager {
     /**
      * The maximum size of the log before the log is simply saved to a file.
      */
-    private static final int MAX_LOG_STREAMED = 1000000;
+    private static final int MAX_LOG_STREAMED = 10000;
 
     /**
      * Default parameters for getting a machine.
@@ -217,11 +216,6 @@ public class JobProcessManager {
     private final boolean deleteOnExit;
 
     /**
-     * True if the process is running on the same machine as the server.
-     */
-    private final boolean isLocal;
-
-    /**
      * The ID of the execution.
      */
     private final String executerId;
@@ -293,7 +287,6 @@ public class JobProcessManager {
         this.executerId = requireNonNull(
                 executerIdParam, "--executerId must be specified");
         this.deleteOnExit = deleteOnExitParam;
-        this.isLocal = isLocalParam;
         this.liveUploadOutput = liveUploadOutputParam;
         this.requestMachine = requestMachineParam;
         this.authToken = authTokenParam;
@@ -370,8 +363,8 @@ public class JobProcessManager {
             if (message == null) {
                 message = "No Error Message";
             }
-            jobManager.setJobError(projectId, job.getId(), message, log, "",
-                    new ArrayList<String>(), new RemoteStackTrace(error));
+            jobManager.setJobError(job.getId(), message, log,
+                    new RemoteStackTrace(error));
         } catch (final Throwable t) {
             // Exception while reporting exception...
             log(t);
@@ -515,19 +508,15 @@ public class JobProcessManager {
         log("Process has finished with status " + status);
 
         final List<File> outputs = process.getOutputs();
-        final List<String> outputsAsStrings = new ArrayList<>();
         if (logWriter instanceof UploadingJobManagerLogWriter) {
             outputs.add(((UploadingJobManagerLogWriter) logWriter)
                     .getLogFile());
         }
         for (final File output : outputs) {
-            if (isLocal) {
-                outputsAsStrings.add(output.getAbsolutePath());
-            } else {
-                try (InputStream input = new FileInputStream(output)) {
-                    jobManager.addOutput(projectId, job.getId(),
-                            output.getName(), input);
-                }
+            try (InputStream input = new FileInputStream(output)) {
+                jobManager.addOutput(projectId, job.getId(),
+                        workingDirectory.getAbsolutePath(),
+                        output.getAbsolutePath(), input);
             }
         }
 
@@ -543,13 +532,11 @@ public class JobProcessManager {
                 if (message == null) {
                     message = "No Error Message";
                 }
-                jobManager.setJobError(projectId, job.getId(), message, log,
-                        workingDirectory.getAbsolutePath(), outputsAsStrings,
+                jobManager.setJobError(job.getId(), message, log,
                         new RemoteStackTrace(error));
                 break;
             case Finished :
-                jobManager.setJobFinished(projectId, job.getId(), log,
-                        workingDirectory.getAbsolutePath(), outputsAsStrings);
+                jobManager.setJobFinished(job.getId(), log);
 
                 // Clean up
                 process.cleanup();
