@@ -76,6 +76,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <module name="FileLength"/>
     <module name="LineLength">
         <property name="ignorePattern" value="^(package|import) .*"/>
+        <property name="fileExtensions" value="java"/>
     </module>
 
     <!-- Checks for whitespace                               -->
