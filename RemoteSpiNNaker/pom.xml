@@ -44,7 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <pac4j.oidc.version>1.8.9</pac4j.oidc.version>
         <j2ee.version>8.0.1</j2ee.version>
         <commons.lang.version>3.12.0</commons.lang.version>
-        <commons.io.version>2.7</commons.io.version>
+        <commons.io.version>2.8.0</commons.io.version>
 		<jacoco.version>0.8.7</jacoco.version>
         <javadoc.version>3.2.0</javadoc.version>
     </properties>
