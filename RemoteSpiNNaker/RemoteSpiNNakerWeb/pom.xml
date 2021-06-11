@@ -154,7 +154,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-jaxrs</artifactId>
+            <artifactId>resteasy-core-spi</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-core</artifactId>
             <scope>runtime</scope>
         </dependency>
 

@@ -99,5 +99,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 			<groupId>org.jboss.resteasy</groupId>
 			<artifactId>resteasy-client</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>commons-codec</groupId>
+			<artifactId>commons-codec</artifactId>
+			<version>1.15</version>
+		</dependency>
 	</dependencies>
 </project>
