@@ -17,12 +17,13 @@
 package uk.ac.manchester.cs.spinnaker.jobprocessmanager;
 
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
-import static org.jboss.resteasy.util.Base64.encodeBytes;
+import static org.apache.commons.codec.binary.Base64.encodeBase64;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
 
+import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.ClientRequestContext;
 import javax.ws.rs.client.ClientRequestFilter;
 
@@ -56,6 +57,10 @@ public abstract class RemoteSpiNNakerAPI {
      */
     private static final long TIMEOUT = 60;
 
+    private static ResteasyClientBuilder clientBuilder() {
+        return (ResteasyClientBuilder) ClientBuilder.newBuilder();
+    }
+
     /**
      * How to talk to the main web site.
      *
@@ -70,7 +75,7 @@ public abstract class RemoteSpiNNakerAPI {
      */
     public static JobManagerInterface createJobManager(final String url,
             final String authToken) {
-        final ResteasyClientBuilder builder = new ResteasyClientBuilder()
+        final ResteasyClientBuilder builder = clientBuilder()
                 .connectTimeout(TIMEOUT, TimeUnit.SECONDS)
                 .readTimeout(TIMEOUT, TimeUnit.SECONDS);
         // TODO Add HTTPS trust store, etc.
@@ -95,7 +100,8 @@ public abstract class RemoteSpiNNakerAPI {
      */
     private static ClientRequestFilter
             getBasicAuthFilter(final String authToken) {
-        final String payload = "Basic " + encodeBytes(authToken.getBytes(UTF8));
+        final String payload = "Basic "
+                + encodeBase64(authToken.getBytes(UTF8));
         return new ClientRequestFilter() {
             @Override
             public void filter(final ClientRequestContext requestContext)

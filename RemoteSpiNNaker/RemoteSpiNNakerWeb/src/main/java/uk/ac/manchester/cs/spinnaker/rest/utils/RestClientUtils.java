@@ -28,6 +28,7 @@ import java.security.cert.CertificateException;
 import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLContext;
+import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.ClientRequestContext;
 import javax.ws.rs.client.ClientRequestFilter;
 
@@ -38,6 +39,7 @@ import org.apache.http.util.EncodingUtils;
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder.HostnameVerificationPolicy;
+import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
@@ -77,6 +79,15 @@ public abstract class RestClientUtils {
     private static final long TIMEOUT = 60;
 
     /**
+     * Create a client builder.
+     *
+     * @return A client builder.
+     */
+    public static ResteasyClientBuilder clientBuilder() {
+        return (ResteasyClientBuilder) ClientBuilder.newBuilder();
+    }
+
+    /**
      * Manufacture a client.
      *
      * @param url
@@ -86,7 +97,7 @@ public abstract class RestClientUtils {
     protected static ResteasyClient createRestClient(final URL url) {
         try {
             // Create and return a client
-            final ResteasyClient client = new ResteasyClientBuilder()
+            final ResteasyClient client = clientBuilder()
                     .connectTimeout(TIMEOUT, TimeUnit.SECONDS)
                     .readTimeout(TIMEOUT, TimeUnit.SECONDS)
                     .connectionPoolSize(MAX_CONNECTIONS)
@@ -138,7 +149,8 @@ public abstract class RestClientUtils {
      * @param url
      *            The URL of the REST service
      * @param authorizationHeader
-     *            The authorisation header to provide
+     *            The authorisation header to provide; if {@code null}, no
+     *            header will be provided.
      * @param clazz
      *            The interface to proxy
      * @param providers
@@ -146,8 +158,8 @@ public abstract class RestClientUtils {
      * @return The proxy instance
      */
     public static <T> T createClient(final URL url,
-            final String authorizationHeader,
-            final Class<T> clazz, final Object... providers) {
+            final String authorizationHeader, final Class<T> clazz,
+            final Object... providers) {
         final ResteasyClient client = createRestClient(url);
         for (final Object provider : providers) {
             client.register(provider);
@@ -155,15 +167,19 @@ public abstract class RestClientUtils {
         if (providers.length == 0) {
             client.register(new JacksonJsonProvider());
         }
-        return client.target(url.toString()).register(
-                new ClientRequestFilter() {
-
-            @Override
-            public void filter(final ClientRequestContext context)
-                    throws IOException {
-                context.getHeaders().add(WWW_AUTH_RESP, authorizationHeader);
-            }
-        }).proxy(clazz);
+        ResteasyWebTarget target = client.target(url.toString());
+        if (authorizationHeader != null) {
+            return target.register(new ClientRequestFilter() {
+                @Override
+                public void filter(final ClientRequestContext context)
+                        throws IOException {
+                    context.getHeaders().add(WWW_AUTH_RESP,
+                            authorizationHeader);
+                }
+            }).proxy(clazz);
+        } else {
+            return target.proxy(clazz);
+        }
     }
 
     /**
