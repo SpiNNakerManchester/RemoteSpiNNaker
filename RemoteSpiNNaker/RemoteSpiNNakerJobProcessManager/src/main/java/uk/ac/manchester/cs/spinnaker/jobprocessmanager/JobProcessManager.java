@@ -19,6 +19,7 @@ package uk.ac.manchester.cs.spinnaker.jobprocessmanager;
 import static java.lang.String.format;
 import static java.lang.System.exit;
 import static java.util.Objects.requireNonNull;
+import static java.io.File.createTempFile;
 import static org.apache.commons.io.FileUtils.deleteQuietly;
 import static org.eclipse.jgit.util.FileUtils.createTempDir;
 import static uk.ac.manchester.cs.spinnaker.jobprocessmanager.RemoteSpiNNakerAPI.createJobManager;
@@ -30,12 +31,12 @@ import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,14 +44,14 @@ import java.util.Map;
 import javax.swing.Timer;
 
 import uk.ac.manchester.cs.spinnaker.job.JobManagerInterface;
-import uk.ac.manchester.cs.spinnaker.job.JobParameters;
 import uk.ac.manchester.cs.spinnaker.job.RemoteStackTrace;
 import uk.ac.manchester.cs.spinnaker.job.Status;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.DataItem;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
-import uk.ac.manchester.cs.spinnaker.job.pynn.PyNNJobParameters;
+import uk.ac.manchester.cs.spinnaker.job_parameters.JobParameters;
 import uk.ac.manchester.cs.spinnaker.job_parameters.JobParametersFactory;
 import uk.ac.manchester.cs.spinnaker.job_parameters.JobParametersFactoryException;
+import uk.ac.manchester.cs.spinnaker.job_parameters.PyNNJobParameters;
 import uk.ac.manchester.cs.spinnaker.jobprocess.JobProcess;
 import uk.ac.manchester.cs.spinnaker.jobprocess.JobProcessFactory;
 import uk.ac.manchester.cs.spinnaker.jobprocess.LogWriter;
@@ -70,9 +71,9 @@ public class JobProcessManager {
     private static final int UPDATE_INTERVAL = 500;
 
     /**
-     * The maximum size of cached log messages before a forced send is done.
+     * The maximum size of the log before the log is simply saved to a file.
      */
-    private static final int MAX_LOG_CACHED = 1000000;
+    private static final int MAX_LOG_STREAMED = 10000;
 
     /**
      * Default parameters for getting a machine.
@@ -100,57 +101,107 @@ public class JobProcessManager {
         private final Timer sendTimer;
 
         /**
-         * An object to synchronise on when sending data.
+         * The size of the log so far.
          */
-        private final Integer sendSync = new Integer(0);
+        private int logSize;
+
+        /**
+         * The file that the log is being written to locally.
+         */
+        private final File logFile;
+
+        /**
+         * The log file to store logs in as well.
+         */
+        private final FileWriter logFileWriter;
 
         /**
          * Make a log writer that uploads the log every half second.
+         * @throws IOException If there is an error creating a log file.
          */
-        UploadingJobManagerLogWriter() {
+        UploadingJobManagerLogWriter() throws IOException {
             sendTimer = new Timer(UPDATE_INTERVAL, new ActionListener() {
                 @Override
                 public void actionPerformed(final ActionEvent e) {
                     sendLog();
                 }
             });
+            logFile = createTempFile("output_", ".txt", workingDirectory);
+            logFileWriter = new FileWriter(logFile);
+            log("Output will be written to " + logFile.getName());
         }
 
         /**
          * Send the log now if changed.
          */
         private void sendLog() {
-            synchronized (sendSync) {
+            synchronized (this) {
                 String toWrite = null;
-                synchronized (this) {
-                    if (isPopulated()) {
-                        toWrite = takeCache();
-                    }
+                if (isPopulated()) {
+                    toWrite = takeCache();
                 }
                 if (toWrite != null && !toWrite.isEmpty()) {
-                    log("Sending cached data to job manager");
-                    jobManager.appendLog(job.getId(), toWrite);
+                    try {
+                        jobManager.appendLog(job.getId(), toWrite);
+                    } catch (Throwable e) {
+                        log("Error sending log");
+                        log(e);
+                    }
                 }
             }
         }
 
         @Override
-        public void append(final String logMsg) {
-            log("Process Output: " + logMsg);
-            synchronized (this) {
-                sendTimer.restart();
-                appendCache(logMsg);
-                if (cacheSize() >= MAX_LOG_CACHED) {
-                    sendLog();
+        public void append(final String logMsg) throws IOException {
+            logFileWriter.append(logMsg);
+            logFileWriter.flush();
+            if (logSize < MAX_LOG_STREAMED) {
+                int nextSize = logSize + logMsg.length();
+                if (nextSize < MAX_LOG_STREAMED) {
+                    // The log is still small enough after adding the new
+                    // message, add it to the streamed data
+                    synchronized (this) {
+                        sendTimer.restart();
+                        appendCache(logMsg);
+                    }
+                } else {
+                    // The log has only just become too big so report it now
+                    appendCache("Output has become too large to be streamed."
+                        + " The rest of the log will be available in "
+                        + logFile.getName()
+                        + " when the run has completed.");
+                    // Still send things that have been done up to this point
+                    synchronized (this) {
+                        sendTimer.stop();
+                        sendLog();
+                    }
                 }
+
+                // We can update in the if statement as we don't need this once
+                // it is too big
+                logSize = nextSize;
             }
         }
 
         @Override
         public void stop() {
-            synchronized (sendSync) {
+            synchronized (this) {
                 sendTimer.stop();
             }
+            try {
+                logFileWriter.close();
+            } catch (IOException e) {
+                log("Error closing log file");
+                log(e);
+            }
+        }
+
+        /**
+         * Get the log file written to.
+         * @return The log file written to.
+         */
+        public File getLogFile() {
+            return logFile;
         }
     }
 
@@ -163,11 +214,6 @@ public class JobProcessManager {
      * True if the working directory should be cleaned on exit.
      */
     private final boolean deleteOnExit;
-
-    /**
-     * True if the process is running on the same machine as the server.
-     */
-    private final boolean isLocal;
 
     /**
      * The ID of the execution.
@@ -210,6 +256,11 @@ public class JobProcessManager {
     private String projectId;
 
     /**
+     * The working directory of the job.
+     */
+    private File workingDirectory;
+
+    /**
      * Create an object that manages the running of a single job.
      *
      * @param serverUrlParam
@@ -236,7 +287,6 @@ public class JobProcessManager {
         this.executerId = requireNonNull(
                 executerIdParam, "--executerId must be specified");
         this.deleteOnExit = deleteOnExitParam;
-        this.isLocal = isLocalParam;
         this.liveUploadOutput = liveUploadOutputParam;
         this.requestMachine = requestMachineParam;
         this.authToken = authTokenParam;
@@ -254,7 +304,7 @@ public class JobProcessManager {
             projectId = new File(job.getCollabId()).getName();
 
             // Create a temporary location for the job
-            final File workingDirectory = createTempDir("job", ".tmp", null);
+            workingDirectory = createTempDir("job", ".tmp", null);
 
             // Download the setup script
             String downloadUrl = serverUrl + JobManagerInterface.PATH
@@ -265,7 +315,7 @@ public class JobProcessManager {
 
 
             final JobParameters parameters = getJobParameters(
-                    workingDirectory, setupScript.getAbsolutePath());
+                    setupScript.getAbsolutePath());
 
             // Create a process to process the request
             log("Creating process from parameters");
@@ -284,7 +334,7 @@ public class JobProcessManager {
             logWriter.stop();
 
             // Get the exit status
-            processOutcome(workingDirectory, process, logWriter.getLog());
+            processOutcome(process, logWriter.getLog());
         } catch (final Exception error) {
             log(error);
             reportFailure(error);
@@ -313,8 +363,8 @@ public class JobProcessManager {
             if (message == null) {
                 message = "No Error Message";
             }
-            jobManager.setJobError(projectId, job.getId(), message, log, "",
-                    new ArrayList<String>(), new RemoteStackTrace(error));
+            jobManager.setJobError(job.getId(), message, log,
+                    new RemoteStackTrace(error));
         } catch (final Throwable t) {
             // Exception while reporting exception...
             log(t);
@@ -396,8 +446,6 @@ public class JobProcessManager {
      * Sort out the parameters to a job. Includes downloading any necessary
      * files.
      *
-     * @param workingDirectory
-     *            The working directory for the job, used to write files.
      * @param setupScript
      *            The setup script
      * @return Description of the parameters.
@@ -406,8 +454,8 @@ public class JobProcessManager {
      *             unreadable or the job being unsupported on the current
      *             architectural configuration.
      */
-    private JobParameters getJobParameters(final File workingDirectory,
-            final String setupScript) throws IOException {
+    private JobParameters getJobParameters(final String setupScript)
+            throws IOException {
         final Map<String, JobParametersFactoryException> errors =
                 new HashMap<>();
         final JobParameters parameters = JobParametersFactory
@@ -421,6 +469,8 @@ public class JobProcessManager {
             throw new IOException(
                     "The job did not appear to be supported on this system");
         }
+
+        workingDirectory = parameters.getWorkingDirectory();
 
         // Get any requested input files
         if (job.getInputData() != null) {
@@ -436,8 +486,9 @@ public class JobProcessManager {
      * Get the log writer.
      *
      * @return The log writer
+     * @throws IOException if there is an error opening the log writer
      */
-    private JobManagerLogWriter getLogWriter() {
+    private JobManagerLogWriter getLogWriter() throws IOException {
         if (!liveUploadOutput) {
             return new SimpleJobManagerLogWriter();
         }
@@ -447,27 +498,25 @@ public class JobProcessManager {
     /**
      * Process the outcome of the job execution.
      *
-     * @param workingDirectory The directory where the job was run
      * @param process The process of the job
      * @param log The log message of the job
      * @throws IOException If there is an error reading or writing files
      */
-    private void processOutcome(final File workingDirectory,
-            final JobProcess<?> process, final String log)
+    private void processOutcome(final JobProcess<?> process, final String log)
             throws IOException {
         final Status status = process.getStatus();
         log("Process has finished with status " + status);
 
         final List<File> outputs = process.getOutputs();
-        final List<String> outputsAsStrings = new ArrayList<>();
+        if (logWriter instanceof UploadingJobManagerLogWriter) {
+            outputs.add(((UploadingJobManagerLogWriter) logWriter)
+                    .getLogFile());
+        }
         for (final File output : outputs) {
-            if (isLocal) {
-                outputsAsStrings.add(output.getAbsolutePath());
-            } else {
-                try (InputStream input = new FileInputStream(output)) {
-                    jobManager.addOutput(projectId, job.getId(),
-                            output.getName(), input);
-                }
+            try (InputStream input = new FileInputStream(output)) {
+                jobManager.addOutput(projectId, job.getId(),
+                        workingDirectory.getAbsolutePath(),
+                        output.getAbsolutePath(), input);
             }
         }
 
@@ -483,13 +532,11 @@ public class JobProcessManager {
                 if (message == null) {
                     message = "No Error Message";
                 }
-                jobManager.setJobError(projectId, job.getId(), message, log,
-                        workingDirectory.getAbsolutePath(), outputsAsStrings,
+                jobManager.setJobError(job.getId(), message, log,
                         new RemoteStackTrace(error));
                 break;
             case Finished :
-                jobManager.setJobFinished(projectId, job.getId(), log,
-                        workingDirectory.getAbsolutePath(), outputsAsStrings);
+                jobManager.setJobFinished(job.getId(), log);
 
                 // Clean up
                 process.cleanup();

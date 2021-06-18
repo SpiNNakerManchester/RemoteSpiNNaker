@@ -28,9 +28,7 @@ import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
-import uk.ac.manchester.cs.spinnaker.job.JobParameters;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
-import uk.ac.manchester.cs.spinnaker.job.pynn.PyNNJobParameters;
 
 /**
  * A {@link JobParametersFactory} that downloads a PyNN job from git. The git
@@ -112,7 +110,7 @@ class GitPyNNJobParametersFactory extends JobParametersFactory {
             script = command;
         }
 
-        return new PyNNJobParameters(cloneDir.getAbsolutePath(),
-                setupScript, script, job.getHardwareConfig());
+        return new PyNNJobParameters(cloneDir, setupScript, script,
+                job.getHardwareConfig());
     }
 }

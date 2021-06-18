@@ -14,12 +14,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package uk.ac.manchester.cs.spinnaker.job.pynn;
+package uk.ac.manchester.cs.spinnaker.job_parameters;
 
+import java.io.File;
 import java.util.Map;
-
-import uk.ac.manchester.cs.spinnaker.job.JobParameters;
-import uk.ac.manchester.cs.spinnaker.job.JobParametersTypeName;
 
 /**
  * Represents the parameters required for a PyNN job.
@@ -30,7 +28,7 @@ public class PyNNJobParameters implements JobParameters {
     /**
      * The directory in which the job should be run.
      */
-    private String workingDirectory;
+    private File workingDirectory;
 
     /**
      * The system (bash) script to be executed to setup the environment.
@@ -66,7 +64,7 @@ public class PyNNJobParameters implements JobParameters {
      * @param hardwareConfigurationParam
      *            The hardware configuration desired.
      */
-    public PyNNJobParameters(final String workingDirectoryParam,
+    public PyNNJobParameters(final File workingDirectoryParam,
             final String setupScriptParam, final String userScriptParam,
             final Map<String, Object> hardwareConfigurationParam) {
         this.workingDirectory = workingDirectoryParam;
@@ -75,22 +73,9 @@ public class PyNNJobParameters implements JobParameters {
         this.hardwareConfiguration = hardwareConfigurationParam;
     }
 
-    /**
-     * Get the workingDirectory.
-     *
-     * @return the workingDirectory
-     */
-    public String getWorkingDirectory() {
+    @Override
+    public File getWorkingDirectory() {
         return workingDirectory;
-    }
-
-    /**
-     * Sets the workingDirectory.
-     *
-     * @param workingDirectoryParam the workingDirectory to set
-     */
-    public void setWorkingDirectory(final String workingDirectoryParam) {
-        this.workingDirectory = workingDirectoryParam;
     }
 
     /**
@@ -103,15 +88,6 @@ public class PyNNJobParameters implements JobParameters {
     }
 
     /**
-     * Set the setup script.
-     *
-     * @param setupScriptParam the script
-     */
-    public void setSetupScript(final String setupScriptParam) {
-        this.setupScript = setupScriptParam;
-    }
-
-    /**
      * Get the user script.
      *
      * @return the script
@@ -121,30 +97,11 @@ public class PyNNJobParameters implements JobParameters {
     }
 
     /**
-     * Sets the user script.
-     *
-     * @param userScriptParam the script to set
-     */
-    public void setUserScript(final String userScriptParam) {
-        this.userScript = userScriptParam;
-    }
-
-    /**
      * Get the hardwareConfiguration.
      *
      * @return the hardwareConfiguration
      */
     public Map<String, Object> getHardwareConfiguration() {
         return hardwareConfiguration;
-    }
-
-    /**
-     * Sets the hardwareConfiguration.
-     *
-     * @param hardwareConfigurationParam the hardwareConfiguration to set
-     */
-    public void setHardwareConfiguration(
-            final Map<String, Object> hardwareConfigurationParam) {
-        this.hardwareConfiguration = hardwareConfigurationParam;
     }
 }

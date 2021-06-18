@@ -16,6 +16,8 @@
  */
 package uk.ac.manchester.cs.spinnaker.jobprocess;
 
+import java.io.IOException;
+
 /**
  * Something that logs can be written to.
  */
@@ -25,6 +27,7 @@ public interface LogWriter {
      *
      * @param log
      *            The line to append. Should include the terminating newline.
+     * @throws IOException if there is an error appending to the log.
      */
-    void append(String log);
+    void append(String log) throws IOException;
 }

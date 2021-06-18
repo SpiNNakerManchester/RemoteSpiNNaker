@@ -21,7 +21,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import uk.ac.manchester.cs.spinnaker.job.JobParameters;
+import uk.ac.manchester.cs.spinnaker.job_parameters.JobParameters;
 
 /**
  * A factory for creating {@link JobProcess} instances given a

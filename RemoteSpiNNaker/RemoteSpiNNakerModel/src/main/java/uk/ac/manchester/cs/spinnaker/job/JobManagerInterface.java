@@ -236,8 +236,10 @@ public interface JobManagerInterface {
      *            The ID of the project owning the job.
      * @param id
      *            The job ID
+     * @param baseDirectory
+     *            The directory containing the file.
      * @param output
-     *            The name of the file to write to.
+     *            The full path of the file to write to.
      * @param input
      *            The contents of the file, streamed.
      */
@@ -246,56 +248,39 @@ public interface JobManagerInterface {
     @Consumes(APPLICATION_OCTET_STREAM)
     void addOutput(@PathParam("projectId") String projectId,
             @PathParam("id") int id,
+            @QueryParam("baseDirectory") String baseDirectory,
             @QueryParam("outputFilename") String output, InputStream input);
 
     /**
      * Mark the job as successfully finished.
      *
-     * @param projectId
-     *            The ID of the project owning the job.
      * @param id
      *            The id of the job.
      * @param logToAppend
      *            The job log data.
-     * @param baseFilename
-     *            The base of filenames.
-     * @param outputs
-     *            The list of output files.
      */
     @POST
-    @Path("{projectId}/{id}/finished")
+    @Path("{id}/finished")
     @Consumes(TEXT_PLAIN)
-    void setJobFinished(@PathParam("projectId") String projectId,
-            @PathParam("id") int id, String logToAppend,
-            @QueryParam("baseFilename") String baseFilename,
-            @QueryParam("outputFilename") List<String> outputs);
+    void setJobFinished(@PathParam("id") int id, String logToAppend);
 
     /**
      * Mark the job as finished with an error.
      *
-     * @param projectId
-     *            The project owning the job.
      * @param id
      *            The id of the job.
      * @param error
      *            The error message.
      * @param logToAppend
      *            The job log data.
-     * @param baseFilename
-     *            The base of filenames.
-     * @param outputs
-     *            The list of output files.
      * @param stackTrace
      *            The stack trace of the exception that caused the error.
      */
     @POST
-    @Path("{projectId}/{id}/error")
+    @Path("{id}/error")
     @Consumes(APPLICATION_JSON)
-    void setJobError(@PathParam("projectId") String projectId,
-            @PathParam("id") int id, @QueryParam("error") String error,
+    void setJobError(@PathParam("id") int id, @QueryParam("error") String error,
             @QueryParam("logToAppend") String logToAppend,
-            @QueryParam("baseFilename") String baseFilename,
-            @QueryParam("outputFilename") List<String> outputs,
             RemoteStackTrace stackTrace);
 
     /**

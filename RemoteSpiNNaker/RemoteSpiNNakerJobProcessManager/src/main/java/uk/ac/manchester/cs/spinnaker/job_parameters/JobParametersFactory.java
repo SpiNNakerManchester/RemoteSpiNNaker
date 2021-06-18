@@ -19,7 +19,6 @@ package uk.ac.manchester.cs.spinnaker.job_parameters;
 import java.io.File;
 import java.util.Map;
 
-import uk.ac.manchester.cs.spinnaker.job.JobParameters;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
 
 /**

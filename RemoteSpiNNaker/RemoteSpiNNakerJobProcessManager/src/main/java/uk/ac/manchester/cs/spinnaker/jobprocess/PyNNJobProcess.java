@@ -65,7 +65,7 @@ import org.ini4j.Profile.Section;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import uk.ac.manchester.cs.spinnaker.job.Status;
-import uk.ac.manchester.cs.spinnaker.job.pynn.PyNNJobParameters;
+import uk.ac.manchester.cs.spinnaker.job_parameters.PyNNJobParameters;
 import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
 import uk.ac.manchester.cs.spinnaker.utils.ThreadUtils;
 
@@ -224,7 +224,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             final PyNNJobParameters parameters, final LogWriter logWriter) {
         try {
             status = Running;
-            workingDirectory = new File(parameters.getWorkingDirectory());
+            workingDirectory = parameters.getWorkingDirectory();
 
             // Run the setup
             final int setupValue = runSetup(parameters, logWriter);
@@ -303,7 +303,11 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             StringWriter stringWriter = new StringWriter();
             PrintWriter printWriter = new PrintWriter(stringWriter);
             e.printStackTrace(printWriter);
-            logWriter.append(stringWriter.toString());
+            try {
+                logWriter.append(stringWriter.toString());
+            } catch (IOException ioEx) {
+                ioEx.printStackTrace();
+            }
             e.printStackTrace();
             error = e;
             status = Error;

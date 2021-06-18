@@ -22,9 +22,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 
-import uk.ac.manchester.cs.spinnaker.job.JobParameters;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
-import uk.ac.manchester.cs.spinnaker.job.pynn.PyNNJobParameters;
 
 /**
  * A {@link JobParametersFactory} that uses the {@code experimentDescription}
@@ -73,8 +71,7 @@ class DirectPyNNJobParametersFactory extends JobParametersFactory {
             writer.print(job.getCode());
         }
 
-        return new PyNNJobParameters(workingDirectory.getAbsolutePath(),
-                setupScript, DEFAULT_SCRIPT_NAME + SYSTEM_ARG,
-                job.getHardwareConfig());
+        return new PyNNJobParameters(workingDirectory, setupScript,
+                DEFAULT_SCRIPT_NAME + SYSTEM_ARG, job.getHardwareConfig());
     }
 }
