@@ -39,7 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <springsecurity.version>5.5.0</springsecurity.version>
         <spring.version>5.3.7</spring.version>
         <cxf.version>3.4.4</cxf.version>
-        <slf4j.version>1.7.30</slf4j.version>
+        <slf4j.version>1.7.31</slf4j.version>
         <pac4j.springsecurity.version>1.4.3</pac4j.springsecurity.version>
         <pac4j.oidc.version>1.8.9</pac4j.oidc.version>
         <j2ee.version>8.0.1</j2ee.version>
