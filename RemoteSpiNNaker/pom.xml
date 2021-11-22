@@ -29,24 +29,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
 
-        <resteasy.version>4.6.0.Final</resteasy.version>
-        <jackson.version>2.12.3</jackson.version>
+        <resteasy.version>5.0.0.Final</resteasy.version>
+        <jackson.version>2.13.0</jackson.version>
         <httpclient.version>4.5.13</httpclient.version>
         <xen.version>6.2.0-3.1</xen.version>
         <ini4j.version>0.5.4</ini4j.version>
-        <jgit.version>5.12.0.202106070339-r</jgit.version>
-        <jarchivelib.version>1.1.0</jarchivelib.version>
-        <springsecurity.version>5.5.0</springsecurity.version>
-        <spring.version>5.3.7</spring.version>
-        <cxf.version>3.4.4</cxf.version>
-        <slf4j.version>1.7.30</slf4j.version>
+        <jgit.version>5.13.0.202109080827-r</jgit.version>
+        <jarchivelib.version>1.2.0</jarchivelib.version>
+        <springsecurity.version>5.6.0</springsecurity.version>
+        <spring.version>5.3.13</spring.version>
+        <cxf.version>3.4.5</cxf.version>
+        <slf4j.version>1.7.32</slf4j.version>
         <pac4j.springsecurity.version>1.4.3</pac4j.springsecurity.version>
         <pac4j.oidc.version>1.8.9</pac4j.oidc.version>
         <j2ee.version>8.0.1</j2ee.version>
         <commons.lang.version>3.12.0</commons.lang.version>
-        <commons.io.version>2.9.0</commons.io.version>
+        <commons.io.version>2.11.0</commons.io.version>
 		<jacoco.version>0.8.7</jacoco.version>
-        <javadoc.version>3.3.0</javadoc.version>
+        <javadoc.version>3.3.1</javadoc.version>
     </properties>
 
     <dependencyManagement>
@@ -197,7 +197,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-dependency-plugin</artifactId>
-                    <version>3.1.2</version>
+                    <version>3.2.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -207,7 +207,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-war-plugin</artifactId>
-                    <version>3.3.1</version>
+                    <version>3.3.2</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -260,7 +260,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 <plugin>
                     <groupId>org.eclipse.jetty</groupId>
                     <artifactId>jetty-maven-plugin</artifactId>
-                    <version>11.0.5</version>
+                    <version>11.0.7</version>
                 </plugin>
 				<plugin>
 					<groupId>org.jacoco</groupId>
