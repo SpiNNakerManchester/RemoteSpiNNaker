@@ -37,7 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <jgit.version>5.13.0.202109080827-r</jgit.version>
         <jarchivelib.version>1.2.0</jarchivelib.version>
         <springsecurity.version>5.6.0</springsecurity.version>
-        <spring.version>5.3.13</spring.version>
+        <spring.version>5.3.14</spring.version>
         <cxf.version>3.4.5</cxf.version>
         <slf4j.version>1.7.32</slf4j.version>
         <pac4j.springsecurity.version>1.4.3</pac4j.springsecurity.version>
