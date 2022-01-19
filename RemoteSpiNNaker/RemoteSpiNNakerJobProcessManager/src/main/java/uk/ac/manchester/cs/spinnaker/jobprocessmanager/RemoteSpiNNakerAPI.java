@@ -16,16 +16,11 @@
  */
 package uk.ac.manchester.cs.spinnaker.jobprocessmanager;
 
-import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
-import static org.apache.commons.codec.binary.Base64.encodeBase64;
+import static jakarta.ws.rs.core.HttpHeaders.AUTHORIZATION;
+import static org.apache.commons.codec.binary.Base64.encodeBase64String;
 
-import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
-
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.ClientRequestContext;
-import javax.ws.rs.client.ClientRequestFilter;
 
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
@@ -34,6 +29,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.ClientRequestFilter;
 import uk.ac.manchester.cs.spinnaker.job.JobManagerInterface;
 
 /**
@@ -101,13 +98,9 @@ public abstract class RemoteSpiNNakerAPI {
     private static ClientRequestFilter
             getBasicAuthFilter(final String authToken) {
         final String payload = "Basic "
-                + encodeBase64(authToken.getBytes(UTF8));
-        return new ClientRequestFilter() {
-            @Override
-            public void filter(final ClientRequestContext requestContext)
-                    throws IOException {
-                requestContext.getHeaders().add(AUTHORIZATION, payload);
-            }
+                + encodeBase64String(authToken.getBytes(UTF8));
+        return requestContext -> {
+            requestContext.getHeaders().add(AUTHORIZATION, payload);
         };
     }
 }

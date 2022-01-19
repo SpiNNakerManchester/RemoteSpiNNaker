@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
 
-        <resteasy.version>5.0.1.Final</resteasy.version>
+        <resteasy.version>6.0.0.Final</resteasy.version>
         <jackson.version>2.13.1</jackson.version>
         <httpclient.version>4.5.13</httpclient.version>
         <xen.version>6.2.0-3.1</xen.version>
@@ -178,6 +178,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 <version>4.13.2</version>
                 <scope>test</scope>
             </dependency>
+			<dependency>
+				<groupId>jakarta.xml.bind</groupId>
+				<artifactId>jakarta.xml.bind-api</artifactId>
+				<version>2.3.3</version>
+			</dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -507,6 +512,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 				<pluginManagement>
 					<plugins>
 						<plugin>
+							<groupId>org.apache.maven.plugins</groupId>
 							<artifactId>maven-javadoc-plugin</artifactId>
 							<configuration>
 								<additionalOptions>
