@@ -28,9 +28,6 @@ import java.security.cert.CertificateException;
 import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLContext;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.ClientRequestContext;
-import javax.ws.rs.client.ClientRequestFilter;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
@@ -42,6 +39,9 @@ import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder.HostnameVerificatio
 import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
+
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.ClientRequestFilter;
 
 /**
  * Manufactures clients for talking to other machines. This class does wicked
@@ -97,14 +97,13 @@ public abstract class RestClientUtils {
     protected static ResteasyClient createRestClient(final URL url) {
         try {
             // Create and return a client
-            final ResteasyClient client = clientBuilder()
+            ResteasyClient client = clientBuilder()
                     .connectTimeout(TIMEOUT, TimeUnit.SECONDS)
                     .readTimeout(TIMEOUT, TimeUnit.SECONDS)
                     .connectionPoolSize(MAX_CONNECTIONS)
                     .maxPooledPerRoute(MAX_CONNECTIONS_PER_ROUTE)
                     .hostnameVerification(HostnameVerificationPolicy.ANY)
-                    .sslContext(getSSLContext())
-                    .build();
+                    .sslContext(getSSLContext()).build();
             client.register(new ErrorCaptureResponseFilter());
             return client;
         } catch (NoSuchAlgorithmException | KeyManagementException
@@ -117,19 +116,22 @@ public abstract class RestClientUtils {
      * Create an SSL context with appropriate key store and management.
      *
      * @return The created context
-     * @throws NoSuchAlgorithmException If the key store can't be read
-     * @throws KeyStoreException If the key store can't be read
-     * @throws KeyManagementException If the key store can't be read
+     * @throws NoSuchAlgorithmException
+     *             If the key store can't be read
+     * @throws KeyStoreException
+     *             If the key store can't be read
+     * @throws KeyManagementException
+     *             If the key store can't be read
      */
     private static SSLContext getSSLContext() throws NoSuchAlgorithmException,
             KeyStoreException, KeyManagementException {
         SSLContextBuilder builder = new SSLContextBuilder();
         builder.loadTrustMaterial(new TrustSelfSignedStrategy());
-        String trustStore = System.getProperty(
-                "remotespinnaker.keystore", null);
+        String trustStore = System.getProperty("remotespinnaker.keystore",
+                null);
         if (trustStore != null) {
-            String password = System.getProperty(
-                    "remotespinnaker.keystore.password", "");
+            String password = System
+                    .getProperty("remotespinnaker.keystore.password", "");
             try {
                 builder.loadTrustMaterial(new File(trustStore),
                         password.toCharArray());
@@ -157,11 +159,11 @@ public abstract class RestClientUtils {
      *            The objects to register with the underlying client
      * @return The proxy instance
      */
-    public static <T> T createClient(final URL url,
+    private static <T> T createClient(final URL url,
             final String authorizationHeader, final Class<T> clazz,
             final Object... providers) {
-        final ResteasyClient client = createRestClient(url);
-        for (final Object provider : providers) {
+        ResteasyClient client = createRestClient(url);
+        for (Object provider : providers) {
             client.register(provider);
         }
         if (providers.length == 0) {
@@ -169,13 +171,8 @@ public abstract class RestClientUtils {
         }
         ResteasyWebTarget target = client.target(url.toString());
         if (authorizationHeader != null) {
-            return target.register(new ClientRequestFilter() {
-                @Override
-                public void filter(final ClientRequestContext context)
-                        throws IOException {
-                    context.getHeaders().add(WWW_AUTH_RESP,
-                            authorizationHeader);
-                }
+            return target.register((ClientRequestFilter) context -> {
+                context.getHeaders().add(WWW_AUTH_RESP, authorizationHeader);
             }).proxy(clazz);
         } else {
             return target.proxy(clazz);
@@ -228,8 +225,8 @@ public abstract class RestClientUtils {
     public static <T> T createApiKeyClient(final URL url, final String username,
             final String apiKey, final Class<T> clazz,
             final Object... providers) {
-        return createClient(url, "ApiKey " + username + ":" + apiKey,
-                clazz, providers);
+        return createClient(url, "ApiKey " + username + ":" + apiKey, clazz,
+                providers);
     }
 
     /**

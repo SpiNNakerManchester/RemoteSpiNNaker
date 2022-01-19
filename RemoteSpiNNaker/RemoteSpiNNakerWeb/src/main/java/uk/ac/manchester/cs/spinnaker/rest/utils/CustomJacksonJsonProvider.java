@@ -17,7 +17,7 @@
 package uk.ac.manchester.cs.spinnaker.rest.utils;
 
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
-import static com.fasterxml.jackson.databind.PropertyNamingStrategy.SNAKE_CASE;
+import static com.fasterxml.jackson.databind.PropertyNamingStrategies.SNAKE_CASE;
 import static javax.ws.rs.core.MediaType.WILDCARD;
 
 import java.io.IOException;
