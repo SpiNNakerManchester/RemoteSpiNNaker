@@ -161,6 +161,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             <artifactId>resteasy-core</artifactId>
             <scope>runtime</scope>
         </dependency>
+		<dependency>
+			<groupId>jakarta.xml.bind</groupId>
+			<artifactId>jakarta.xml.bind-api</artifactId>
+		</dependency>
 
         <dependency>
             <groupId>junit</groupId>
