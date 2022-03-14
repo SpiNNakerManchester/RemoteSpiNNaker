@@ -97,11 +97,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>RemoteSpiNNakerModel</artifactId>
-            <version>${project.version}</version>
         </dependency>
-        <!-- <dependency> <groupId>${project.groupId}</groupId> <artifactId>RemoteSpiNNakerJobProcessModel</artifactId>
-            <version>${project.version}</version> <scope>provided</scope> </dependency> -->
-
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-frontend-jaxrs</artifactId>
@@ -178,19 +174,4 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             <scope>provided</scope>
         </dependency>
     </dependencies>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>com.nimbusds</groupId>
-                <artifactId>nimbus-jose-jwt</artifactId>
-                <version>9.21</version>
-            </dependency>
-            <dependency>
-                <groupId>net.minidev</groupId>
-                <artifactId>json-smart</artifactId>
-                <version>2.4.8</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 </project>
