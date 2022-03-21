@@ -32,7 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <resteasy.version>6.0.0.Final</resteasy.version>
         <jackson.version>2.13.2</jackson.version>
         <springsecurity.version>5.6.2</springsecurity.version>
-        <spring.version>5.3.16</spring.version>
+        <spring.version>5.3.17</spring.version>
         <slf4j.version>1.7.36</slf4j.version>
         <pac4j.springsecurity.version>1.4.3</pac4j.springsecurity.version>
         <pac4j.oidc.version>1.8.9</pac4j.oidc.version>
