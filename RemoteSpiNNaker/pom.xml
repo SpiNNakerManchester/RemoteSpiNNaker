@@ -34,8 +34,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <springsecurity.version>5.6.2</springsecurity.version>
         <spring.version>5.3.18</spring.version>
         <slf4j.version>1.7.36</slf4j.version>
-        <pac4j.springsecurity.version>1.4.3</pac4j.springsecurity.version>
-        <pac4j.oidc.version>1.8.9</pac4j.oidc.version>
         <javadoc.version>3.3.2</javadoc.version>
         <jaxb.version>2.3.1</jaxb.version>
     </properties>
@@ -142,16 +140,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 <groupId>org.springframework.security</groupId>
                 <artifactId>spring-security-config</artifactId>
                 <version>${springsecurity.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.pac4j</groupId>
-                <artifactId>spring-security-pac4j</artifactId>
-                <version>${pac4j.springsecurity.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.pac4j</groupId>
-                <artifactId>pac4j-oidc</artifactId>
-                <version>${pac4j.oidc.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
