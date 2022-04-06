@@ -75,9 +75,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     <httpConnector>
                         <port>${jetty.port}</port>
                     </httpConnector>
-                    <webAppConfig>
-                        <contextPath>${jetty.root}</contextPath>
-                    </webAppConfig>
+                    <webApp>
+                    	<contextPath>${jetty.root}</contextPath>
+                    </webApp>
                     <systemProperties>
                         <systemProperty>
                             <name>java.awt.headless</name>
@@ -123,10 +123,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             <artifactId>commons-io</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.pac4j</groupId>
-            <artifactId>pac4j-oidc</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
@@ -137,10 +133,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.pac4j</groupId>
-            <artifactId>spring-security-pac4j</artifactId>
         </dependency>
 
         <dependency>
