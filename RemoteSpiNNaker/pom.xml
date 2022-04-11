@@ -36,6 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <slf4j.version>1.7.36</slf4j.version>
         <javadoc.version>3.3.2</javadoc.version>
         <jaxb.version>2.3.1</jaxb.version>
+        <xml-bind.version>4.0.0</xml-bind.version>
     </properties>
 
     <dependencyManagement>
@@ -170,7 +171,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 			<dependency>
 				<groupId>jakarta.xml.bind</groupId>
 				<artifactId>jakarta.xml.bind-api</artifactId>
-				<version>3.0.1</version>
+				<version>${xml-bind.version}</version>
 			</dependency>
             <dependency>
                 <groupId>com.nimbusds</groupId>
@@ -549,6 +550,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 					</plugins>
 				</pluginManagement>
 			</build>
+		</profile>
+		<profile>
+			<id>SupportJDK8</id>
+			<activation>
+				<jdk>1.8</jdk>
+			</activation>
+			<properties>
+				<!-- Can't use a newer version; bytecode incompatible -->
+				<xml-bind.version>3.0.1</xml-bind.version>
+			</properties>
 		</profile>
     </profiles>
 </project>
