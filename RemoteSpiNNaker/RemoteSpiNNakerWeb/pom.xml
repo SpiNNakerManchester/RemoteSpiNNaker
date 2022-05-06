@@ -75,9 +75,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     <httpConnector>
                         <port>${jetty.port}</port>
                     </httpConnector>
-                    <webAppConfig>
-                        <contextPath>${jetty.root}</contextPath>
-                    </webAppConfig>
+                    <webApp>
+                    	<contextPath>${jetty.root}</contextPath>
+                    </webApp>
                     <systemProperties>
                         <systemProperty>
                             <name>java.awt.headless</name>
@@ -97,11 +97,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>RemoteSpiNNakerModel</artifactId>
-            <version>${project.version}</version>
         </dependency>
-        <!-- <dependency> <groupId>${project.groupId}</groupId> <artifactId>RemoteSpiNNakerJobProcessModel</artifactId>
-            <version>${project.version}</version> <scope>provided</scope> </dependency> -->
-
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-frontend-jaxrs</artifactId>
@@ -127,10 +123,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             <artifactId>commons-io</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.pac4j</groupId>
-            <artifactId>pac4j-oidc</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
@@ -141,10 +133,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.pac4j</groupId>
-            <artifactId>spring-security-pac4j</artifactId>
         </dependency>
 
         <dependency>
@@ -161,6 +149,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             <artifactId>resteasy-core</artifactId>
             <scope>runtime</scope>
         </dependency>
+		<dependency>
+			<groupId>jakarta.xml.bind</groupId>
+			<artifactId>jakarta.xml.bind-api</artifactId>
+		</dependency>
 
         <dependency>
             <groupId>junit</groupId>
@@ -174,19 +166,4 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             <scope>provided</scope>
         </dependency>
     </dependencies>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>com.nimbusds</groupId>
-                <artifactId>nimbus-jose-jwt</artifactId>
-                <version>9.16-preview.1</version>
-            </dependency>
-            <dependency>
-                <groupId>net.minidev</groupId>
-                <artifactId>json-smart</artifactId>
-                <version>2.4.7</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 </project>
