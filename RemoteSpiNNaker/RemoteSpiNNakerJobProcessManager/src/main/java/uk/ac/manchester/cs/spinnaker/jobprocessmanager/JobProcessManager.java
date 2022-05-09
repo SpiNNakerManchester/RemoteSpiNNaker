@@ -25,8 +25,6 @@ import static uk.ac.manchester.cs.spinnaker.jobprocessmanager.RemoteSpiNNakerAPI
 import static uk.ac.manchester.cs.spinnaker.utils.FileDownloader.downloadFile;
 import static uk.ac.manchester.cs.spinnaker.utils.Log.log;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -102,18 +100,13 @@ public class JobProcessManager {
         /**
          * An object to synchronise on when sending data.
          */
-        private final Integer sendSync = new Integer(0);
+        private final Object sendSync = new Object();
 
         /**
          * Make a log writer that uploads the log every half second.
          */
         UploadingJobManagerLogWriter() {
-            sendTimer = new Timer(UPDATE_INTERVAL, new ActionListener() {
-                @Override
-                public void actionPerformed(final ActionEvent e) {
-                    sendLog();
-                }
-            });
+            sendTimer = new Timer(UPDATE_INTERVAL, e -> sendLog());
         }
 
         /**

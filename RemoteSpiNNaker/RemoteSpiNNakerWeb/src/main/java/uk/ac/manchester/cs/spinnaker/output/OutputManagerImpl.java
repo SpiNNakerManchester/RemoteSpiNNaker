@@ -84,7 +84,7 @@ public class OutputManagerImpl implements OutputManager {
     /**
      * Map of locks for files.
      */
-    private final Map<File, JobLock.Token> synchronizers = new HashMap<>();
+    private final Map<File, LockToken> synchronizers = new HashMap<>();
 
     /**
      * The logger.
@@ -92,56 +92,54 @@ public class OutputManagerImpl implements OutputManager {
     private static final Logger logger = getLogger(OutputManagerImpl.class);
 
     /**
+     * A lock token. Initially locked.
+     */
+    private static class LockToken {
+        /**
+         * True if the token is locked.
+         */
+        private boolean locked = true;
+
+        /**
+         * True if the token is waiting for a lock.
+         */
+        private boolean waiting = false;
+
+        /**
+         * Wait until the token is unlocked.
+         */
+        private synchronized void waitForUnlock() {
+            waiting = true;
+
+            // Wait until unlocked
+            while (locked) {
+                try {
+                    wait();
+                } catch (final InterruptedException e) {
+                    // Do Nothing
+                }
+            }
+
+            // Now lock again
+            locked = true;
+            waiting = false;
+        }
+
+        /**
+         * Unlock the token.
+         * @return True if the token is waiting again.
+         */
+        private synchronized boolean unlock() {
+            locked = false;
+            notifyAll();
+            return waiting;
+        }
+    }
+
+    /**
      * A class to lock a job.
      */
     private class JobLock implements AutoCloseable {
-
-        /**
-         * A lock token.
-         */
-        private class Token {
-
-            /**
-             * True if the token is locked.
-             */
-            private boolean locked = true;
-
-            /**
-             * True if the token is waiting for a lock.
-             */
-            private boolean waiting = false;
-
-            /**
-             * Wait until the token is unlocked.
-             */
-            private synchronized void waitForUnlock() {
-                waiting = true;
-
-                // Wait until unlocked
-                while (locked) {
-                    try {
-                        wait();
-                    } catch (final InterruptedException e) {
-                        // Do Nothing
-                    }
-                }
-
-                // Now lock again
-                locked = true;
-                waiting = false;
-            }
-
-            /**
-             * Unlock the token.
-             * @return True if the token is waiting again.
-             */
-            private synchronized boolean unlock() {
-                locked = false;
-                notifyAll();
-                return waiting;
-            }
-        }
-
         /**
          * The directory being locked by this token.
          */
@@ -154,11 +152,11 @@ public class OutputManagerImpl implements OutputManager {
         JobLock(final File dirParam) {
             this.dir = dirParam;
 
-            Token lock;
+            LockToken lock;
             synchronized (synchronizers) {
                 if (!synchronizers.containsKey(dirParam)) {
                     // Constructed pre-locked
-                    synchronizers.put(dirParam, new Token());
+                    synchronizers.put(dirParam, new LockToken());
                     return;
                 }
                 lock = synchronizers.get(dirParam);
@@ -170,7 +168,7 @@ public class OutputManagerImpl implements OutputManager {
         @Override
         public void close() {
             synchronized (synchronizers) {
-                final Token lock = synchronizers.get(dir);
+                final LockToken lock = synchronizers.get(dir);
                 if (!lock.unlock()) {
                     synchronizers.remove(dir);
                 }
@@ -209,12 +207,7 @@ public class OutputManagerImpl implements OutputManager {
      */
     @PostConstruct
     private void initPurgeScheduler() {
-        scheduler.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                removeOldFiles();
-            }
-        }, 0, 1, DAYS);
+        scheduler.scheduleAtFixedRate(this::removeOldFiles, 0, 1, DAYS);
     }
 
     /**

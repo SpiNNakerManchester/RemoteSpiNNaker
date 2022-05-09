@@ -184,7 +184,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
     /**
      * The executer thread.
      */
-    class Executer implements JobExecuter, Runnable {
+    class Executer implements JobExecuter {
 
         /**
          * The job manager to report to.
@@ -249,11 +249,11 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
 
         @Override
         public void startExecuter() {
-            new Thread(threadGroup, this, "Executer (" + id + ")").start();
+            new Thread(threadGroup, this::runSubprocess,
+                    "Executer (" + id + ")").start();
         }
 
-        @Override
-        public void run() {
+        private void runSubprocess() {
             try (JobOutputPipe pipe = startSubprocess(constructArguments())) {
                 logger.debug("Waiting for process to finish");
                 try {
@@ -306,22 +306,24 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
             builder.directory(jobExecuterDirectory);
             logger.debug("Working directory: {}", jobExecuterDirectory);
             builder.redirectErrorStream(true);
-            JobOutputPipe pipe = null;
             synchronized (this) {
                 try {
                     logger.debug("Starting execution process");
                     process = builder.start();
                     logger.debug("Starting pipe from process");
-                    pipe = new JobOutputPipe(process.getInputStream(),
+                    JobOutputPipe pipe = new JobOutputPipe(
+                            process.getInputStream(),
                             new PrintWriter(outputLog));
                     pipe.start();
+                    return pipe;
                 } catch (final IOException e) {
                     logger.error("Error running external job", e);
                     startException = e;
+                    return null;
+                } finally {
+                    notifyAll();
                 }
-                notifyAll();
             }
-            return pipe;
         }
 
         /**

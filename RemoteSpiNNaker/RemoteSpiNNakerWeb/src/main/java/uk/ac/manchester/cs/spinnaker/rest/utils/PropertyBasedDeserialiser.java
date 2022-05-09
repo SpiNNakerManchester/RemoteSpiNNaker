@@ -81,9 +81,9 @@ public class PropertyBasedDeserialiser<T> extends StdDeserializer<T> {
         final ObjectNode root = parser.readValueAsTree();
         final Iterator<String> elementsIterator = root.fieldNames();
         while (elementsIterator.hasNext()) {
-            final String name = elementsIterator.next();
-            if (registry.containsKey(name)) {
-                return parser.getCodec().treeToValue(root, registry.get(name));
+            Class<? extends T> c = registry.get(elementsIterator.next());
+            if (c != null) {
+                return parser.getCodec().treeToValue(root, c);
             }
         }
         return null;

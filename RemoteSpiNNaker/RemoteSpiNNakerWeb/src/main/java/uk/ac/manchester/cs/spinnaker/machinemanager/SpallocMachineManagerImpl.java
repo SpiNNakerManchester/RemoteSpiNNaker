@@ -42,7 +42,6 @@ import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
 
 import javax.annotation.PostConstruct;
 
@@ -79,7 +78,7 @@ import uk.ac.manchester.cs.spinnaker.rest.utils.PropertyBasedDeserialiser;
 /**
  * A machine manager that interfaces to the spalloc service.
  */
-public class SpallocMachineManagerImpl implements MachineManager, Runnable {
+public class SpallocMachineManagerImpl implements MachineManager {
 
     /**
      * The default version of a machine.
@@ -238,30 +237,18 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
     @PostConstruct
     private void startThreads() {
         final ThreadGroup group = new ThreadGroup("Spalloc");
-        scheduler = newScheduledThreadPool(1, new ThreadFactory() {
-            @Override
-            public Thread newThread(final Runnable r) {
-                return new Thread(group, r, "Spalloc Keep Alive Handler");
-            }
-        });
+        scheduler = newScheduledThreadPool(1,
+                r -> new Thread(group, r, "Spalloc Keep Alive Handler"));
 
-        new Thread(group, this, "Spalloc Comms Interface").start();
+        new Thread(group, this::comms, "Spalloc Comms Interface").start();
 
-        final Thread t = new Thread(group, new Runnable() {
-            @Override
-            public void run() {
-                updateStateOfJobs();
-            }
-        }, "Spalloc JobState Update Notification Handler");
+        final Thread t = new Thread(group, this::updateStateOfJobs,
+                "Spalloc JobState Update Notification Handler");
         t.setDaemon(true);
         t.start();
 
-        scheduler.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                keepAllJobsAlive();
-            }
-        }, PERIOD, PERIOD, SECONDS);
+        scheduler.scheduleAtFixedRate(this::keepAllJobsAlive,
+                PERIOD, PERIOD, SECONDS);
     }
 
     // ------------------------------ COMMS ------------------------------
@@ -566,8 +553,7 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
         comms.disconnect();
     }
 
-    @Override
-    public void run() {
+    private void comms() {
         try {
             comms.mainLoop();
         } finally {

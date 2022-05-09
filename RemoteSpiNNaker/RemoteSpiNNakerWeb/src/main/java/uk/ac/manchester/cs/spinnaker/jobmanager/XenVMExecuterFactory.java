@@ -444,7 +444,7 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
     /**
      * The executer core connector.
      */
-    class Executer implements JobExecuter, Runnable {
+    class Executer implements JobExecuter {
         // Parameters from constructor
         /**
          * The Job Manager to report to.
@@ -537,7 +537,8 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
 
         @Override
         public void startExecuter() {
-            new Thread(threadGroup, this, "Executer (" + uuid + ")").start();
+            new Thread(threadGroup, this::runInVm,
+                    "Executer (" + uuid + ")").start();
         }
 
         /**
@@ -595,8 +596,7 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
             }
         }
 
-        @Override
-        public void run() {
+        private void runInVm() {
             XenConnection conn = null;
             try {
                 conn = new XenConnection(uuid);

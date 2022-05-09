@@ -29,10 +29,8 @@ import java.net.URLDecoder;
 import java.util.Map;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
@@ -194,13 +192,7 @@ public abstract class FileDownloader {
             sc.init(null, new TrustManager[] {tm}, new SecureRandom());
 
             connection.setSSLSocketFactory(sc.getSocketFactory());
-            connection.setHostnameVerifier(new HostnameVerifier() {
-                @Override
-                public boolean verify(
-                        final String hostname, final SSLSession session) {
-                    return true;
-                }
-            });
+            connection.setHostnameVerifier((hostname, session) -> true);
         } catch (Exception e) {
             throw new IOException("Error processing HTTPS request", e);
         }

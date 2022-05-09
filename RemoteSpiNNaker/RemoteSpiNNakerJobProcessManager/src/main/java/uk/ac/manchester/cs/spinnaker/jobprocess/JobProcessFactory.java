@@ -17,6 +17,7 @@
 package uk.ac.manchester.cs.spinnaker.jobprocess;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -102,10 +103,16 @@ public class JobProcessFactory {
      *             If there is an error creating the class
      * @throws InstantiationException
      *             If there is an error creating the class
+     * @throws SecurityException
+     * @throws NoSuchMethodException
+     * @throws InvocationTargetException
+     * @throws IllegalArgumentException
      */
     public <P extends JobParameters> JobProcess<P>
             createProcess(final P parameters)
-                    throws InstantiationException, IllegalAccessException {
+                    throws InstantiationException, IllegalAccessException,
+                    IllegalArgumentException, InvocationTargetException,
+                    NoSuchMethodException, SecurityException {
         /*
          * We know that this is of the correct type, because the addMapping
          * method will only allow the correct type mapping in
@@ -114,7 +121,8 @@ public class JobProcessFactory {
         final Class<JobProcess<P>> processType =
                 (Class<JobProcess<P>>) typeMap.get(parameters.getClass());
 
-        final JobProcess<P> process = processType.newInstance();
+        final JobProcess<P> process =
+                processType.getDeclaredConstructor().newInstance();
 
         // Magically set the thread group if there is one
         setField(process, "threadGroup", threadGroup);
