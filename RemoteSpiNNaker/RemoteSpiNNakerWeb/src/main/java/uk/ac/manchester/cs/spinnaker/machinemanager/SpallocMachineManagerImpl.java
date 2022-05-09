@@ -178,7 +178,8 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
     /**
      * Logging.
      */
-    private final Logger logger = getLogger(getClass());
+    private static final Logger logger =
+            getLogger(SpallocMachineManagerImpl.class);
 
     /**
      * Communication management.
@@ -390,7 +391,7 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
          */
         private void writeRequest(final Command<?> request) throws IOException {
             String message = mapper.writeValueAsString(request);
-            logger.trace("Sending message " + message);
+            logger.trace("Sending message {}", message);
             writer.println(message);
             writer.flush();
         }
@@ -411,16 +412,16 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
                 return;
             }
 
-            logger.trace("Received response: " + line);
+            logger.trace("Received response: {}", line);
             final Response response = mapper.readValue(line, Response.class);
-            logger.trace("Received response of type " + response);
+            logger.trace("Received response of type {}", response);
             if (response instanceof ReturnResponse
                     || response instanceof ExceptionResponse) {
                 responses.offer(response);
             } else if (response instanceof JobsChangedResponse) {
                 notifications.offer((JobsChangedResponse) response);
             } else {
-                logger.error("Unrecognized response: " + response);
+                logger.error("Unrecognized response: {}", response);
             }
         }
 
@@ -738,9 +739,9 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
     private void updateJobState(final SpallocJob job) throws IOException {
         final JobState state;
         synchronized (machineState) {
-            logger.debug("Getting state of " + job.id);
+            logger.debug("Getting state of {}", job.id);
             state = job.getState();
-            logger.debug("Job " + job + " is in state " + state.getState());
+            logger.debug("Job {} is in state {}", job, state.getState());
             machineState.put(job.id, state);
             machineState.notifyAll();
         }
@@ -748,7 +749,7 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
         if (state.getState() == DESTROYED) {
             final SpinnakerMachine machine = machinesAllocated.remove(job.id);
             if (machine == null) {
-                logger.error("Unrecognized job: " + job);
+                logger.error("Unrecognized job: {}", job);
                 return;
             }
             jobByMachine.remove(machine);
@@ -790,8 +791,8 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
             machineState.put(job.id, state);
             while (!machineState.containsKey(job.id)
                     || !set.contains(machineState.get(job.id).getState())) {
-                logger.debug("Waiting for job " + job.id + " to get to one of "
-                        + Arrays.toString(states));
+                logger.debug("Waiting for job {} to get to one of {}", job.id,
+                        Arrays.toString(states));
                 if (waitfor(machineState)) {
                     return null;
                 }
@@ -829,15 +830,15 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
             try {
                 job = createJob(nBoards);
 
-                logger.debug(
-                        "Got machine " + job.id + ", requesting notifications");
+                logger.debug("Got machine {}, requesting notifications",
+                        job.id);
                 job.notify(true);
                 JobState state = job.getState();
                 synchronized (machineState) {
                     machineState.put(job.id, state);
                     machineState.notifyAll();
                 }
-                logger.debug("Notifications for " + job.id + " are on");
+                logger.debug("Notifications for {} are on", job.id);
 
                 state = waitForStates(job, READY, DESTROYED);
                 if (state.getState() == DESTROYED) {
@@ -863,18 +864,18 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
         final SpallocJob job = jobByMachine.remove(machine);
         if (job != null) {
             try {
-                logger.debug("Turning off notification for " + job.id);
+                logger.debug("Turning off notification for {}", job.id);
                 job.notify(false);
-                logger.debug("Notifications for " + job.id + " are off");
+                logger.debug("Notifications for {} are off", job.id);
                 machinesAllocated.remove(job.id);
                 synchronized (machineState) {
                     machineState.remove(job.id);
                 }
                 callbacks.remove(job.id);
                 job.destroy();
-                logger.debug("Job " + job.id + " destroyed");
+                logger.debug("Job {} destroyed", job.id);
             } catch (final IOException e) {
-                logger.error("Error releasing machine for " + job.id);
+                logger.error("Error releasing machine for {}", job.id);
             }
         }
     }
@@ -885,7 +886,7 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
         if (job == null) {
             return false;
         }
-        logger.debug("Job " + job.id + " still available");
+        logger.debug("Job {} still available", job.id);
         return true;
     }
 
@@ -956,7 +957,7 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
             try {
                 new SpallocJob(jobId).keepAlive();
             } catch (final IOException e) {
-                logger.error("Error keeping machine " + jobId + " alive");
+                logger.error("Error keeping machine {} alive", jobId);
             }
         }
     }

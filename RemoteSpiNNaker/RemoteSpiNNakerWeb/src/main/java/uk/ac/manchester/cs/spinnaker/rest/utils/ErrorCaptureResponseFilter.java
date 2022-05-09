@@ -50,7 +50,7 @@ public class ErrorCaptureResponseFilter implements ClientResponseFilter {
     /**
      * Logging.
      */
-    private static final Logger LOG =
+    private static final Logger logger =
             getLogger(ErrorCaptureResponseFilter.class);
 
     /**
@@ -76,23 +76,23 @@ public class ErrorCaptureResponseFilter implements ClientResponseFilter {
         }
         final Family family = responseContext.getStatusInfo().getFamily();
         if ((family == CLIENT_ERROR) || (family == SERVER_ERROR)) {
-            LOG.trace("Error when sending request:");
-            LOG.trace(INDENT + "Headers:");
+            logger.trace("Error when sending request:");
+            logger.trace(INDENT + "Headers:");
             final MultivaluedMap<String, String> headers =
                     requestContext.getStringHeaders();
             for (final String headerName : headers.keySet()) {
                 for (final String headerValue : headers.get(headerName)) {
-                    LOG.trace(IND2 + headerName + ": " + headerValue);
+                    logger.trace(IND2 + "{}: {}", headerName, headerValue);
                 }
             }
 
-            LOG.trace(INDENT + "Entity:");
-            LOG.trace(IND2 + requestContext.getEntity());
+            logger.trace(INDENT + "Entity:");
+            logger.trace(IND2 + "{}", requestContext.getEntity());
 
             final String json = getRequestAsJSON(requestContext);
             if (json != null) {
-                LOG.trace(INDENT + "JSON version:");
-                LOG.trace(IND2 + json);
+                logger.trace(INDENT + "JSON version:");
+                logger.trace(IND2 + "{}", json);
             }
         }
     }
@@ -116,7 +116,7 @@ public class ErrorCaptureResponseFilter implements ClientResponseFilter {
             }
             return jsonWriter.toString();
         } catch (final Exception e) {
-            LOG.trace("problem when converting request to JSON", e);
+            logger.trace("problem when converting request to JSON", e);
             return null;
         }
     }

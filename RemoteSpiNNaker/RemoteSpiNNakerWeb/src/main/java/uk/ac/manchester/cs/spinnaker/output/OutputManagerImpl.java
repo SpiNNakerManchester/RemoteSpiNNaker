@@ -87,7 +87,7 @@ public class OutputManagerImpl implements OutputManager {
     /**
      * The logger.
      */
-    private final Logger logger = getLogger(getClass());
+    private static final Logger logger = getLogger(OutputManagerImpl.class);
 
     /**
      * A class to lock a job.
@@ -265,7 +265,7 @@ public class OutputManagerImpl implements OutputManager {
             copyInputStreamToFile(input, newOutput);
             final URL outputUrl = new URL(baseServerUrl,
                     "output/" + pId + "/" + id + "/" + outputPath);
-            logger.debug("New output " + newOutput + " mapped to " + outputUrl);
+            logger.debug("New output {} mapped to {}", newOutput, outputUrl);
 
             return new DataItem(outputUrl.toExternalForm());
         }
@@ -287,7 +287,7 @@ public class OutputManagerImpl implements OutputManager {
 
         try (JobLock op = new JobLock(idDirectory)) {
             if (purgeFile.exists()) {
-                logger.debug(idDirectory + " was purged");
+                logger.debug("{} was purged", idDirectory);
                 return Response
                         .status(NOT_FOUND).entity("Results from job "
                                 + idDirectory.getName() + " have been removed")
@@ -295,7 +295,7 @@ public class OutputManagerImpl implements OutputManager {
             }
 
             if (!resultFile.canRead()) {
-                logger.debug(resultFile + " was not found");
+                logger.debug("{} was not found", resultFile);
                 return Response.status(NOT_FOUND).build();
             }
 
@@ -304,13 +304,13 @@ public class OutputManagerImpl implements OutputManager {
                     final String contentType =
                             probeContentType(resultFile.toPath());
                     if (contentType != null) {
-                        logger.debug("File has content type " + contentType);
+                        logger.debug("File has content type {}", contentType);
                         return Response.ok(resultFile, contentType).build();
                     }
                 }
             } catch (final IOException e) {
-                logger.debug("Content type of " + resultFile
-                        + " could not be determined", e);
+                logger.debug("Content type of {} could not be determined",
+                        resultFile, e);
             }
 
             return Response.ok(resultFile).header("Content-Disposition",
@@ -331,8 +331,7 @@ public class OutputManagerImpl implements OutputManager {
     public Response getResultFile(final String projectId, final int id,
             final String filename, final boolean download) {
         // TODO projectId and id? What's going on?
-        logger.debug(
-                "Retrieving " + filename + " from " + projectId + "/" + id);
+        logger.debug("Retrieving {} from {}/{}", filename, projectId, id);
         final File projectDirectory = getProjectDirectory(projectId);
         final File idDirectory = new File(projectDirectory, String.valueOf(id));
         return getResultFile(idDirectory, filename, download);
@@ -342,7 +341,7 @@ public class OutputManagerImpl implements OutputManager {
     public Response getResultFile(final int id, final String filename,
             final boolean download) {
         // TODO projectId and NO id? What's going on?
-        logger.debug("Retrieving " + filename + " from " + id);
+        logger.debug("Retrieving {} from {}", filename, id);
         final File idDirectory = getProjectDirectory(String.valueOf(id));
         return getResultFile(idDirectory, filename, download);
     }
@@ -395,7 +394,7 @@ public class OutputManagerImpl implements OutputManager {
         final File idDirectory =
                 new File(getProjectDirectory(projectId), String.valueOf(id));
         if (!idDirectory.canRead()) {
-            logger.debug(idDirectory + " was not found");
+            logger.debug("{} was not found", idDirectory);
             return Response.status(NOT_FOUND).build();
         }
 
@@ -444,8 +443,8 @@ public class OutputManagerImpl implements OutputManager {
             if (projectDirectory.isDirectory()
                     && removeOldProjectDirectoryContents(startTime,
                             projectDirectory)) {
-                logger.info("No more outputs for project "
-                        + projectDirectory.getName());
+                logger.info("No more outputs for project {}",
+                        projectDirectory.getName());
                 projectDirectory.delete();
             }
         }
@@ -461,13 +460,14 @@ public class OutputManagerImpl implements OutputManager {
             final File projectDirectory) {
         boolean allJobsRemoved = true;
         for (final File jobDirectory : projectDirectory.listFiles()) {
-            logger.debug("Determining whether to remove " + jobDirectory
-                    + " which is " + (startTime - jobDirectory.lastModified())
-                    + "ms old of " + timeToKeepResults);
+            logger.debug("Determining whether to remove {} "
+                    + "which is {}ms old of {}", jobDirectory,
+                    startTime - jobDirectory.lastModified(),
+                    timeToKeepResults);
             if (jobDirectory.isDirectory() && ((startTime
                     - jobDirectory.lastModified()) > timeToKeepResults)) {
-                logger.info(
-                        "Removing results for job " + jobDirectory.getName());
+                logger.info("Removing results for job {}",
+                        jobDirectory.getName());
                 try (JobLock op = new JobLock(jobDirectory)) {
                     removeDirectory(jobDirectory);
                 }
