@@ -75,7 +75,7 @@
 <a class="jxr_linenumber" name="L67" href="#L67">67</a>      <em class="jxr_javadoccomment">/**</em>
 <a class="jxr_linenumber" name="L68" href="#L68">68</a>  <em class="jxr_javadoccomment">     * Logging.</em>
 <a class="jxr_linenumber" name="L69" href="#L69">69</a>  <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L70" href="#L70">70</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> Logger logger = getLogger(getClass());
+<a class="jxr_linenumber" name="L70" href="#L70">70</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> Logger logger = getLogger(Executer.<strong class="jxr_keyword">class</strong>);
 <a class="jxr_linenumber" name="L71" href="#L71">71</a>  
 <a class="jxr_linenumber" name="L72" href="#L72">72</a>      <em class="jxr_javadoccomment">/**</em>
 <a class="jxr_linenumber" name="L73" href="#L73">73</a>  <em class="jxr_javadoccomment">     * The URL of the Xen Server.</em>
@@ -168,12 +168,12 @@
 <a class="jxr_linenumber" name="L160" href="#L160">160</a> <em class="jxr_javadoccomment">     */</em>
 <a class="jxr_linenumber" name="L161" href="#L161">161</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> waitToClaimVM() {
 <a class="jxr_linenumber" name="L162" href="#L162">162</a>         <strong class="jxr_keyword">synchronized</strong> (lock) {
-<a class="jxr_linenumber" name="L163" href="#L163">163</a>             logger.info(nVirtualMachines + <span class="jxr_string">" of "</span> + maxNVirtualMachines
-<a class="jxr_linenumber" name="L164" href="#L164">164</a>                     + <span class="jxr_string">" in use"</span>);
+<a class="jxr_linenumber" name="L163" href="#L163">163</a>             logger.info(<span class="jxr_string">"{} of {} in use"</span>, nVirtualMachines,
+<a class="jxr_linenumber" name="L164" href="#L164">164</a>                     maxNVirtualMachines);
 <a class="jxr_linenumber" name="L165" href="#L165">165</a>             <strong class="jxr_keyword">while</strong> (nVirtualMachines &gt;= maxNVirtualMachines) {
-<a class="jxr_linenumber" name="L166" href="#L166">166</a>                 logger.debug(<span class="jxr_string">"Waiting for a VM to become available ("</span>
-<a class="jxr_linenumber" name="L167" href="#L167">167</a>                         + nVirtualMachines + <span class="jxr_string">" of "</span> + maxNVirtualMachines
-<a class="jxr_linenumber" name="L168" href="#L168">168</a>                         + <span class="jxr_string">" in use)"</span>);
+<a class="jxr_linenumber" name="L166" href="#L166">166</a>                 logger.debug(<span class="jxr_string">"Waiting for a VM to become available "</span>
+<a class="jxr_linenumber" name="L167" href="#L167">167</a>                         + <span class="jxr_string">"({} of {} in use)"</span>, nVirtualMachines,
+<a class="jxr_linenumber" name="L168" href="#L168">168</a>                         maxNVirtualMachines);
 <a class="jxr_linenumber" name="L169" href="#L169">169</a>                 <strong class="jxr_keyword">try</strong> {
 <a class="jxr_linenumber" name="L170" href="#L170">170</a>                     lock.wait();
 <a class="jxr_linenumber" name="L171" href="#L171">171</a>                 } <strong class="jxr_keyword">catch</strong> (<strong class="jxr_keyword">final</strong> InterruptedException e) {
@@ -188,8 +188,8 @@
 <a class="jxr_linenumber" name="L180" href="#L180">180</a>     <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">void</strong> executorFinished() {
 <a class="jxr_linenumber" name="L181" href="#L181">181</a>         <strong class="jxr_keyword">synchronized</strong> (lock) {
 <a class="jxr_linenumber" name="L182" href="#L182">182</a>             nVirtualMachines--;
-<a class="jxr_linenumber" name="L183" href="#L183">183</a>             logger.info(nVirtualMachines + <span class="jxr_string">" of "</span> + maxNVirtualMachines
-<a class="jxr_linenumber" name="L184" href="#L184">184</a>                     + <span class="jxr_string">" now in use"</span>);
+<a class="jxr_linenumber" name="L183" href="#L183">183</a>             logger.info(<span class="jxr_string">"{} of {} now in use"</span>, nVirtualMachines,
+<a class="jxr_linenumber" name="L184" href="#L184">184</a>                     maxNVirtualMachines);
 <a class="jxr_linenumber" name="L185" href="#L185">185</a>             lock.notifyAll();
 <a class="jxr_linenumber" name="L186" href="#L186">186</a>         }
 <a class="jxr_linenumber" name="L187" href="#L187">187</a>     }
@@ -614,8 +614,8 @@
 <a class="jxr_linenumber" name="L606" href="#L606">606</a>                     <strong class="jxr_keyword">do</strong> {
 <a class="jxr_linenumber" name="L607" href="#L607">607</a>                         sleep(VM_POLL_INTERVAL);
 <a class="jxr_linenumber" name="L608" href="#L608">608</a>                         powerState = conn.getState(clonedVm);
-<a class="jxr_linenumber" name="L609" href="#L609">609</a>                         logger.debug(<span class="jxr_string">"VM for "</span> + uuid + <span class="jxr_string">" is in state "</span>
-<a class="jxr_linenumber" name="L610" href="#L610">610</a>                                 + powerState);
+<a class="jxr_linenumber" name="L609" href="#L609">609</a>                         logger.debug(<span class="jxr_string">"VM for {} is in state {}"</span>, uuid,
+<a class="jxr_linenumber" name="L610" href="#L610">610</a>                                 powerState);
 <a class="jxr_linenumber" name="L611" href="#L611">611</a>                     } <strong class="jxr_keyword">while</strong> (powerState != HALTED);
 <a class="jxr_linenumber" name="L612" href="#L612">612</a>                 } <strong class="jxr_keyword">catch</strong> (<strong class="jxr_keyword">final</strong> Exception e) {
 <a class="jxr_linenumber" name="L613" href="#L613">613</a>                     logger.error(<span class="jxr_string">"Could not get VM power state, assuming off"</span>,

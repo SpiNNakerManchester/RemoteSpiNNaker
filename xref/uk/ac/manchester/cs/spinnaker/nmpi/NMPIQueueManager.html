@@ -100,7 +100,7 @@
 <a class="jxr_linenumber" name="L92" href="#L92">92</a>      <em class="jxr_javadoccomment">/**</em>
 <a class="jxr_linenumber" name="L93" href="#L93">93</a>  <em class="jxr_javadoccomment">     * Logger.</em>
 <a class="jxr_linenumber" name="L94" href="#L94">94</a>  <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L95" href="#L95">95</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> Logger logger = getLogger(getClass());
+<a class="jxr_linenumber" name="L95" href="#L95">95</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> Logger logger = getLogger(NMPIQueueManager.<strong class="jxr_keyword">class</strong>);
 <a class="jxr_linenumber" name="L96" href="#L96">96</a>  
 <a class="jxr_linenumber" name="L97" href="#L97">97</a>      <em class="jxr_javadoccomment">/** The hardware identifier for the queue. */</em>
 <a class="jxr_linenumber" name="L98" href="#L98">98</a>      @Value(<span class="jxr_string">"${nmpi.hardware}"</span>)
@@ -223,7 +223,7 @@
 <a class="jxr_linenumber" name="L215" href="#L215">215</a>         <strong class="jxr_keyword">synchronized</strong> (jobCache) {
 <a class="jxr_linenumber" name="L216" href="#L216">216</a>             jobCache.put(job.getId(), job);
 <a class="jxr_linenumber" name="L217" href="#L217">217</a>         }
-<a class="jxr_linenumber" name="L218" href="#L218">218</a>         logger.debug(<span class="jxr_string">"Job "</span> + job.getId() + <span class="jxr_string">" received"</span>);
+<a class="jxr_linenumber" name="L218" href="#L218">218</a>         logger.debug(<span class="jxr_string">"Job {} received"</span>, job.getId());
 <a class="jxr_linenumber" name="L219" href="#L219">219</a>         <strong class="jxr_keyword">try</strong> {
 <a class="jxr_linenumber" name="L220" href="#L220">220</a>             <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">final</strong> <a name="NMPIQueueListener" href="../../../../../../uk/ac/manchester/cs/spinnaker/nmpi/NMPIQueueListener.html#NMPIQueueListener">NMPIQueueListener</a> listener : listeners) {
 <a class="jxr_linenumber" name="L221" href="#L221">221</a>                 listener.addJob(job);
@@ -256,7 +256,7 @@
 <a class="jxr_linenumber" name="L248" href="#L248">248</a>             jobLog.put(id, existingLog);
 <a class="jxr_linenumber" name="L249" href="#L249">249</a>         }
 <a class="jxr_linenumber" name="L250" href="#L250">250</a>         existingLog.appendContent(logToAppend);
-<a class="jxr_linenumber" name="L251" href="#L251">251</a>         logger.debug(<span class="jxr_string">"Job "</span> + id + <span class="jxr_string">" log is being updated"</span>);
+<a class="jxr_linenumber" name="L251" href="#L251">251</a>         logger.debug(<span class="jxr_string">"Job {} log is being updated"</span>, id);
 <a class="jxr_linenumber" name="L252" href="#L252">252</a>         queue.updateLog(id, existingLog);
 <a class="jxr_linenumber" name="L253" href="#L253">253</a>     }
 <a class="jxr_linenumber" name="L254" href="#L254">254</a> 
@@ -267,7 +267,7 @@
 <a class="jxr_linenumber" name="L259" href="#L259">259</a> <em class="jxr_javadoccomment">     *            The ID of the job.</em>
 <a class="jxr_linenumber" name="L260" href="#L260">260</a> <em class="jxr_javadoccomment">     */</em>
 <a class="jxr_linenumber" name="L261" href="#L261">261</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> setJobRunning(<strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> id) {
-<a class="jxr_linenumber" name="L262" href="#L262">262</a>         logger.debug(<span class="jxr_string">"Job "</span> + id + <span class="jxr_string">" is running"</span>);
+<a class="jxr_linenumber" name="L262" href="#L262">262</a>         logger.debug(<span class="jxr_string">"Job {} is running"</span>, id);
 <a class="jxr_linenumber" name="L263" href="#L263">263</a>         <strong class="jxr_keyword">final</strong> <a name="Job" href="../../../../../../uk/ac/manchester/cs/spinnaker/job/nmpi/Job.html#Job">Job</a> job = getJob(id);
 <a class="jxr_linenumber" name="L264" href="#L264">264</a>         job.setStatus(STATUS_RUNNING);
 <a class="jxr_linenumber" name="L265" href="#L265">265</a>         logger.debug(<span class="jxr_string">"Updating job status on server"</span>);
@@ -292,7 +292,7 @@
 <a class="jxr_linenumber" name="L284" href="#L284">284</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> setJobFinished(<strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> id, <strong class="jxr_keyword">final</strong> String logToAppend,
 <a class="jxr_linenumber" name="L285" href="#L285">285</a>             <strong class="jxr_keyword">final</strong> List&lt;DataItem&gt; outputs, <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">long</strong> resourceUsage,
 <a class="jxr_linenumber" name="L286" href="#L286">286</a>             <strong class="jxr_keyword">final</strong> ObjectNode provenance) {
-<a class="jxr_linenumber" name="L287" href="#L287">287</a>         logger.debug(<span class="jxr_string">"Job "</span> + id + <span class="jxr_string">" is finished"</span>);
+<a class="jxr_linenumber" name="L287" href="#L287">287</a>         logger.debug(<span class="jxr_string">"Job {} is finished"</span>, id);
 <a class="jxr_linenumber" name="L288" href="#L288">288</a> 
 <a class="jxr_linenumber" name="L289" href="#L289">289</a>         <strong class="jxr_keyword">if</strong> (logToAppend != <strong class="jxr_keyword">null</strong>) {
 <a class="jxr_linenumber" name="L290" href="#L290">290</a>             appendJobLog(id, logToAppend);
@@ -332,7 +332,7 @@
 <a class="jxr_linenumber" name="L324" href="#L324">324</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> setJobError(<strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> id, <strong class="jxr_keyword">final</strong> String logToAppend,
 <a class="jxr_linenumber" name="L325" href="#L325">325</a>             <strong class="jxr_keyword">final</strong> List&lt;DataItem&gt; outputs, <strong class="jxr_keyword">final</strong> Throwable error,
 <a class="jxr_linenumber" name="L326" href="#L326">326</a>             <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">long</strong> resourceUsage, <strong class="jxr_keyword">final</strong> ObjectNode provenance) {
-<a class="jxr_linenumber" name="L327" href="#L327">327</a>         logger.debug(<span class="jxr_string">"Job "</span> + id + <span class="jxr_string">" finished with an error"</span>);
+<a class="jxr_linenumber" name="L327" href="#L327">327</a>         logger.debug(<span class="jxr_string">"Job {} finished with an error"</span>, id);
 <a class="jxr_linenumber" name="L328" href="#L328">328</a>         <strong class="jxr_keyword">final</strong> StringWriter errors = <strong class="jxr_keyword">new</strong> StringWriter();
 <a class="jxr_linenumber" name="L329" href="#L329">329</a>         error.printStackTrace(<strong class="jxr_keyword">new</strong> PrintWriter(errors));
 <a class="jxr_linenumber" name="L330" href="#L330">330</a>         <strong class="jxr_keyword">final</strong> StringBuilder logMessage = <strong class="jxr_keyword">new</strong> StringBuilder();
