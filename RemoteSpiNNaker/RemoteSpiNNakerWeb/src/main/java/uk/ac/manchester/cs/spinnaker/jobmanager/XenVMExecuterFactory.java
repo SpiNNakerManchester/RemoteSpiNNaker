@@ -161,11 +161,11 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
     private void waitToClaimVM() {
         synchronized (lock) {
             logger.info("{} of {} in use", nVirtualMachines,
-            		maxNVirtualMachines);
+                    maxNVirtualMachines);
             while (nVirtualMachines >= maxNVirtualMachines) {
                 logger.debug("Waiting for a VM to become available "
-                		+ "({} of {} in use)", nVirtualMachines,
-                		maxNVirtualMachines);
+                        + "({} of {} in use)", nVirtualMachines,
+                        maxNVirtualMachines);
                 try {
                     lock.wait();
                 } catch (final InterruptedException e) {
@@ -181,7 +181,7 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
         synchronized (lock) {
             nVirtualMachines--;
             logger.info("{} of {} now in use", nVirtualMachines,
-            		maxNVirtualMachines);
+                    maxNVirtualMachines);
             lock.notifyAll();
         }
     }
@@ -607,7 +607,7 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
                         sleep(VM_POLL_INTERVAL);
                         powerState = conn.getState(clonedVm);
                         logger.debug("VM for {} is in state {}", uuid,
-                        		powerState);
+                                powerState);
                     } while (powerState != HALTED);
                 } catch (final Exception e) {
                     logger.error("Could not get VM power state, assuming off",

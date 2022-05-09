@@ -179,7 +179,7 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
      * Logging.
      */
     private static final Logger logger =
-    		getLogger(SpallocMachineManagerImpl.class);
+            getLogger(SpallocMachineManagerImpl.class);
 
     /**
      * Communication management.
@@ -831,7 +831,7 @@ public class SpallocMachineManagerImpl implements MachineManager, Runnable {
                 job = createJob(nBoards);
 
                 logger.debug("Got machine {}, requesting notifications",
-                		job.id);
+                        job.id);
                 job.notify(true);
                 JobState state = job.getState();
                 synchronized (machineState) {

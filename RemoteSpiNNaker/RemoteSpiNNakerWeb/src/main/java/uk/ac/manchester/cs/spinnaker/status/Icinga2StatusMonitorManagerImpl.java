@@ -93,7 +93,7 @@ public class Icinga2StatusMonitorManagerImpl implements StatusMonitorManager {
      * Logging.
      */
     private static final Logger logger =
-    		getLogger(Icinga2StatusMonitorManagerImpl.class);
+            getLogger(Icinga2StatusMonitorManagerImpl.class);
 
     /**
      * Initialise the service.

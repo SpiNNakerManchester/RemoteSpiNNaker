@@ -277,7 +277,7 @@ public class OutputManagerImpl implements OutputManager {
                         "output/" + pId + "/" + id + "/" + outputPath);
                 outputData.add(new DataItem(outputUrl.toExternalForm()));
                 logger.debug("New output {} mapped to {}",
-                		newOutput, outputUrl);
+                        newOutput, outputUrl);
             }
 
             return outputData;
@@ -323,7 +323,7 @@ public class OutputManagerImpl implements OutputManager {
                 }
             } catch (final IOException e) {
                 logger.debug("Content type of {} could not be determined",
-                		resultFile, e);
+                        resultFile, e);
             }
 
             return Response.ok(resultFile).header("Content-Disposition",
@@ -474,13 +474,13 @@ public class OutputManagerImpl implements OutputManager {
         boolean allJobsRemoved = true;
         for (final File jobDirectory : projectDirectory.listFiles()) {
             logger.debug("Determining whether to remove {} "
-            		+ "which is {}ms old of {}", jobDirectory,
-            		startTime - jobDirectory.lastModified(),
-            		timeToKeepResults);
+                    + "which is {}ms old of {}", jobDirectory,
+                    startTime - jobDirectory.lastModified(),
+                    timeToKeepResults);
             if (jobDirectory.isDirectory() && ((startTime
                     - jobDirectory.lastModified()) > timeToKeepResults)) {
                 logger.info("Removing results for job {}",
-                		jobDirectory.getName());
+                        jobDirectory.getName());
                 try (JobLock op = new JobLock(jobDirectory)) {
                     removeDirectory(jobDirectory);
                 }

@@ -310,7 +310,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         // TODO Check quota
 
         logger.info(
-        		"Request for {} cores or {} chips or {} boards for {} seconds",
+                "Request for {} cores or {} chips or {} boards for {} seconds",
                 nCores, nChips, nBoards, runTime / MILLISECONDS_PER_SECOND);
 
         int nBoardsToRequest = nBoards;
@@ -540,7 +540,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
             }
         } catch (final IOException e) {
             logger.error("Error creating temporary output directory for {}",
-            		id, e);
+                    id, e);
             throw new WebApplicationException(INTERNAL_SERVER_ERROR);
         }
 
@@ -550,7 +550,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
             copyInputStreamToFile(input, outputFile);
         } catch (final IOException e) {
             logger.error("Error writing file {} for job {}",
-            		outputFile, id, e);
+                    outputFile, id, e);
             throw new WebApplicationException(INTERNAL_SERVER_ERROR);
         }
     }
@@ -616,7 +616,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
                 } else {
                     add = false;
                     logger.warn("Could not add provenance item {} to job {}: "
-                    		+ "Node {} is not an object",
+                            + "Node {} is not an object",
                             path, id, item);
                     break;
                 }
@@ -800,7 +800,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
             }
         } else {
             logger.error("An executer {} has exited without a job. "
-            		+ "This could indicate an error!", executorId);
+                    + "This could indicate an error!", executorId);
             logger.error(logToAppend);
 
             if (restartJobExecuterOnFailure) {

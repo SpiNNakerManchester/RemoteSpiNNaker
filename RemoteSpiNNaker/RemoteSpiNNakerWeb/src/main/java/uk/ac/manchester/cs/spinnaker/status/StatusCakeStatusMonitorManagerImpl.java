@@ -67,7 +67,7 @@ public class StatusCakeStatusMonitorManagerImpl
      * Logging.
      */
     private static final Logger logger =
-    		getLogger(StatusCakeStatusMonitorManagerImpl.class);
+            getLogger(StatusCakeStatusMonitorManagerImpl.class);
 
     /**
      * Initialise the service.
@@ -84,8 +84,8 @@ public class StatusCakeStatusMonitorManagerImpl
     @Override
     public void updateStatus(final int runningJobs, final int nBoardsInUse) {
         logger.debug("Updating to Status Cake - "
-        		+ "runningJobs = {}, nBoardsInUse = {}",
-        		runningJobs, nBoardsInUse);
+                + "runningJobs = {}, nBoardsInUse = {}",
+                runningJobs, nBoardsInUse);
         try {
             statusCake.pushUpdate(primaryKey, testID, nBoardsInUse);
         } catch (Throwable e) {
