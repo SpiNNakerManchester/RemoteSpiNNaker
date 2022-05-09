@@ -164,7 +164,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     /**
      * Logging.
      */
-    private final Logger logger = getLogger(getClass());
+    private static final Logger logger = getLogger(JobManager.class);
 
     /**
      * Job ID -> Machine allocated.
@@ -214,7 +214,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
      */
     public JobManager(final URL baseUrlParam) {
         this.baseUrl = requireNonNull(baseUrlParam);
-        System.err.println("Base URL is " + baseUrlParam);
+        logger.info("Base URL is {}", baseUrlParam);
     }
 
     /**
@@ -235,7 +235,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     @Override
     public void addJob(final Job job) throws IOException {
         requireNonNull(job);
-        logger.info("New job " + job.getId());
+        logger.info("New job {}", job.getId());
 
         // Add any existing provenance to be updated
         synchronized (jobProvenance) {
@@ -279,13 +279,12 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
                 try {
                     jobExecuters.wait();
                 } catch (InterruptedException e) {
-
                     // Ignore
                 }
                 job = executorJobId.get(executerId);
             }
         }
-        logger.info("Executer " + executerId + " is running " + job.getId());
+        logger.info("Executer {} is running {}", executerId, job.getId());
         queueManager.setJobRunning(job.getId());
         return job;
     }
@@ -310,10 +309,9 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
             final int nChips, final int nBoards, final double runTime) {
         // TODO Check quota
 
-        logger.info("Request for " + nCores + " cores or " + nChips
-                + " chips or " + nBoards + " boards for "
-                + (runTime / MILLISECONDS_PER_SECOND)
-                + " seconds");
+        logger.info(
+                "Request for {} cores or {} chips or {} boards for {} seconds",
+                nCores, nChips, nBoards, runTime / MILLISECONDS_PER_SECOND);
 
         int nBoardsToRequest = nBoards;
         long quotaNCores = (long) (nBoards * CORES_PER_CHIP * CHIPS_PER_BOARD);
@@ -350,10 +348,10 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
 
         final SpinnakerMachine machine =
                 allocateMachineForJob(id, nBoardsToRequest);
-        logger.info("Running " + id + " on " + machine.getMachineName());
+        logger.info("Running {} on {}", id, machine.getMachineName());
         final long resourceUsage =
                 (long) ((runTime / MILLISECONDS_PER_SECOND) * quotaNCores);
-        logger.debug("Resource usage " + resourceUsage);
+        logger.debug("Resource usage: {}", resourceUsage);
         synchronized (jobResourceUsage) {
             jobResourceUsage.put(id, resourceUsage);
             jobNCores.put(id, quotaNCores);
@@ -463,7 +461,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
                     * (runTime / MILLISECONDS_PER_SECOND));
             jobResourceUsage.put(id, usage);
         }
-        logger.info("Usage for " + id + " now " + usage);
+        logger.info("Usage for {} now {}", id, usage);
     }
 
     @Override
@@ -523,8 +521,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
 
     @Override
     public void appendLog(final int id, final String logToAppend) {
-        logger.debug("Updating log for " + id);
-        logger.trace(id + ": " + logToAppend);
+        logger.debug("Updating log for {}", id);
+        logger.trace("{}: {}", id, logToAppend);
         queueManager.appendJobLog(id, requireNonNull(logToAppend));
     }
 
@@ -541,8 +539,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
                 jobOutputTempFiles.put(id, tempOutputDir);
             }
         } catch (final IOException e) {
-            logger.error("Error creating temporary output directory for " + id,
-                    e);
+            logger.error("Error creating temporary output directory for {}",
+                    id, e);
             throw new WebApplicationException(INTERNAL_SERVER_ERROR);
         }
 
@@ -551,8 +549,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
             forceMkdirParent(outputFile);
             copyInputStreamToFile(input, outputFile);
         } catch (final IOException e) {
-            logger.error("Error writing file " + outputFile + " for job " + id,
-                    e);
+            logger.error("Error writing file {} for job {}",
+                    outputFile, id, e);
             throw new WebApplicationException(INTERNAL_SERVER_ERROR);
         }
     }
@@ -617,9 +615,9 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
                 // error as a non-object can't contain values
                 } else {
                     add = false;
-                    logger.warn("Could not add provenance item " + path
-                            + " to job " + id + ": Node " + item
-                            + " is not an object");
+                    logger.warn("Could not add provenance item {} to job {}: "
+                            + "Node {} is not an object",
+                            path, id, item);
                     break;
                 }
             }
@@ -669,7 +667,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         requireNonNull(logToAppend);
         requireNonNull(baseDirectory);
         requireNonNull(outputs);
-        logger.info("Marking job " + id + " as finished");
+        logger.info("Marking job {} as finished", id);
         releaseAllocatedMachines(id);
 
         // Do these before anything that can throw
@@ -716,7 +714,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         requireNonNull(outputs);
         requireNonNull(stackTrace);
 
-        logger.info("Marking job " + id + " as error");
+        logger.info("Marking job {} as error", id);
         releaseAllocatedMachines(id);
 
         final Exception exception =
@@ -776,13 +774,12 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         }
         if (job != null) {
             final int id = job.getId();
-            logger.debug(
-                "Executer " + executorId + " for Job " + id + " has exited");
+            logger.debug("Executer {} for Job {} has exited", executorId, id);
 
             String status = job.getStatus();
             if (status == NMPIQueueManager.STATUS_QUEUED
                     || status == NMPIQueueManager.STATUS_RUNNING) {
-                logger.debug("Job " + id + " has not exited cleanly");
+                logger.debug("Job {} has not exited cleanly", id);
                 releaseAllocatedMachines(id);
                 final long resourceUsage = getResourceUsage(id);
                 final ObjectNode prov = getProvenance(id);
@@ -802,9 +799,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
                 }
             }
         } else {
-            logger.error(
-                    "An executer " + executorId + " has exited without a job. "
-                            + "This could indicate an error!");
+            logger.error("An executer {} has exited without a job. "
+                    + "This could indicate an error!", executorId);
             logger.error(logToAppend);
 
             if (restartJobExecuterOnFailure) {

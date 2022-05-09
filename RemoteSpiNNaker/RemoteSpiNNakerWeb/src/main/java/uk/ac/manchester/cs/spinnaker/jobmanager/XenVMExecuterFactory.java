@@ -67,7 +67,7 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
     /**
      * Logging.
      */
-    private final Logger logger = getLogger(getClass());
+    private static final Logger logger = getLogger(Executer.class);
 
     /**
      * The URL of the Xen Server.
@@ -160,12 +160,12 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
      */
     private void waitToClaimVM() {
         synchronized (lock) {
-            logger.info(nVirtualMachines + " of " + maxNVirtualMachines
-                    + " in use");
+            logger.info("{} of {} in use", nVirtualMachines,
+                    maxNVirtualMachines);
             while (nVirtualMachines >= maxNVirtualMachines) {
-                logger.debug("Waiting for a VM to become available ("
-                        + nVirtualMachines + " of " + maxNVirtualMachines
-                        + " in use)");
+                logger.debug("Waiting for a VM to become available "
+                        + "({} of {} in use)", nVirtualMachines,
+                        maxNVirtualMachines);
                 try {
                     lock.wait();
                 } catch (final InterruptedException e) {
@@ -180,8 +180,8 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
     protected void executorFinished() {
         synchronized (lock) {
             nVirtualMachines--;
-            logger.info(nVirtualMachines + " of " + maxNVirtualMachines
-                    + " now in use");
+            logger.info("{} of {} now in use", nVirtualMachines,
+                    maxNVirtualMachines);
             lock.notifyAll();
         }
     }
@@ -606,8 +606,8 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
                     do {
                         sleep(VM_POLL_INTERVAL);
                         powerState = conn.getState(clonedVm);
-                        logger.debug("VM for " + uuid + " is in state "
-                                + powerState);
+                        logger.debug("VM for {} is in state {}", uuid,
+                                powerState);
                     } while (powerState != HALTED);
                 } catch (final Exception e) {
                     logger.error("Could not get VM power state, assuming off",

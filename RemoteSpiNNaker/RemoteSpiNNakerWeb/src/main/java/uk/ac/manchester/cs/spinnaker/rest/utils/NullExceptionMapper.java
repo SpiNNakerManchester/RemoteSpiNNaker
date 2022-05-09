@@ -38,7 +38,7 @@ public class NullExceptionMapper
     /**
      * Log.
      */
-    private final Logger log = getLogger(getClass());
+    private static final Logger logger = getLogger(NullExceptionMapper.class);
 
     @Override
     public Response toResponse(final NullPointerException exception) {
@@ -46,7 +46,7 @@ public class NullExceptionMapper
         if ((msg == null) || msg.isEmpty()) {
             msg = "bad parameter";
         }
-        log.info("trapped exception in service method", exception);
+        logger.info("trapped exception in service method", exception);
         return status(BAD_REQUEST).entity(msg).build();
     }
 }
