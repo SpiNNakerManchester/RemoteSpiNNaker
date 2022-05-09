@@ -92,7 +92,8 @@ public class Icinga2StatusMonitorManagerImpl implements StatusMonitorManager {
     /**
      * Logging.
      */
-    private final Logger logger = getLogger(getClass());
+    private static final Logger logger =
+    		getLogger(Icinga2StatusMonitorManagerImpl.class);
 
     /**
      * Initialise the service.
@@ -114,15 +115,15 @@ public class Icinga2StatusMonitorManagerImpl implements StatusMonitorManager {
                 STATUS, STATUS_MESSAGE, performanceData, ttl, host, service);
         try {
             Map<String, Object> response = icinga.processCheckResult(result);
-            logger.debug("Status updated, result = " + response);
+            logger.debug("Status updated, result = {}", response);
         } catch (WebApplicationException e) {
             Response response = e.getResponse();
-            logger.error("Error updating to Icinga on "
-                    + response.getLocation() + ":", e);
-            logger.error("    Status: " + response.getStatus());
-            logger.error("    Message: "
-                    + response.getStatusInfo().getReasonPhrase());
-            logger.error("    Body: " + response.readEntity(String.class));
+            logger.error("Error updating to Icinga on {}:",
+                    response.getLocation(), e);
+            logger.error("    Status: {}", response.getStatus());
+            logger.error("    Message: {}",
+                    response.getStatusInfo().getReasonPhrase());
+            logger.error("    Body: {}", response.readEntity(String.class));
         } catch (Throwable e) {
             logger.error("Error updating to Icinga", e);
         }

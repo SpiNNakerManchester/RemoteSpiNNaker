@@ -107,7 +107,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
     /**
      * Logging.
      */
-    private static Logger log = getLogger(Executer.class);
+    private static final Logger logger = getLogger(Executer.class);
 
     /**
      * Create a new local executor.
@@ -255,13 +255,13 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         @Override
         public void run() {
             try (JobOutputPipe pipe = startSubprocess(constructArguments())) {
-                log.debug("Waiting for process to finish");
+                logger.debug("Waiting for process to finish");
                 try {
                     process.waitFor();
                 } catch (final InterruptedException e) {
                     // Do nothing; the thread will terminate shortly
                 }
-                log.debug("Process finished, closing pipe");
+                logger.debug("Process finished, closing pipe");
             }
 
             reportResult();
@@ -284,13 +284,13 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
             }
             command.add("-cp");
             command.add(classPathBuilder.toString());
-            log.debug("Classpath: " + classPathBuilder);
+            logger.debug("Classpath: {}", classPathBuilder);
 
             command.add(JOB_PROCESS_MANAGER_MAIN_CLASS);
-            log.debug("Main command: " + JOB_PROCESS_MANAGER_MAIN_CLASS);
+            logger.debug("Main command: {}", JOB_PROCESS_MANAGER_MAIN_CLASS);
             for (final String argument : arguments) {
                 command.add(argument);
-                log.debug("Argument: " + argument);
+                logger.debug("Argument: {}", argument);
             }
             return command;
         }
@@ -304,19 +304,19 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         private JobOutputPipe startSubprocess(final List<String> command) {
             final ProcessBuilder builder = new ProcessBuilder(command);
             builder.directory(jobExecuterDirectory);
-            log.debug("Working directory: " + jobExecuterDirectory);
+            logger.debug("Working directory: {}", jobExecuterDirectory);
             builder.redirectErrorStream(true);
             JobOutputPipe pipe = null;
             synchronized (this) {
                 try {
-                    log.debug("Starting execution process");
+                    logger.debug("Starting execution process");
                     process = builder.start();
-                    log.debug("Starting pipe from process");
+                    logger.debug("Starting pipe from process");
                     pipe = new JobOutputPipe(process.getInputStream(),
                             new PrintWriter(outputLog));
                     pipe.start();
                 } catch (final IOException e) {
-                    log.error("Error running external job", e);
+                    logger.error("Error running external job", e);
                     startException = e;
                 }
                 notifyAll();
@@ -339,7 +339,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
                     logToAppend.append(line).append("\n");
                 }
             } catch (final IOException e) {
-                log.warn("problem in reporting log", e);
+                logger.warn("problem in reporting log", e);
             }
             jobManager.setExecutorExited(id, logToAppend.toString());
         }
@@ -428,7 +428,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
                         break;
                     }
                     if (!line.isEmpty()) {
-                        log.debug(line);
+                        logger.debug("{}", line);
                         writer.println(line);
                     }
                 }

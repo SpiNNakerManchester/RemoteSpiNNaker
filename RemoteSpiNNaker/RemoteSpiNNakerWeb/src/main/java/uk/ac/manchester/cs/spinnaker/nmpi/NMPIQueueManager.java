@@ -92,7 +92,7 @@ public class NMPIQueueManager implements Runnable {
     /**
      * Logger.
      */
-    private final Logger logger = getLogger(getClass());
+    private static final Logger logger = getLogger(NMPIQueueManager.class);
 
     /** The hardware identifier for the queue. */
     @Value("${nmpi.hardware}")
@@ -215,7 +215,7 @@ public class NMPIQueueManager implements Runnable {
         synchronized (jobCache) {
             jobCache.put(job.getId(), job);
         }
-        logger.debug("Job " + job.getId() + " received");
+        logger.debug("Job {} received", job.getId());
         try {
             for (final NMPIQueueListener listener : listeners) {
                 listener.addJob(job);
@@ -248,7 +248,7 @@ public class NMPIQueueManager implements Runnable {
             jobLog.put(id, existingLog);
         }
         existingLog.appendContent(logToAppend);
-        logger.debug("Job " + id + " log is being updated");
+        logger.debug("Job {} log is being updated", id);
         queue.updateLog(id, existingLog);
     }
 
@@ -259,7 +259,7 @@ public class NMPIQueueManager implements Runnable {
      *            The ID of the job.
      */
     public void setJobRunning(final int id) {
-        logger.debug("Job " + id + " is running");
+        logger.debug("Job {} is running", id);
         final Job job = getJob(id);
         job.setStatus(STATUS_RUNNING);
         logger.debug("Updating job status on server");
@@ -284,7 +284,7 @@ public class NMPIQueueManager implements Runnable {
     public void setJobFinished(final int id, final String logToAppend,
             final List<DataItem> outputs, final long resourceUsage,
             final ObjectNode provenance) {
-        logger.debug("Job " + id + " is finished");
+        logger.debug("Job {} is finished", id);
 
         if (logToAppend != null) {
             appendJobLog(id, logToAppend);
@@ -324,7 +324,7 @@ public class NMPIQueueManager implements Runnable {
     public void setJobError(final int id, final String logToAppend,
             final List<DataItem> outputs, final Throwable error,
             final long resourceUsage, final ObjectNode provenance) {
-        logger.debug("Job " + id + " finished with an error");
+        logger.debug("Job {} finished with an error", id);
         final StringWriter errors = new StringWriter();
         error.printStackTrace(new PrintWriter(errors));
         final StringBuilder logMessage = new StringBuilder();
