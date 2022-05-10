@@ -46,8 +46,6 @@ import uk.ac.manchester.cs.spinnaker.job.nmpi.QueueEmpty;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.QueueNextResponse;
 import uk.ac.manchester.cs.spinnaker.model.NMPILog;
 import uk.ac.manchester.cs.spinnaker.rest.NMPIQueue;
-import uk.ac.manchester.cs.spinnaker.rest.utils.CustomJacksonJsonProvider;
-import uk.ac.manchester.cs.spinnaker.rest.utils.PropertyBasedDeserialiser;
 
 /**
  * Manages the NMPI queue, receiving jobs and submitting them to be run.
@@ -118,27 +116,6 @@ public class NMPIQueueManager {
      */
     @PostConstruct
     private void initAPIClient() {
-        final CustomJacksonJsonProvider provider =
-                new CustomJacksonJsonProvider();
-
-        /**
-         * How to understand messages coming from the queue.
-         */
-        @SuppressWarnings("serial")
-        class QueueResponseDeserialiser
-                extends PropertyBasedDeserialiser<QueueNextResponse> {
-            /**
-             * Make a deserialiser.
-             */
-            QueueResponseDeserialiser() {
-                super(QueueNextResponse.class);
-                register("id", Job.class);
-                register("warning", QueueEmpty.class);
-            }
-        }
-        provider.addDeserialiser(QueueNextResponse.class,
-                new QueueResponseDeserialiser());
-
         String apiKey = nmpiPassword;
         if (!nmpiPasswordIsApiKey) {
             queue = createBasicClient(nmpiUrl, nmpiUsername, nmpiPassword,
@@ -146,7 +123,7 @@ public class NMPIQueueManager {
             apiKey = queue.getToken(nmpiUsername).getKey();
         }
         queue = createApiKeyClient(nmpiUrl, nmpiUsername, apiKey,
-                NMPIQueue.class, provider);
+                NMPIQueue.class, NMPIQueue.createProvider());
     }
 
     /**

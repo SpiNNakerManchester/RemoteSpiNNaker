@@ -23,7 +23,6 @@ package uk.ac.manchester.cs.spinnaker.jobmanager;
  * @see XenVMExecuterFactory.Executer
  */
 public interface JobExecuter {
-
     /**
      * Gets the id of the executer.
      *

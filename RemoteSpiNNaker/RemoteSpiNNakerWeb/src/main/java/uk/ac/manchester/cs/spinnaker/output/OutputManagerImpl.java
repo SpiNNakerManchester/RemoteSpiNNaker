@@ -22,8 +22,10 @@ import static java.nio.file.Files.probeContentType;
 import static java.util.concurrent.Executors.newScheduledThreadPool;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Response.serverError;
+import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.slf4j.LoggerFactory.getLogger;
 import static uk.ac.manchester.cs.spinnaker.rest.utils.RestClientUtils.createBearerClient;
@@ -294,15 +296,14 @@ public class OutputManagerImpl implements OutputManager {
         try (JobLock op = new JobLock(idDirectory)) {
             if (purgeFile.exists()) {
                 logger.debug("{} was purged", idDirectory);
-                return Response
-                        .status(NOT_FOUND).entity("Results from job "
-                                + idDirectory.getName() + " have been removed")
+                return status(NOT_FOUND).entity("Results from job "
+                        + idDirectory.getName() + " have been removed")
                         .build();
             }
 
             if (!resultFile.canRead()) {
                 logger.debug("{} was not found", resultFile);
-                return Response.status(NOT_FOUND).build();
+                return status(NOT_FOUND).build();
             }
 
             try {
@@ -311,7 +312,7 @@ public class OutputManagerImpl implements OutputManager {
                             probeContentType(resultFile.toPath());
                     if (contentType != null) {
                         logger.debug("File has content type {}", contentType);
-                        return Response.ok(resultFile, contentType).build();
+                        return ok(resultFile, contentType).build();
                     }
                 }
             } catch (final IOException e) {
@@ -319,7 +320,7 @@ public class OutputManagerImpl implements OutputManager {
                         resultFile, e);
             }
 
-            return Response.ok(resultFile).header("Content-Disposition",
+            return ok(resultFile).header("Content-Disposition",
                     "attachment; filename=" + filename).build();
         }
     }
@@ -401,7 +402,7 @@ public class OutputManagerImpl implements OutputManager {
                 new File(getProjectDirectory(projectId), String.valueOf(id));
         if (!idDirectory.canRead()) {
             logger.debug("{} was not found", idDirectory);
-            return Response.status(NOT_FOUND).build();
+            return status(NOT_FOUND).build();
         }
 
         try {
@@ -413,16 +414,16 @@ public class OutputManagerImpl implements OutputManager {
             }
         } catch (final MalformedURLException e) {
             logger.error("bad user-supplied URL", e);
-            return Response.status(BAD_REQUEST)
+            return status(BAD_REQUEST)
                     .entity("The URL specified was malformed").build();
         } catch (final Throwable e) {
             logger.error("failure in upload", e);
-            return Response.status(INTERNAL_SERVER_ERROR)
+            return serverError()
                     .entity("General error reading or uploading a file")
                     .build();
         }
 
-        return Response.ok().entity("ok").build();
+        return ok("ok").build();
     }
 
     /**

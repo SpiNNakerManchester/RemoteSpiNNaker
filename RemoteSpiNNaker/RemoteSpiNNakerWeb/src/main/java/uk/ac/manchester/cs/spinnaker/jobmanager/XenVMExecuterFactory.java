@@ -23,6 +23,7 @@ import static com.xensource.xenapi.Types.VbdType.DISK;
 import static com.xensource.xenapi.Types.VdiType.USER;
 import static com.xensource.xenapi.Types.VmPowerState.HALTED;
 import static java.util.Objects.requireNonNull;
+import static java.util.UUID.randomUUID;
 import static org.slf4j.LoggerFactory.getLogger;
 import static uk.ac.manchester.cs.spinnaker.job.JobManagerInterface.JOB_PROCESS_MANAGER_ZIP;
 import static uk.ac.manchester.cs.spinnaker.jobmanager.JobManager.JOB_PROCESS_MANAGER_JAR;
@@ -31,7 +32,6 @@ import static uk.ac.manchester.cs.spinnaker.utils.ThreadUtils.sleep;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Set;
-import java.util.UUID;
 
 import org.apache.xmlrpc.XmlRpcException;
 import org.slf4j.Logger;
@@ -188,7 +188,6 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
 
     /** Taming the Xen API a bit. */
     class XenConnection implements AutoCloseable {
-
         /**
          * The Xen connection.
          */
@@ -444,7 +443,7 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
     /**
      * The executer core connector.
      */
-    class Executer implements JobExecuter {
+    protected class Executer implements JobExecuter {
         // Parameters from constructor
         /**
          * The Job Manager to report to.
@@ -508,7 +507,7 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
         Executer(final JobManager jobManagerParam, final URL baseUrl)
                 throws XmlRpcException, IOException {
             this.jobManager = jobManagerParam;
-            uuid = UUID.randomUUID().toString();
+            uuid = randomUUID().toString();
             jobProcessManagerUrl =
                     new URL(baseUrl, "job/" + JOB_PROCESS_MANAGER_ZIP);
 
@@ -596,36 +595,60 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
             }
         }
 
-        private void runInVm() {
-            XenConnection conn = null;
+        /**
+         * Wait until the running VM shuts down.
+         *
+         * @param conn The connection to Xen
+         * @throws XenAPIException If there is a Xen API issue
+         * @throws XmlRpcException If there is an error speaking to Xen
+         */
+        private void waitForHalt(XenConnection conn)
+                throws XenAPIException, XmlRpcException {
+            VmPowerState powerState;
+            do {
+                sleep(VM_POLL_INTERVAL);
+                powerState = conn.getState(clonedVm);
+                logger.debug("VM for {} is in state {}", uuid, powerState);
+            } while (powerState != HALTED);
+        }
+
+        /**
+         * Run the VM.
+         *
+         * @param conn The connection to Xen
+         */
+        private void runInVm(XenConnection conn) {
+            String action = null;
             try {
-                conn = new XenConnection(uuid);
+                action = "setting up VM";
                 createVm(conn);
-                try {
-                    VmPowerState powerState;
-                    do {
-                        sleep(VM_POLL_INTERVAL);
-                        powerState = conn.getState(clonedVm);
-                        logger.debug("VM for {} is in state {}", uuid,
-                                powerState);
-                    } while (powerState != HALTED);
-                } catch (final Exception e) {
-                    logger.error("Could not get VM power state, assuming off",
-                            e);
-                } finally {
-                    jobManager.setExecutorExited(uuid, null);
-                }
+                action = "getting VM power state; assuming off";
+                waitForHalt(conn);
+                jobManager.setExecutorExited(uuid, null);
             } catch (final Exception e) {
-                logger.error("Error setting up VM", e);
+                logger.error("Error {}", action, e);
                 jobManager.setExecutorExited(uuid, e.getMessage());
             } finally {
                 try {
-                    if (conn != null && deleteOnExit) {
+                    if (deleteOnExit) {
                         deleteVm(conn);
                     }
                 } catch (final Exception e) {
-                    logger.error("Error deleting VM");
+                    logger.error("Error deleting VM", e);
                 }
+            }
+        }
+
+        /**
+         * Connect to Xen and run the VM. Notifies the factory when done.
+         */
+        private void runInVm() {
+            try (XenConnection conn = new XenConnection(uuid)) {
+                runInVm(conn);
+            } catch (final Exception e) {
+                logger.error("Error talking to Xen", e);
+                jobManager.setExecutorExited(uuid, e.getMessage());
+            } finally {
                 executorFinished();
             }
         }

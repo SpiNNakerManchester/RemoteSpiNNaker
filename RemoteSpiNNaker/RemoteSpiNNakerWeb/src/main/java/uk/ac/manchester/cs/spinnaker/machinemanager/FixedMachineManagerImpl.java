@@ -100,12 +100,9 @@ public class FixedMachineManagerImpl implements MachineManager {
      * @return A machine big enough, or null of none.
      */
     private SpinnakerMachine getLargeEnoughMachine(final int nBoards) {
-        for (final SpinnakerMachine nextMachine : machinesAvailable) {
-            if (nextMachine.getnBoards() >= nBoards) {
-                return nextMachine;
-            }
-        }
-        return null;
+        return machinesAvailable.stream()
+                .filter(machine -> machine.getnBoards() >= nBoards)
+                .findFirst().orElse(null);
     }
 
     @Override

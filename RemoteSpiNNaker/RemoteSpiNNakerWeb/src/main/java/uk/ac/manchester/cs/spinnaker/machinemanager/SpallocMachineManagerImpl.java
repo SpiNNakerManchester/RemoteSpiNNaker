@@ -17,10 +17,11 @@
 package uk.ac.manchester.cs.spinnaker.machinemanager;
 
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
-import static com.fasterxml.jackson.databind.PropertyNamingStrategy.CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES;
+import static com.fasterxml.jackson.databind.PropertyNamingStrategies.SNAKE_CASE;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.Executors.newScheduledThreadPool;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.stream.Collectors.toList;
 import static org.slf4j.LoggerFactory.getLogger;
 import static uk.ac.manchester.cs.spinnaker.machinemanager.responses.JobState.DESTROYED;
 import static uk.ac.manchester.cs.spinnaker.machinemanager.responses.JobState.READY;
@@ -116,19 +117,6 @@ public class SpallocMachineManagerImpl implements MachineManager {
     private static final long TIMEOUT_SECONDS = 1;
 
     /**
-     * Used for callbacks about machines.
-     */
-    public interface MachineNotificationReceiver {
-        /**
-         * Indicates that a machine is no longer allocated.
-         *
-         * @param machine
-         *            The machine that is no longer allocated
-         */
-        void machineUnallocated(SpinnakerMachine machine);
-    }
-
-    /**
      * The spalloc server address.
      */
     @Value("${spalloc.server}")
@@ -169,12 +157,6 @@ public class SpallocMachineManagerImpl implements MachineManager {
     private final Map<Integer, JobState> machineState = new HashMap<>();
 
     /**
-     * The callback handler by job ID.
-     */
-    private final Map<Integer, MachineNotificationReceiver> callbacks =
-            new HashMap<>();
-
-    /**
      * Logging.
      */
     private static final Logger logger =
@@ -191,21 +173,15 @@ public class SpallocMachineManagerImpl implements MachineManager {
     private volatile boolean done = false;
 
     /**
-     * General callback handler when one doesn't exist.
-     */
-    private final MachineNotificationReceiver callback = null;
-
-    /**
      * Deserialiser for spalloc responses.
      */
     @SuppressWarnings("serial")
-    private static class ResponseBasedDeserializer
+    private static class ResponseDeserializer
             extends PropertyBasedDeserialiser<Response> {
-
         /**
          * Subclass initialiser.
          */
-        ResponseBasedDeserializer() {
+        ResponseDeserializer() {
             super(Response.class);
             register("jobs_changed", JobsChangedResponse.class);
             register("return", ReturnResponse.class);
@@ -216,13 +192,11 @@ public class SpallocMachineManagerImpl implements MachineManager {
     /**
      * Make a machine manager that talks to Spalloc to do its work.
      */
-    @SuppressWarnings("deprecation")
     public SpallocMachineManagerImpl() {
         final SimpleModule module = new SimpleModule();
-        module.addDeserializer(Response.class, new ResponseBasedDeserializer());
+        module.addDeserializer(Response.class, new ResponseDeserializer());
         mapper.registerModule(module);
-        mapper.setPropertyNamingStrategy(
-                CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES);
+        mapper.setPropertyNamingStrategy(SNAKE_CASE);
         mapper.configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
@@ -739,10 +713,6 @@ public class SpallocMachineManagerImpl implements MachineManager {
                 return;
             }
             jobByMachine.remove(machine);
-            final MachineNotificationReceiver acallback = callbacks.get(job.id);
-            if (acallback != null) {
-                acallback.machineUnallocated(machine);
-            }
         }
     }
 
@@ -790,17 +760,13 @@ public class SpallocMachineManagerImpl implements MachineManager {
     @Override
     public List<SpinnakerMachine> getMachines() {
         try {
-            final List<SpinnakerMachine> machines = new ArrayList<>();
-            for (final Machine machine : listMachines()) {
-                if (machine.getTags().contains(DEFAULT_TAG)) {
-                    machines.add(new SpinnakerMachine(machine.getName(),
-                            MACHINE_VERSION,
-                            machine.getWidth() * MACHINE_WIDTH_FACTOR,
-                            machine.getHeight() * MACHINE_HEIGHT_FACTOR,
-                            machine.getWidth() * machine.getHeight(), null));
-                }
-            }
-            return machines;
+            return Arrays.stream(listMachines())
+                    .filter(m -> m.getTags().contains(DEFAULT_TAG))
+                    .map(m -> new SpinnakerMachine(m.getName(), MACHINE_VERSION,
+                            m.getWidth() * MACHINE_WIDTH_FACTOR,
+                            m.getHeight() * MACHINE_HEIGHT_FACTOR,
+                            m.getWidth() * m.getHeight(), null))
+                    .collect(toList());
         } catch (final IOException e) {
             logger.error("Error getting machines", e);
             return null;
@@ -814,23 +780,7 @@ public class SpallocMachineManagerImpl implements MachineManager {
 
         while ((job == null) || (machineAllocated == null)) {
             try {
-                job = createJob(nBoards);
-
-                logger.debug("Got machine {}, requesting notifications",
-                        job.id);
-                job.notify(true);
-                JobState state = job.getState();
-                synchronized (machineState) {
-                    machineState.put(job.id, state);
-                    machineState.notifyAll();
-                }
-                logger.debug("Notifications for {} are on", job.id);
-
-                state = waitForStates(job, READY, DESTROYED);
-                if (state.getState() == DESTROYED) {
-                    throw new RuntimeException(state.getReason());
-                }
-
+                job = startJob(nBoards);
                 machineAllocated = getMachineForJob(job);
             } catch (final IOException e) {
                 logger.error("Error getting machine - retrying", e);
@@ -839,31 +789,48 @@ public class SpallocMachineManagerImpl implements MachineManager {
 
         machinesAllocated.put(job.id, machineAllocated);
         jobByMachine.put(machineAllocated, job);
-        if (callback != null) {
-            callbacks.put(job.id, callback);
-        }
         return machineAllocated;
+    }
+
+    private SpallocJob startJob(int nBoards) throws IOException {
+        SpallocJob job = createJob(nBoards);
+        logger.debug("Got machine {}, requesting notifications", job.id);
+        job.notify(true);
+        JobState state = job.getState();
+        synchronized (machineState) {
+            machineState.put(job.id, state);
+            machineState.notifyAll();
+        }
+        logger.debug("Notifications for {} are on", job.id);
+        state = waitForStates(job, READY, DESTROYED);
+        if (state.getState() == DESTROYED) {
+            throw new RuntimeException(state.getReason());
+        }
+        return job;
     }
 
     @Override
     public void releaseMachine(final SpinnakerMachine machine) {
         final SpallocJob job = jobByMachine.remove(machine);
-        if (job != null) {
-            try {
-                logger.debug("Turning off notification for {}", job.id);
-                job.notify(false);
-                logger.debug("Notifications for {} are off", job.id);
-                machinesAllocated.remove(job.id);
-                synchronized (machineState) {
-                    machineState.remove(job.id);
-                }
-                callbacks.remove(job.id);
-                job.destroy();
-                logger.debug("Job {} destroyed", job.id);
-            } catch (final IOException e) {
-                logger.error("Error releasing machine for {}", job.id);
+        try {
+            if (job != null) {
+                stopJob(job);
             }
+        } catch (final IOException e) {
+            logger.error("Error releasing machine for {}", job.id);
         }
+    }
+
+    private void stopJob(final SpallocJob job) throws IOException {
+        logger.debug("Turning off notification for {}", job.id);
+        job.notify(false);
+        logger.debug("Notifications for {} are off", job.id);
+        machinesAllocated.remove(job.id);
+        synchronized (machineState) {
+            machineState.remove(job.id);
+        }
+        job.destroy();
+        logger.debug("Job {} destroyed", job.id);
     }
 
     @Override

@@ -20,7 +20,6 @@ package uk.ac.manchester.cs.spinnaker.model;
  * A Neuromorphic Platform Interface log core.
  */
 public class NMPILog {
-
     /**
      * The content of the log.
      */
@@ -42,23 +41,23 @@ public class NMPILog {
     /**
      * Set the content.
      *
-     * @param contentParam The content to set
+     * @param content The content to set
      */
-    public void setContent(final String contentParam) {
-        this.content = new StringBuilder(contentParam);
+    public void setContent(final String content) {
+        this.content = new StringBuilder(content);
     }
 
     /**
      * Append the string to the log.
      *
-     * @param contentParam
+     * @param content
      *            The string to append.
      */
-    public void appendContent(final String contentParam) {
+    public void appendContent(final String content) {
         if (this.content == null) {
-            this.content = new StringBuilder(contentParam);
+            this.content = new StringBuilder(content);
         } else {
-            this.content.append(contentParam);
+            this.content.append(content);
         }
     }
 }
