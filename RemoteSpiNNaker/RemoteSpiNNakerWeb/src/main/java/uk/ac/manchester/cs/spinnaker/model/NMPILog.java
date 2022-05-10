@@ -23,7 +23,7 @@ public class NMPILog {
     /**
      * The content of the log.
      */
-    private StringBuilder content;
+    private StringBuilder buffer;
 
     /**
      * Gets the current log contents.
@@ -32,10 +32,10 @@ public class NMPILog {
      *         initialised.
      */
     public String getContent() {
-        if (content == null) {
+        if (buffer == null) {
             return null;
         }
-        return content.toString();
+        return buffer.toString();
     }
 
     /**
@@ -44,7 +44,7 @@ public class NMPILog {
      * @param content The content to set
      */
     public void setContent(final String content) {
-        this.content = new StringBuilder(content);
+        this.buffer = new StringBuilder(content);
     }
 
     /**
@@ -54,10 +54,10 @@ public class NMPILog {
      *            The string to append.
      */
     public void appendContent(final String content) {
-        if (this.content == null) {
-            this.content = new StringBuilder(content);
+        if (this.buffer == null) {
+            this.buffer = new StringBuilder(content);
         } else {
-            this.content.append(content);
+            this.buffer.append(content);
         }
     }
 }

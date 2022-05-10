@@ -174,38 +174,38 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     private static final Logger logger = getLogger(JobManager.class);
 
     /**
-     * Job ID -> Machine allocated.
+     * Job ID &rarr; Machine(s) allocated.
      */
     private final Map<Integer, List<SpinnakerMachine>> allocatedMachines =
             new HashMap<>();
 
     /**
-     * Executor ID -> Executor.
+     * Executor ID &rarr; Executor.
      */
     private final Map<String, JobExecuter> jobExecuters = new HashMap<>();
 
     /**
-     * Executor ID -> Job ID.
+     * Executor ID &rarr; Job ID.
      */
     private final Map<String, Job> executorJobId = new HashMap<>();
 
     /**
-     * Job ID -> Directory of temporary output files.
+     * Job ID &rarr; Directory of temporary output files.
      */
     private final Map<Integer, File> jobOutputTempFiles = new HashMap<>();
 
     /**
-     * Job ID -> number of cores needed by job.
+     * Job ID &rarr; number of cores needed by job.
      */
     private final Map<Integer, Long> jobNCores = new HashMap<>();
 
     /**
-     * Job ID -> Job resource usage (in core-hours).
+     * Job ID &rarr; Job resource usage (in core-hours).
      */
     private final Map<Integer, Long> jobResourceUsage = new HashMap<>();
 
     /**
-     * Job ID -> Job Provenance data.
+     * Job ID &rarr; Job Provenance data.
      */
     private final Map<Integer, ObjectNode> jobProvenance = new HashMap<>();
 
@@ -214,6 +214,10 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
      */
     private ThreadGroup threadGroup;
 
+    /**
+     * Calls {@link #updateStatus()} every {@link #STATUS_UPDATE_PERIOD}
+     * seconds.
+     */
     private final ScheduledExecutorService scheduler =
             newScheduledThreadPool(1);
 
@@ -758,12 +762,12 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         }
         if (job != null) {
             final int id = job.getId();
-            logger.debug("Executer {} for Job {} has exited", executorId, id);
 
             switch (job.getStatus()) {
             case STATUS_QUEUED:
             case STATUS_RUNNING:
-                logger.debug("Job {} has not exited cleanly", id);
+                logger.debug("Executer {} for Job {} has exited, "
+                        + "but job not exited cleanly", executorId, id);
                 releaseAllocatedMachines(id);
                 final long resourceUsage = getResourceUsage(id);
                 final ObjectNode prov = getProvenance(id);
@@ -781,6 +785,10 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
                             new Exception("Job did not finish cleanly"),
                             resourceUsage, prov);
                 }
+                break;
+            default:
+                logger.debug("Executer {} for Job {} has exited",
+                        executorId, id);
             }
         } else {
             logger.error("An executer {} has exited without a job. "

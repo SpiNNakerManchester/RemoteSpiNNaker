@@ -792,7 +792,7 @@ public class SpallocMachineManagerImpl implements MachineManager {
         return machineAllocated;
     }
 
-    private SpallocJob startJob(int nBoards) throws IOException {
+    private SpallocJob startJob(final int nBoards) throws IOException {
         SpallocJob job = createJob(nBoards);
         logger.debug("Got machine {}, requesting notifications", job.id);
         job.notify(true);

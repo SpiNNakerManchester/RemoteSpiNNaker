@@ -136,7 +136,7 @@ public class NMPIQueueManager {
      */
     private Job getJob(final int id) {
         synchronized (jobCache) {
-        	return jobCache.computeIfAbsent(id, queue::getJob);
+            return jobCache.computeIfAbsent(id, queue::getJob);
         }
     }
 
@@ -214,7 +214,7 @@ public class NMPIQueueManager {
      */
     public void appendJobLog(final int id, final String logToAppend) {
         NMPILog existingLog = jobLog.computeIfAbsent(id,
-        		ignored -> new NMPILog());
+                ignored -> new NMPILog());
         existingLog.appendContent(logToAppend);
         logger.debug("Job {} log is being updated", id);
         queue.updateLog(id, existingLog);

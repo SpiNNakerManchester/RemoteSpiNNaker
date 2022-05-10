@@ -124,7 +124,7 @@ class NMPIQueueResponseDeserialiser
     /**
      * Make a deserialiser.
      */
-	NMPIQueueResponseDeserialiser() {
+    NMPIQueueResponseDeserialiser() {
         super(QueueNextResponse.class);
         register("id", Job.class);
         register("warning", QueueEmpty.class);

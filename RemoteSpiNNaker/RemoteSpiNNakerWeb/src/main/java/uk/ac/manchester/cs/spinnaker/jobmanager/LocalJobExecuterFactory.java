@@ -280,7 +280,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
             command.add(javaExec.getAbsolutePath());
 
             String classPath = jobProcessManagerClasspath.stream()
-            		.map(File::toString).collect(joining(pathSeparator));
+                    .map(File::toString).collect(joining(pathSeparator));
             command.add("-cp");
             command.add(classPath);
             logger.debug("Classpath: {}", classPath);
@@ -329,9 +329,9 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
          * Report the results of the job using the log.
          */
         private void reportResult() {
-        	StringWriter loggedOutput = new StringWriter();
+            StringWriter loggedOutput = new StringWriter();
             try (FileReader reader = new FileReader(outputLog)) {
-            	IOUtils.copy(reader, loggedOutput);
+                IOUtils.copy(reader, loggedOutput);
             } catch (final IOException e) {
                 logger.warn("problem in reporting log", e);
             }
@@ -419,7 +419,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         @Override
         public void run() {
             try {
-            	String line;
+                String line;
                 while (!done && (line = readLine()) != null) {
                     if (!line.isEmpty()) {
                         logger.debug("{}", line);

@@ -602,7 +602,7 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
          * @throws XenAPIException If there is a Xen API issue
          * @throws XmlRpcException If there is an error speaking to Xen
          */
-        private void waitForHalt(XenConnection conn)
+        private void waitForHalt(final XenConnection conn)
                 throws XenAPIException, XmlRpcException {
             VmPowerState powerState;
             do {
@@ -617,7 +617,7 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
          *
          * @param conn The connection to Xen
          */
-        private void runInVm(XenConnection conn) {
+        private void runInVm(final XenConnection conn) {
             String action = null;
             try {
                 action = "setting up VM";
