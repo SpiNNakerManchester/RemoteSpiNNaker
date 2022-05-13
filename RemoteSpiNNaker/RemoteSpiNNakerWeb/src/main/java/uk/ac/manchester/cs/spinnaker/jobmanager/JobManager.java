@@ -610,6 +610,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     public void addOutput(final String projectId, final int id,
             final String baseDirectory, final String output,
             final InputStream input) {
+    	// Don't need to validate; delegates to something that validates
         requireNonNull(output);
         requireNonNull(input);
         try {

@@ -223,20 +223,58 @@ public class OutputManagerImpl implements OutputManager {
         scheduler.shutdown();
     }
 
+	/**
+	 * Validate a potential filename.
+	 *
+	 * @param type     What sort of thing are we validating? For error messages.
+	 * @param filename The string being validated.
+	 * @param isPath   Whether this is a path (as opposed to a simple filename).
+	 *                 Paths permit separators and can have an empty final
+	 *                 component.
+	 * @throws IllegalArgumentException if the filename does not validate.
+	 */
+    private static void validateFilename(String type, String filename,
+    		boolean isPath) {
+    	if (filename == null) {
+    		throw new IllegalArgumentException("bad " + type);
+    	}
+    	final String[] bits = filename.split("[\\/]");
+    	if (bits.length == 0) {
+    		// I believe this is unreachable
+    		throw new IllegalArgumentException("bad " + type);
+    	}
+    	int element = 0;
+    	for (String name: bits) {
+    		element++;
+    		switch (name) {
+    		case "":
+    			// Allow an empty final component if validating a path
+    			if (isPath && element == bits.length) {
+    				continue;
+    			}
+    			// Fall through
+    		case ".":
+    		case "..":
+    			throw new IllegalArgumentException("bad " + type);
+    		}
+    	}
+    	if (bits.length != 1 && !isPath) {
+    		throw new IllegalArgumentException("bad " + type);
+    	}
+    }
+
+    private static String finalComponent(String filename) {
+    	return new File(filename).getName();
+    }
+
     /**
      * Get the project directory for a given project.
      * @param projectId The id of the project
      * @return The directory of the project
      */
     private File getProjectDirectory(final String projectId) {
-        if ((projectId == null) || projectId.isEmpty()
-                || projectId.endsWith("/")) {
-            throw new IllegalArgumentException("bad projectId");
-        }
-        final String name = new File(projectId).getName();
-        if (name.equals(".") || name.equals("..") || name.isEmpty()) {
-            throw new IllegalArgumentException("bad projectId");
-        }
+    	validateFilename("projectId", projectId, false);
+        final String name = finalComponent(projectId);
         return new File(resultsDirectory, name);
     }
 
@@ -244,7 +282,10 @@ public class OutputManagerImpl implements OutputManager {
     public DataItem addOutput(final String projectId, final int id,
             final String baseDirectory, final String output,
             final InputStream input) throws IOException {
-        final String pId = new File(projectId).getName();
+    	validateFilename("projectId", projectId, false);
+    	validateFilename("baseDirectory", baseDirectory, true);
+    	validateFilename("output", output, true);
+        final String pId = finalComponent(projectId);
         final int pathStart = baseDirectory.length();
         final File projectDirectory = getProjectDirectory(projectId);
         final File idDirectory = new File(projectDirectory, String.valueOf(id));
@@ -330,6 +371,8 @@ public class OutputManagerImpl implements OutputManager {
     @Override
     public Response getResultFile(final String projectId, final int id,
             final String filename, final boolean download) {
+    	validateFilename("projectId", projectId, false);
+    	validateFilename("filename", filename, true);
         // TODO projectId and id? What's going on?
         logger.debug("Retrieving {} from {}/{}", filename, projectId, id);
         final File projectDirectory = getProjectDirectory(projectId);
@@ -340,6 +383,7 @@ public class OutputManagerImpl implements OutputManager {
     @Override
     public Response getResultFile(final int id, final String filename,
             final boolean download) {
+    	validateFilename("filename", filename, true);
         // TODO projectId and NO id? What's going on?
         logger.debug("Retrieving {} from {}", filename, id);
         final File idDirectory = getProjectDirectory(String.valueOf(id));
@@ -390,6 +434,9 @@ public class OutputManagerImpl implements OutputManager {
     public Response uploadResultsToHPCServer(final String projectId,
             final int id, final String serverUrl, final String storageId,
             final String filePath, final String userId, final String token) {
+    	validateFilename("projectId", projectId, false);
+    	validateFilename("storageId", storageId, false);
+    	validateFilename("filePath", filePath, true);
         // TODO projectId and id? What's going on?
         final File idDirectory =
                 new File(getProjectDirectory(projectId), String.valueOf(id));
