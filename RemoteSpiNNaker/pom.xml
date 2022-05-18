@@ -26,8 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+		<maven.compiler.release>11</maven.compiler.release>
 
         <resteasy.version>6.0.1.Final</resteasy.version>
         <jackson.version>2.13.2</jackson.version>
@@ -260,6 +259,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 								<packages>uk.ac.manchester.cs.spinnaker.utils</packages>
 							</group>
 						</groups>
+						<additionalOptions>
+							<additionalOption>-html5</additionalOption>
+						</additionalOptions>
 					</configuration>
 				</plugin>
 				<plugin>
@@ -309,6 +311,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 					<groupId>org.eluder.coveralls</groupId>
 					<artifactId>coveralls-maven-plugin</artifactId>
 					<version>4.3.0</version>
+					<dependencies>
+						<!-- Of course! -->
+						<dependency>
+							<groupId>javax.xml.bind</groupId>
+							<artifactId>jaxb-api</artifactId>
+							<version>${jaxb.version}</version>
+						</dependency>
+					</dependencies>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
@@ -516,50 +526,4 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 			</plugin>
 		</plugins>
 	</reporting>
-
-    <profiles>
-		<profile>
-			<id>SupportJDK9AndLater</id>
-			<activation>
-				<jdk>[1.9,)</jdk>
-			</activation>
-			<build>
-				<pluginManagement>
-					<plugins>
-						<plugin>
-							<groupId>org.apache.maven.plugins</groupId>
-							<artifactId>maven-javadoc-plugin</artifactId>
-							<configuration>
-								<additionalOptions>
-									<additionalOption>-html5</additionalOption>
-								</additionalOptions>
-							</configuration>
-						</plugin>
-						<plugin>
-							<groupId>org.eluder.coveralls</groupId>
-							<artifactId>coveralls-maven-plugin</artifactId>
-							<dependencies>
-								<!-- Of course! -->
-								<dependency>
-									<groupId>javax.xml.bind</groupId>
-									<artifactId>jaxb-api</artifactId>
-									<version>${jaxb.version}</version>
-								</dependency>
-							</dependencies>
-						</plugin>
-					</plugins>
-				</pluginManagement>
-			</build>
-		</profile>
-		<profile>
-			<id>SupportJDK8</id>
-			<activation>
-				<jdk>1.8</jdk>
-			</activation>
-			<properties>
-				<!-- Can't use a newer version; bytecode incompatible -->
-				<xml-bind.version>3.0.1</xml-bind.version>
-			</properties>
-		</profile>
-    </profiles>
 </project>
