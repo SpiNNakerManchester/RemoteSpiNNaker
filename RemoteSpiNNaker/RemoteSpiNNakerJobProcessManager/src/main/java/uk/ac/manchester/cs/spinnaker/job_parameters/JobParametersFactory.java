@@ -79,11 +79,10 @@ public abstract class JobParametersFactory {
     public static JobParameters getJobParameters(final Job job,
             final File workingDirectory, final String setupScript,
             final Map<String, JobParametersFactoryException> errors) {
-        for (final JobParametersFactory factory : JOB_PARAMETER_FACTORIES) {
+        for (final var factory : JOB_PARAMETER_FACTORIES) {
             try {
-                final JobParameters parameters =
-                        factory.getJobParameters(job, workingDirectory,
-                                setupScript);
+                final var parameters = factory.getJobParameters(
+                        job, workingDirectory, setupScript);
                 if (parameters != null) {
                     return parameters;
                 }

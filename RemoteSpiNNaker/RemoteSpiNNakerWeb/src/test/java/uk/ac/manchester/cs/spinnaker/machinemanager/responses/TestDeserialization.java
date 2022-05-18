@@ -34,10 +34,10 @@ public class TestDeserialization {
     @Test
     public void machine()
             throws JsonParseException, JsonMappingException, IOException {
-        final String machine =
+        final var machine =
                 "{\"name\":\"foo\",\"tags\":[\"a\",\"b c\"],\"width\":123,"
                 + "\"height\":456}";
-        final Machine m = mapper.readValue(machine, Machine.class);
+        final var m = mapper.readValue(machine, Machine.class);
         assertNotNull(m);
 
         assertEquals("foo", m.getName());
@@ -49,11 +49,11 @@ public class TestDeserialization {
     @Test
     public void machineArray()
             throws JsonParseException, JsonMappingException, IOException {
-        final String machine =
+        final var machine =
                 "[{\"name\":\"foo\",\"tags\":[\"a\",\"b c\"],\"width\":123,"
                 + "\"height\":456},{\"name\":\"bar\",\"width\":1,"
                 + "\"height\":2}]";
-        final Machine[] m = mapper.readValue(machine, Machine[].class);
+        final var m = mapper.readValue(machine, Machine[].class);
         assertNotNull(m);
 
         assertEquals(2, m.length);
@@ -71,11 +71,10 @@ public class TestDeserialization {
     @Test
     public void jobMachineInfo()
             throws JsonParseException, JsonMappingException, IOException {
-        final String machine = "{\"width\":123,\"height\":456,\"connections\":["
+        final var machine = "{\"width\":123,\"height\":456,\"connections\":["
                 + "[[1,2],\"abcde\"],[[3,4],\"edcba\"]"
                 + "],\"machineName\":\"foo\"}";
-        final JobMachineInfo m =
-                mapper.readValue(machine, JobMachineInfo.class);
+        final var m = mapper.readValue(machine, JobMachineInfo.class);
         assertNotNull(m);
 
         assertEquals("foo", m.getMachineName());
@@ -95,10 +94,10 @@ public class TestDeserialization {
     @Test
     public void jobState()
             throws JsonParseException, JsonMappingException, IOException {
-        final String machine =
+        final var machine =
                 "{\"state\":2,\"power\":true,\"keepAlive\":1.25,"
                 + "\"reason\":\"foo\"}";
-        final JobState m = mapper.readValue(machine, JobState.class);
+        final var m = mapper.readValue(machine, JobState.class);
         assertNotNull(m);
 
         assertEquals("foo", m.getReason());

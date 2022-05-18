@@ -18,14 +18,12 @@ package uk.ac.manchester.cs.spinnaker.rest.utils;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * A deserialiser which deserialises classes based on unique properties that
@@ -78,10 +76,10 @@ public class PropertyBasedDeserialiser<T> extends StdDeserializer<T> {
     public T deserialize(final JsonParser parser,
             final DeserializationContext context)
             throws IOException, JsonProcessingException {
-        final ObjectNode root = parser.readValueAsTree();
-        final Iterator<String> elementsIterator = root.fieldNames();
+        final var root = parser.readValueAsTree();
+        final var elementsIterator = root.fieldNames();
         while (elementsIterator.hasNext()) {
-            Class<? extends T> c = registry.get(elementsIterator.next());
+            var c = registry.get(elementsIterator.next());
             if (c != null) {
                 return parser.getCodec().treeToValue(root, c);
             }

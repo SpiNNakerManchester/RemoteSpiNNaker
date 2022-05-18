@@ -16,7 +16,6 @@
  */
 package uk.ac.manchester.cs.spinnaker.jobprocess;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -118,11 +117,10 @@ public class JobProcessFactory {
          * method will only allow the correct type mapping in
          */
         @SuppressWarnings("unchecked")
-        final Class<JobProcess<P>> processType =
+        final var processType =
                 (Class<JobProcess<P>>) typeMap.get(parameters.getClass());
 
-        final JobProcess<P> process =
-                processType.getDeclaredConstructor().newInstance();
+        final var process = processType.getDeclaredConstructor().newInstance();
 
         // Magically set the thread group if there is one
         setField(process, "threadGroup", threadGroup);
@@ -141,7 +139,7 @@ public class JobProcessFactory {
     private static void setField(final Class<?> clazz, final String fieldName,
             final Object value) {
         try {
-            final Field threadGroupField = clazz.getDeclaredField(fieldName);
+            final var threadGroupField = clazz.getDeclaredField(fieldName);
             threadGroupField.setAccessible(true);
             threadGroupField.set(null, value);
         } catch (NoSuchFieldException | SecurityException
@@ -160,7 +158,7 @@ public class JobProcessFactory {
     private static void setField(final Object instance, final String fieldName,
             final Object value) {
         try {
-            final Field threadGroupField =
+            final var threadGroupField =
                     instance.getClass().getDeclaredField(fieldName);
             threadGroupField.setAccessible(true);
             threadGroupField.set(instance, value);

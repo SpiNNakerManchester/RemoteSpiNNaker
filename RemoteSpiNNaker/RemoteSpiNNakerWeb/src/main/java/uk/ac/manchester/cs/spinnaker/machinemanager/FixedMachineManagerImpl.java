@@ -63,7 +63,7 @@ public class FixedMachineManagerImpl implements MachineManager {
 
     @Override
     public List<SpinnakerMachine> getMachines() {
-        final List<SpinnakerMachine> machines = new ArrayList<>();
+        final var machines = new ArrayList<SpinnakerMachine>();
         synchronized (lock) {
             machines.addAll(machinesAvailable);
             machines.addAll(machinesAllocated);
@@ -75,9 +75,8 @@ public class FixedMachineManagerImpl implements MachineManager {
     public SpinnakerMachine getNextAvailableMachine(final int nBoards) {
         try {
             synchronized (lock) {
-                SpinnakerMachine machine;
                 while (!done) {
-                    machine = getLargeEnoughMachine(nBoards);
+                    var machine = getLargeEnoughMachine(nBoards);
                     if (machine != null) {
                         // Move the machine from available to allocated
                         machinesAvailable.remove(machine);

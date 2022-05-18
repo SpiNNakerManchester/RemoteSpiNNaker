@@ -21,14 +21,11 @@ import static javax.ws.rs.core.Response.Status.Family.SERVER_ERROR;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.StringWriter;
 
 import javax.ws.rs.client.ClientRequestContext;
 import javax.ws.rs.client.ClientResponseContext;
 import javax.ws.rs.client.ClientResponseFilter;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response.Status.Family;
 import javax.ws.rs.ext.Provider;
 
 import org.apache.commons.io.output.WriterOutputStream;
@@ -74,14 +71,13 @@ public class ErrorCaptureResponseFilter implements ClientResponseFilter {
         if (!writeToLog) {
             return;
         }
-        final Family family = responseContext.getStatusInfo().getFamily();
+        final var family = responseContext.getStatusInfo().getFamily();
         if ((family == CLIENT_ERROR) || (family == SERVER_ERROR)) {
             logger.trace("Error when sending request:");
             logger.trace(INDENT + "Headers:");
-            final MultivaluedMap<String, String> headers =
-                    requestContext.getStringHeaders();
-            for (final String headerName : headers.keySet()) {
-                for (final String headerValue : headers.get(headerName)) {
+            final var headers = requestContext.getStringHeaders();
+            for (final var headerName : headers.keySet()) {
+                for (final var headerValue : headers.get(headerName)) {
                     logger.trace(IND2 + "{}: {}", headerName, headerValue);
                 }
             }
@@ -89,7 +85,7 @@ public class ErrorCaptureResponseFilter implements ClientResponseFilter {
             logger.trace(INDENT + "Entity:");
             logger.trace(IND2 + "{}", requestContext.getEntity());
 
-            final String json = getRequestAsJSON(requestContext);
+            final var json = getRequestAsJSON(requestContext);
             if (json != null) {
                 logger.trace(INDENT + "JSON version:");
                 logger.trace(IND2 + "{}", json);
@@ -104,9 +100,8 @@ public class ErrorCaptureResponseFilter implements ClientResponseFilter {
      */
     private String getRequestAsJSON(final ClientRequestContext requestContext) {
         try {
-            final StringWriter jsonWriter = new StringWriter();
-            try (OutputStream jsonOutput =
-                    new WriterOutputStream(jsonWriter, "UTF-8")) {
+            final var jsonWriter = new StringWriter();
+            try (var jsonOutput = new WriterOutputStream(jsonWriter, "UTF-8")) {
                 provider.writeTo(requestContext.getEntity(),
                         requestContext.getEntityClass(),
                         requestContext.getEntityType(),

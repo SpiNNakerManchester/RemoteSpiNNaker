@@ -95,8 +95,7 @@ public class RemoteSpinnakerBeans {
      */
     @Bean
     public static ConversionServiceFactoryBean conversionService() {
-        final ConversionServiceFactoryBean factory =
-                new ConversionServiceFactoryBean();
+        final var factory = new ConversionServiceFactoryBean();
         factory.setConverters(singleton((Converter<String, SpinnakerMachine>)
                 SpinnakerMachine::parse));
         return factory;
@@ -241,7 +240,7 @@ public class RemoteSpinnakerBeans {
      */
     @Bean
     public Server jaxRsServer() {
-        final JAXRSServerFactoryBean factory = new JAXRSServerFactoryBean();
+        final var factory = new JAXRSServerFactoryBean();
         factory.setAddress(restPath);
         factory.setBus(ctx.getBean(SpringBus.class));
         factory.setServiceBeans(asList(outputManager(), jobManager()));

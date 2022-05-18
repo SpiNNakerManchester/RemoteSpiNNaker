@@ -17,6 +17,7 @@
 package uk.ac.manchester.cs.spinnaker.machine;
 
 import static java.lang.Integer.parseInt;
+import static java.util.Arrays.asList;
 
 import java.io.Serializable;
 
@@ -120,8 +121,7 @@ public class SpinnakerMachine
                     + value + "\" - missing start and end brackets");
         }
 
-        final String[] parts =
-                value.substring(1, value.length() - 1).split(":");
+        final var parts = value.substring(1, value.length() - 1).split(":");
         if (parts.length != N_PARTS) {
             throw new IllegalArgumentException(
                     "Wrong number of :-separated arguments - " + parts.length
@@ -141,19 +141,17 @@ public class SpinnakerMachine
      */
     @Override
     public String toString() {
-        String output = null;
-
-        for (Object potential : new Object[]{
-                machineName, version, bmpDetails, width, height, bmpDetails}) {
+        final var output = new StringBuilder();
+        for (final var potential : asList(
+                machineName, version, bmpDetails, width, height, bmpDetails)) {
             if (potential != null) {
-                if (output == null) {
-                    output = potential.toString();
-                } else {
-                    output += ":" + potential.toString();
+                if (output.length() > 0) {
+                    output.append(':');
                 }
+                output.append(potential);
             }
         }
-        return output;
+        return output.toString();
     }
 
     /**
@@ -310,7 +308,7 @@ public class SpinnakerMachine
     public boolean equals(final Object o) {
         if (o instanceof SpinnakerMachine) {
             // TODO Is this the right way to determine equality?
-            final SpinnakerMachine m = (SpinnakerMachine) o;
+            final var m = (SpinnakerMachine) o;
             if (machineName == null) {
                 if (m.machineName != null) {
                     return false;

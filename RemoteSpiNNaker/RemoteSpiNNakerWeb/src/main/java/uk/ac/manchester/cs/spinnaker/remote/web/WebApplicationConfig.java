@@ -66,7 +66,7 @@ public class WebApplicationConfig implements WebApplicationInitializer {
     public void onStartup(final ServletContext container)
             throws ServletException {
         try {
-            final PropertySource<?> properties = getPropertySource();
+            final var properties = getPropertySource();
             if (ADD_SERVLET | ADD_FILTER) {
                 container.addListener(getContextLoaderListener(properties));
             }
@@ -88,7 +88,7 @@ public class WebApplicationConfig implements WebApplicationInitializer {
      */
     private ContextLoaderListener
             getContextLoaderListener(final PropertySource<?> properties) {
-        final AnnotationConfigWebApplicationContext annotationConfig =
+        final var annotationConfig =
                 new AnnotationConfigWebApplicationContext();
         annotationConfig.getEnvironment().getPropertySources()
                 .addFirst(properties);
@@ -123,7 +123,7 @@ public class WebApplicationConfig implements WebApplicationInitializer {
      * @throws IOException If something goes wrong
      */
     private PropertySource<?> getPropertySource() throws IOException {
-        final File source = new File(getProperty(LOCATION_PROPERTY));
+        final var source = new File(getProperty(LOCATION_PROPERTY));
         return new ResourcePropertySource(source.toURI().toString());
     }
 }

@@ -41,21 +41,16 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.io.filefilter.AbstractFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
-import org.ini4j.Config;
 import org.ini4j.Ini;
 import org.ini4j.Profile.Section;
 
@@ -63,7 +58,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
-import jakarta.xml.bind.Unmarshaller;
 import uk.ac.manchester.cs.spinnaker.job.Status;
 import uk.ac.manchester.cs.spinnaker.job.pynn.PyNNJobParameters;
 import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
@@ -234,11 +228,11 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             }
 
             // Create a spynnaker config file
-            final File cfgFile = new File(workingDirectory, "spynnaker.cfg");
+            final var cfgFile = new File(workingDirectory, "spynnaker.cfg");
 
             // Add the details of the machine
-            final Ini ini = new Ini();
-            final Config config = ini.getConfig();
+            final var ini = new Ini();
+            final var config = ini.getConfig();
             config.setEscape(false);
             config.setLowerCaseSection(false);
             config.setLowerCaseOption(false);
@@ -255,7 +249,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             if (machine != null) {
                 section.put("machine_name", machine.getMachineName());
                 section.put("version", machine.getVersion());
-                final String bmpDetails = machine.getBmpDetails();
+                final var bmpDetails = machine.getBmpDetails();
                 if (bmpDetails != null) {
                     section.put("bmp_names", bmpDetails);
                 }
@@ -265,11 +259,10 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             ini.store(cfgFile);
 
             // Keep existing files to compare to later
-            final Set<File> existingFiles = gatherFiles(workingDirectory);
+            final var existingFiles = gatherFiles(workingDirectory);
 
             // Get a lifetime if there is one
-            Map<String, Object> hwConfig =
-                    parameters.getHardwareConfiguration();
+            var hwConfig = parameters.getHardwareConfiguration();
             int lifetimeHours = (Integer) hwConfig.getOrDefault(
                     TIMEOUT_PARAMETER, RUN_TIMEOUT);
 
@@ -281,8 +274,8 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             gatherProvenance(workingDirectory);
 
             // Get any output files
-            final Set<File> allFiles = gatherFiles(workingDirectory);
-            for (final File file : allFiles) {
+            final var allFiles = gatherFiles(workingDirectory);
+            for (final var file : allFiles) {
                 if (!existingFiles.contains(file)) {
                     outputs.add(file);
                 }
@@ -300,8 +293,8 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             }
             status = Finished;
         } catch (final Throwable e) {
-            StringWriter stringWriter = new StringWriter();
-            PrintWriter printWriter = new PrintWriter(stringWriter);
+            var stringWriter = new StringWriter();
+            var printWriter = new PrintWriter(stringWriter);
             e.printStackTrace(printWriter);
             logWriter.append(stringWriter.toString());
             e.printStackTrace();
@@ -327,19 +320,18 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
     private int runSetup(final PyNNJobParameters parameters,
             final LogWriter logWriter)
             throws IOException, InterruptedException {
-        final List<String> command = new ArrayList<>();
+        final var command = new ArrayList<String>();
         command.add(SETUP_RUNNER);
         command.add(parameters.getSetupScript());
 
         // Build a process
-        final ProcessBuilder builder = new ProcessBuilder(command);
+        final var builder = new ProcessBuilder(command);
         builder.directory(workingDirectory);
         builder.redirectErrorStream(true);
-        ObjectMapper mapper = new ObjectMapper();
-        for (Entry<String, Object> entry
-                : parameters.getHardwareConfiguration().entrySet()) {
+        var mapper = new ObjectMapper();
+        for (var entry: parameters.getHardwareConfiguration().entrySet()) {
             String stringValue = null;
-            Object value = entry.getValue();
+            var value = entry.getValue();
             if (value instanceof String) {
                 stringValue = (String) value;
             } else {
@@ -347,10 +339,10 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             }
             builder.environment().put(entry.getKey(), stringValue);
         }
-        final Process process = builder.start();
+        final var process = builder.start();
 
         // Run a thread to gather the log
-        try (ReaderLogWriter logger =
+        try (var logger =
                 new ReaderLogWriter(process.getInputStream(), logWriter)) {
             logger.start();
 
@@ -377,24 +369,24 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
     private int runSubprocess(final PyNNJobParameters parameters,
             final LogWriter logWriter, final int lifetime)
             throws IOException, InterruptedException {
-        final List<String> command = new ArrayList<>();
+        final var command = new ArrayList<String>();
         command.add(SUBPROCESS_RUNNER);
 
-        final Matcher scriptMatcher =
+        final var scriptMatcher =
                 ARGUMENT_FINDER.matcher(parameters.getUserScript());
         while (scriptMatcher.find()) {
             command.add(
                     scriptMatcher.group(1).replace("{system}", "spiNNaker"));
         }
 
-        final ProcessBuilder builder = new ProcessBuilder(command);
+        final var builder = new ProcessBuilder(command);
         log("Running " + command + " in " + workingDirectory);
         builder.directory(workingDirectory);
         builder.redirectErrorStream(true);
-        final Process process = builder.start();
+        final var process = builder.start();
 
         // Run a thread to gather the log
-        try (ReaderLogWriter logger =
+        try (var logger =
                 new ReaderLogWriter(process.getInputStream(), logWriter)) {
             logger.start();
 
@@ -445,20 +437,19 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             final String path, final LinkedList<String> pathList) {
 
         // Create a path for this level in the tree
-        final String myPath = path + items.getName();
+        final var myPath = path + items.getName();
         pathList.addLast(items.getName());
 
         // Add all nested items
-        for (final ProvenanceDataItems subItems : items
-                .getProvenanceDataItems()) {
+        for (final var subItems : items.getProvenanceDataItems()) {
             putProvenanceInMap(subItems, myPath + "/", pathList);
         }
 
         // Add items from this level
-        for (final ProvenanceDataItem subItem : items.getProvenanceDataItem()) {
-            final String itemPath = myPath + "/" + subItem.getName();
+        for (final var subItem : items.getProvenanceDataItem()) {
+            final var itemPath = myPath + "/" + subItem.getName();
             pathList.addLast(subItem.getName());
-            for (final String item : PROVENANCE_ITEMS_TO_ADD) {
+            for (final var item : PROVENANCE_ITEMS_TO_ADD) {
                 if (itemPath.matches(item)) {
                     provenance.add(new ProvenanceItem(
                         new ArrayList<>(pathList), subItem.getValue()));
@@ -483,18 +474,17 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             throws IOException, JAXBException {
 
         // Get provenance data from files
-        for (final File file : provenanceDirectory.listFiles()) {
+        for (final var file : provenanceDirectory.listFiles()) {
 
             // Only process XML files
             if (file.getName().endsWith(".xml")) {
-                final JAXBContext jaxbContext =
+                final var jaxbContext =
                         JAXBContext.newInstance(ProvenanceDataItems.class);
-                final Unmarshaller jaxbUnmarshaller =
+                final var jaxbUnmarshaller =
                         jaxbContext.createUnmarshaller();
-                final Source source = new StreamSource(file);
-                final ProvenanceDataItems items =
-                        (ProvenanceDataItems) jaxbUnmarshaller
-                                .unmarshal(source);
+                final var source = new StreamSource(file);
+                final var items = (ProvenanceDataItems) jaxbUnmarshaller
+                        .unmarshal(source);
                 putProvenanceInMap(items, "", new LinkedList<String>());
             }
         }
@@ -519,8 +509,8 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             throws IOException, JAXBException {
 
         // Go through the report files and zip them up
-        final byte[] buffer = new byte[BUFFER_SIZE];
-        for (final File file : directory.listFiles()) {
+        final var buffer = new byte[BUFFER_SIZE];
+        for (final var file : directory.listFiles()) {
             if (file.isDirectory()) {
                 zipProvenance(reportsZip, file, path + "/" + file.getName());
 
@@ -529,10 +519,9 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
                     addProvenance(file);
                 }
             } else {
-                final ZipEntry entry =
-                        new ZipEntry(path + "/" + file.getName());
+                final var entry = new ZipEntry(path + "/" + file.getName());
                 reportsZip.putNextEntry(entry);
-                try (FileInputStream in = new FileInputStream(file)) {
+                try (var in = new FileInputStream(file)) {
                     int bytesRead = in.read(buffer);
                     while (bytesRead >= 0) {
                         reportsZip.write(buffer, 0, bytesRead);
@@ -557,13 +546,12 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             throws IOException, JAXBException {
 
         // Find the reports folder
-        final File reportsFolder = new File(workingDirectoryParam, "reports");
+        final var reportsFolder = new File(workingDirectoryParam, "reports");
         if (reportsFolder.isDirectory()) {
 
             // Create a zip file of the reports
-            try (ZipOutputStream reportsZip =
-                    new ZipOutputStream(new FileOutputStream(
-                            new File(workingDirectoryParam, "reports.zip")))) {
+            try (var reportsZip = new ZipOutputStream(new FileOutputStream(
+                    new File(workingDirectoryParam, "reports.zip")))) {
                 // Gather items into the reports zip, keeping an eye out for
                 // the "provenance data" folder
                 zipProvenance(reportsZip, reportsFolder, "reports");
@@ -693,7 +681,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
          */
         private void copyStream() throws IOException {
             while (!interrupted()) {
-                final String line = reader.readLine();
+                final var line = reader.readLine();
                 if (line == null) {
                     return;
                 }

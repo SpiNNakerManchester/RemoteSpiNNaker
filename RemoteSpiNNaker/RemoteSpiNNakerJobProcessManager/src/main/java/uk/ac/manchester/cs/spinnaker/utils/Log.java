@@ -25,7 +25,6 @@ public abstract class Log {
      * Avoid instantiation.
      */
     private Log() {
-
         // Does Nothing
     }
 

@@ -31,7 +31,6 @@ import static uk.ac.manchester.cs.spinnaker.utils.ThreadUtils.sleep;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.Set;
 
 import org.apache.xmlrpc.XmlRpcException;
 import org.slf4j.Logger;
@@ -225,12 +224,12 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
          *             something went wrong
          */
         VM getVirtualMachine() throws XmlRpcException, IOException {
-            final Set<VM> vmsWithLabel = VM.getByNameLabel(conn, templateLabel);
+            final var vmsWithLabel = VM.getByNameLabel(conn, templateLabel);
             if (vmsWithLabel.isEmpty()) {
                 throw new IOException("No template with name " + templateLabel
                         + " was found");
             }
-            final VM template = vmsWithLabel.iterator().next();
+            final var template = vmsWithLabel.iterator().next();
             return template.createClone(conn, templateLabel + "_" + id);
         }
 
@@ -247,7 +246,7 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
          */
         VBD getVirtualBlockDevice(final VM vm)
                 throws XmlRpcException, IOException {
-            final Set<VBD> disks = vm.getVBDs(conn);
+            final var disks = vm.getVBDs(conn);
             if (disks.isEmpty()) {
                 throw new IOException("No disks found on " + templateLabel);
             }
@@ -284,7 +283,7 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
          *             something went wrong
          */
         VDI getBaseVDI(final VBD disk) throws XmlRpcException, XenAPIException {
-            final VDI vdi = disk.getVDI(conn);
+            final var vdi = disk.getVDI(conn);
             vdi.setNameLabel(conn, getLabel(vdi, "base"));
             return vdi;
         }
@@ -302,7 +301,7 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
          */
         VDI createVDI(final VDI baseVDI)
                 throws XenAPIException, XmlRpcException {
-            final VDI.Record descriptor = new VDI.Record();
+            final var descriptor = new VDI.Record();
             descriptor.nameLabel = getLabel(baseVDI, "storage");
             descriptor.type = USER;
             descriptor.SR = baseVDI.getSR(conn);
@@ -326,7 +325,7 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
          */
         VBD createVBD(final VM vm, final VDI vdi)
                 throws XenAPIException, XmlRpcException {
-            final VBD.Record descriptor = new VBD.Record();
+            final var descriptor = new VBD.Record();
             descriptor.VM = vm;
             descriptor.VDI = vdi;
             descriptor.userdevice = "1";
@@ -511,7 +510,7 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
             jobProcessManagerUrl =
                     new URL(baseUrl, "job/" + JOB_PROCESS_MANAGER_ZIP);
 
-            final StringBuilder execArgs = new StringBuilder("-jar ");
+            final var execArgs = new StringBuilder("-jar ");
             execArgs.append(JOB_PROCESS_MANAGER_JAR);
             execArgs.append(" --serverUrl ");
             execArgs.append(baseUrl);
@@ -643,7 +642,7 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
          * Connect to Xen and run the VM. Notifies the factory when done.
          */
         private void runInVm() {
-            try (XenConnection conn = new XenConnection(uuid)) {
+            try (var conn = new XenConnection(uuid)) {
                 runInVm(conn);
             } catch (final Exception e) {
                 logger.error("Error talking to Xen", e);

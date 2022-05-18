@@ -170,7 +170,7 @@ public class OutputManagerImpl implements OutputManager {
         @Override
         public void close() {
             synchronized (synchronizers) {
-                final LockToken lock = synchronizers.get(dir);
+                final var lock = synchronizers.get(dir);
                 if (!lock.unlock()) {
                     synchronizers.remove(dir);
                 }
@@ -230,7 +230,7 @@ public class OutputManagerImpl implements OutputManager {
                 || projectId.endsWith("/")) {
             throw new IllegalArgumentException("bad projectId");
         }
-        final String name = new File(projectId).getName();
+        final var name = new File(projectId).getName();
         if (name.equals(".") || name.equals("..") || name.isEmpty()) {
             throw new IllegalArgumentException("bad projectId");
         }
@@ -245,30 +245,30 @@ public class OutputManagerImpl implements OutputManager {
             return null;
         }
 
-        final String pId = new File(projectId).getName();
+        final var pId = new File(projectId).getName();
         final int pathStart = baseDirectory.getAbsolutePath().length();
-        final File projectDirectory = getProjectDirectory(projectId);
-        final File idDirectory = new File(projectDirectory, String.valueOf(id));
+        final var projectDirectory = getProjectDirectory(projectId);
+        final var idDirectory = new File(projectDirectory, String.valueOf(id));
 
-        try (JobLock op = new JobLock(idDirectory)) {
-            final List<DataItem> outputData = new ArrayList<>();
-            for (final File output : outputs) {
+        try (var op = new JobLock(idDirectory)) {
+            final var outputData = new ArrayList<DataItem>();
+            for (final var output : outputs) {
                 if (!output.getAbsolutePath()
                         .startsWith(baseDirectory.getAbsolutePath())) {
                     throw new IOException("Output file " + output
                             + " is outside base directory " + baseDirectory);
                 }
 
-                String outputPath = output.getAbsolutePath()
+                var outputPath = output.getAbsolutePath()
                         .substring(pathStart).replace('\\', '/');
                 if (outputPath.startsWith("/")) {
                     outputPath = outputPath.substring(1);
                 }
 
-                final File newOutput = new File(idDirectory, outputPath);
+                final var newOutput = new File(idDirectory, outputPath);
                 newOutput.getParentFile().mkdirs();
                 move(output.toPath(), newOutput.toPath());
-                final URL outputUrl = new URL(baseServerUrl,
+                final var outputUrl = new URL(baseServerUrl,
                         "output/" + pId + "/" + id + "/" + outputPath);
                 outputData.add(new DataItem(outputUrl.toExternalForm()));
                 logger.debug("New output {} mapped to {}",
@@ -290,10 +290,10 @@ public class OutputManagerImpl implements OutputManager {
      */
     private Response getResultFile(final File idDirectory,
             final String filename, final boolean download) {
-        final File resultFile = new File(idDirectory, filename);
-        final File purgeFile = getPurgeFile(idDirectory);
+        final var resultFile = new File(idDirectory, filename);
+        final var purgeFile = getPurgeFile(idDirectory);
 
-        try (JobLock op = new JobLock(idDirectory)) {
+        try (var op = new JobLock(idDirectory)) {
             if (purgeFile.exists()) {
                 logger.debug("{} was purged", idDirectory);
                 return status(NOT_FOUND).entity("Results from job "
@@ -308,7 +308,7 @@ public class OutputManagerImpl implements OutputManager {
 
             try {
                 if (!download) {
-                    final String contentType =
+                    final var contentType =
                             probeContentType(resultFile.toPath());
                     if (contentType != null) {
                         logger.debug("File has content type {}", contentType);
@@ -339,8 +339,8 @@ public class OutputManagerImpl implements OutputManager {
             final String filename, final boolean download) {
         // TODO projectId and id? What's going on?
         logger.debug("Retrieving {} from {}/{}", filename, projectId, id);
-        final File projectDirectory = getProjectDirectory(projectId);
-        final File idDirectory = new File(projectDirectory, String.valueOf(id));
+        final var projectDirectory = getProjectDirectory(projectId);
+        final var idDirectory = new File(projectDirectory, String.valueOf(id));
         return getResultFile(idDirectory, filename, download);
     }
 
@@ -349,7 +349,7 @@ public class OutputManagerImpl implements OutputManager {
             final boolean download) {
         // TODO projectId and NO id? What's going on?
         logger.debug("Retrieving {} from {}", filename, id);
-        final File idDirectory = getProjectDirectory(String.valueOf(id));
+        final var idDirectory = getProjectDirectory(String.valueOf(id));
         return getResultFile(idDirectory, filename, download);
     }
 
@@ -364,16 +364,16 @@ public class OutputManagerImpl implements OutputManager {
     private void recursivelyUploadFiles(final File directory,
             final UnicoreFileClient fileManager, final String storageId,
             final String filePath) throws IOException {
-        final File[] files = directory.listFiles();
+        final var files = directory.listFiles();
         if (files == null) {
             return;
         }
-        for (final File file : files) {
+        for (final var file : files) {
             if (file.getName().equals(".") || file.getName().equals("..")
                     || file.getName().isEmpty()) {
                 continue;
             }
-            final String uploadFileName = filePath + "/" + file.getName();
+            final var uploadFileName = filePath + "/" + file.getName();
             if (file.isDirectory()) {
                 recursivelyUploadFiles(file, fileManager, storageId,
                         uploadFileName);
@@ -382,7 +382,7 @@ public class OutputManagerImpl implements OutputManager {
             if (!file.isFile()) {
                 continue;
             }
-            try (FileInputStream input = new FileInputStream(file)) {
+            try (var input = new FileInputStream(file)) {
                 fileManager.upload(storageId, uploadFileName, input);
             } catch (final WebApplicationException e) {
                 throw new IOException("Error uploading file to " + storageId
@@ -398,7 +398,7 @@ public class OutputManagerImpl implements OutputManager {
             final int id, final String serverUrl, final String storageId,
             final String filePath, final String userId, final String token) {
         // TODO projectId and id? What's going on?
-        final File idDirectory =
+        final var idDirectory =
                 new File(getProjectDirectory(projectId), String.valueOf(id));
         if (!idDirectory.canRead()) {
             logger.debug("{} was not found", idDirectory);
@@ -406,9 +406,9 @@ public class OutputManagerImpl implements OutputManager {
         }
 
         try {
-            final UnicoreFileClient fileClient = createBearerClient(
+            final var fileClient = createBearerClient(
                     new URL(serverUrl), token, UnicoreFileClient.class);
-            try (JobLock op = new JobLock(idDirectory)) {
+            try (var op = new JobLock(idDirectory)) {
                 recursivelyUploadFiles(idDirectory, fileClient, storageId,
                         filePath.replaceAll("/+$", ""));
             }
@@ -431,7 +431,7 @@ public class OutputManagerImpl implements OutputManager {
      * @param directory The directory to remove
      */
     private void removeDirectory(final File directory) {
-        for (final File file : directory.listFiles()) {
+        for (final var file : directory.listFiles()) {
             if (file.isDirectory()) {
                 removeDirectory(file);
             } else {
@@ -446,7 +446,7 @@ public class OutputManagerImpl implements OutputManager {
      */
     private void removeOldFiles() {
         final long startTime = currentTimeMillis();
-        for (final File projectDirectory : resultsDirectory.listFiles()) {
+        for (final var projectDirectory : resultsDirectory.listFiles()) {
             if (projectDirectory.isDirectory()
                     && removeOldProjectDirectoryContents(startTime,
                             projectDirectory)) {
@@ -466,7 +466,7 @@ public class OutputManagerImpl implements OutputManager {
     private boolean removeOldProjectDirectoryContents(final long startTime,
             final File projectDirectory) {
         boolean allJobsRemoved = true;
-        for (final File jobDirectory : projectDirectory.listFiles()) {
+        for (final var jobDirectory : projectDirectory.listFiles()) {
             logger.debug("Determining whether to remove {} "
                     + "which is {}ms old of {}", jobDirectory,
                     startTime - jobDirectory.lastModified(),
@@ -475,11 +475,11 @@ public class OutputManagerImpl implements OutputManager {
                     - jobDirectory.lastModified()) > timeToKeepResults)) {
                 logger.info("Removing results for job {}",
                         jobDirectory.getName());
-                try (JobLock op = new JobLock(jobDirectory)) {
+                try (var op = new JobLock(jobDirectory)) {
                     removeDirectory(jobDirectory);
                 }
 
-                try (PrintWriter purgedFileWriter =
+                try (var purgedFileWriter =
                         new PrintWriter(getPurgeFile(jobDirectory))) {
                     purgedFileWriter.println(currentTimeMillis());
                 } catch (final IOException e) {
