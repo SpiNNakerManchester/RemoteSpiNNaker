@@ -102,7 +102,7 @@ public class JobProcessManager {
         /**
          * An object to synchronise on when sending data.
          */
-        private final Integer sendSync = new Integer(0);
+        private final Object sendSync = new Object();
 
         /**
          * Make a log writer that uploads the log every half second.
