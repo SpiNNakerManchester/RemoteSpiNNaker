@@ -21,6 +21,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import uk.ac.manchester.cs.spinnaker.job.JobParameters;
 
@@ -58,26 +59,21 @@ public class JobProcessFactory {
     }
 
     /**
-     * A version of {@link java.util.function.Supplier Supplier} that builds a
-     * job process. Required to work around type inference rules.
+     * A version of {@link Supplier} that builds a job process. Required to work
+     * around type inference rules.
      *
      * @param <P>
      *            The type of job parameters handled by the job process this
      *            supplier produces.
      */
     @FunctionalInterface
-    public interface ProcessSupplier<P extends JobParameters> {
-        /**
-         * Make a new instance of a job process.
-         *
-         * @return The instance.
-         */
-        JobProcess<P> get();
+    public interface ProcessSupplier<P extends JobParameters>
+            extends Supplier<JobProcess<P>> {
     }
 
     /**
-     * A map between parameter types and process types. Note that the type is
-     * guaranteed by the {@link #addMapping(Class,ProcessSupplier)} method,
+     * A map between parameter types and process suppliers. Note that the type
+     * is guaranteed by the {@link #addMapping(Class,ProcessSupplier)} method,
      * which is the only place that this map should be modified.
      */
     private final Map<Class<? extends JobParameters>,
@@ -90,13 +86,13 @@ public class JobProcessFactory {
      *            The type of parameters that this mapping will handle.
      * @param parameterType
      *            The job parameter type
-     * @param processType
-     *            The job process type
+     * @param processSupplier
+     *            The job process supplier
      */
     public <P extends JobParameters> void addMapping(
             final Class<P> parameterType,
-            final ProcessSupplier<P> processType) {
-        typeMap.put(parameterType, processType);
+            final ProcessSupplier<P> processSupplier) {
+        typeMap.put(parameterType, processSupplier);
     }
 
     /**
