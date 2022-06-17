@@ -69,7 +69,7 @@ class DirectPyNNJobParametersFactory extends JobParametersFactory {
             final File workingDirectory, final String setupScript)
             throws FileNotFoundException, UnsupportedEncodingException {
         final var scriptFile = new File(workingDirectory, DEFAULT_SCRIPT_NAME);
-        try (final var writer = new PrintWriter(scriptFile, ENCODING)) {
+        try (var writer = new PrintWriter(scriptFile, ENCODING)) {
             writer.print(job.getCode());
         }
 
