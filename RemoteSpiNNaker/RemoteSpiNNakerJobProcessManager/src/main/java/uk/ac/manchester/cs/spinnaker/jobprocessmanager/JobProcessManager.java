@@ -256,7 +256,6 @@ public class JobProcessManager {
             final File setupScript = downloadFile(downloadUrl,
                     workingDirectory, JobManagerInterface.SETUP_SCRIPT);
 
-
             final JobParameters parameters = getJobParameters(
                     workingDirectory, setupScript.getAbsolutePath());
 

@@ -17,7 +17,6 @@
 package uk.ac.manchester.cs.spinnaker.jobprocess;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -112,31 +111,26 @@ public class JobProcessFactory {
      * @param parameters
      *            The parameters of the job
      * @return A JobProcess matching the parameters
-     * @throws IllegalAccessException
-     *             If there is an error creating the class
-     * @throws InstantiationException
-     *             If there is an error creating the class
-     * @throws SecurityException
-     * @throws NoSuchMethodException
-     * @throws InvocationTargetException
      * @throws IllegalArgumentException
+     *             If the type of the job parameters is unexpected.
      */
-    public <P extends JobParameters> JobProcess<P>
-            createProcess(final P parameters)
-                    throws InstantiationException, IllegalAccessException,
-                    IllegalArgumentException, InvocationTargetException,
-                    NoSuchMethodException, SecurityException {
+    public <P extends JobParameters> JobProcess<P> createProcess(
+            final P parameters) {
         /*
          * We know that this is of the correct type, because the addMapping
          * method will only allow the correct type mapping in
          */
         @SuppressWarnings("unchecked")
-        final JobProcess<P> process =
-                (JobProcess<P>) typeMap.get(parameters.getClass()).get();
+        final ProcessSupplier<P> supplier =
+                (ProcessSupplier<P>) typeMap.get(parameters.getClass());
+        if (supplier == null) {
+            throw new IllegalArgumentException(
+                    "unsupported job parameter type: " + parameters.getClass());
+        }
 
+        final JobProcess<P> process = supplier.get();
         // Magically set the thread group if there is one
         setField(process, "threadGroup", threadGroup);
-
         return process;
     }
 
