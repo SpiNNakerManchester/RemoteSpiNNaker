@@ -58,13 +58,29 @@ public class JobProcessFactory {
     }
 
     /**
-     * A map between parameter types and process types. Note that the type is
-     * guaranteed by the {@link #addMapping(Class,Class)} method, which is the
-     * only place that this map should be modified.
-     */
-    private final Map<Class<? extends JobParameters>,
-            Class<? extends JobProcess<? extends JobParameters>>> typeMap =
-                    new HashMap<>();
+	 * A version of {@link java.util.function.Supplier Supplier} that builds a
+	 * job process. Required to work around type inference rules.
+	 *
+	 * @param <P> The type of job parameters
+	 * @author Donal Fellows
+	 */
+    @FunctionalInterface
+    public interface ProcessSupplier<P extends JobParameters> {
+		/**
+		 * Make a new instance of a job process.
+		 *
+		 * @return The instance.
+		 */
+    	JobProcess<P> get();
+    }
+
+    /**
+	 * A map between parameter types and process types. Note that the type is
+	 * guaranteed by the {@link #addMapping(Class,ProcessSupplier)} method,
+	 * which is the only place that this map should be modified.
+	 */
+	private final Map<Class<? extends JobParameters>,
+			ProcessSupplier<? extends JobParameters>> typeMap = new HashMap<>();
 
     /**
      * Adds a new type mapping.
@@ -78,7 +94,7 @@ public class JobProcessFactory {
      */
     public <P extends JobParameters> void addMapping(
             final Class<P> parameterType,
-            final Class<? extends JobProcess<P>> processType) {
+            final ProcessSupplier<P> processType) {
         typeMap.put(parameterType, processType);
     }
 
@@ -118,11 +134,8 @@ public class JobProcessFactory {
          * method will only allow the correct type mapping in
          */
         @SuppressWarnings("unchecked")
-        final Class<JobProcess<P>> processType =
-                (Class<JobProcess<P>>) typeMap.get(parameters.getClass());
-
         final JobProcess<P> process =
-                processType.getDeclaredConstructor().newInstance();
+        		(JobProcess<P>) typeMap.get(parameters.getClass()).get();
 
         // Magically set the thread group if there is one
         setField(process, "threadGroup", threadGroup);

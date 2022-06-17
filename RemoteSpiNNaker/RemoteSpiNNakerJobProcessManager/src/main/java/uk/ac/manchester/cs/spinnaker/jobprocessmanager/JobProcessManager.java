@@ -84,7 +84,7 @@ public class JobProcessManager {
             new JobProcessFactory("JobProcess");
     static {
         JOB_PROCESS_FACTORY.addMapping(PyNNJobParameters.class,
-                PyNNJobProcess.class);
+                PyNNJobProcess::new);
     }
 
     /**
