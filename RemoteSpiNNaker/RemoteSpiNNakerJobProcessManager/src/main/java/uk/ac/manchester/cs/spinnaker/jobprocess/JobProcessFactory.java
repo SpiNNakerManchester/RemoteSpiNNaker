@@ -58,29 +58,30 @@ public class JobProcessFactory {
     }
 
     /**
-	 * A version of {@link java.util.function.Supplier Supplier} that builds a
-	 * job process. Required to work around type inference rules.
-	 *
-	 * @param <P> The type of job parameters
-	 * @author Donal Fellows
-	 */
+     * A version of {@link java.util.function.Supplier Supplier} that builds a
+     * job process. Required to work around type inference rules.
+     *
+     * @param <P>
+     *            The type of job parameters handled by the job process this
+     *            supplier produces.
+     */
     @FunctionalInterface
     public interface ProcessSupplier<P extends JobParameters> {
-		/**
-		 * Make a new instance of a job process.
-		 *
-		 * @return The instance.
-		 */
-    	JobProcess<P> get();
+        /**
+         * Make a new instance of a job process.
+         *
+         * @return The instance.
+         */
+        JobProcess<P> get();
     }
 
     /**
-	 * A map between parameter types and process types. Note that the type is
-	 * guaranteed by the {@link #addMapping(Class,ProcessSupplier)} method,
-	 * which is the only place that this map should be modified.
-	 */
-	private final Map<Class<? extends JobParameters>,
-			ProcessSupplier<? extends JobParameters>> typeMap = new HashMap<>();
+     * A map between parameter types and process types. Note that the type is
+     * guaranteed by the {@link #addMapping(Class,ProcessSupplier)} method,
+     * which is the only place that this map should be modified.
+     */
+    private final Map<Class<? extends JobParameters>,
+            ProcessSupplier<? extends JobParameters>> typeMap = new HashMap<>();
 
     /**
      * Adds a new type mapping.
@@ -135,7 +136,7 @@ public class JobProcessFactory {
          */
         @SuppressWarnings("unchecked")
         final JobProcess<P> process =
-        		(JobProcess<P>) typeMap.get(parameters.getClass()).get();
+                (JobProcess<P>) typeMap.get(parameters.getClass()).get();
 
         // Magically set the thread group if there is one
         setField(process, "threadGroup", threadGroup);
