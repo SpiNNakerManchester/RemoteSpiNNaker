@@ -32,7 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <resteasy.version>6.0.1.Final</resteasy.version>
         <jackson.version>2.13.3</jackson.version>
         <springsecurity.version>5.7.1</springsecurity.version>
-        <spring.version>5.3.20</spring.version>
+        <spring.version>5.3.21</spring.version>
         <slf4j.version>1.7.36</slf4j.version>
         <javadoc.version>3.4.0</javadoc.version>
         <jaxb.version>2.3.1</jaxb.version>
@@ -54,7 +54,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             <dependency>
                 <groupId>org.eclipse.jgit</groupId>
                 <artifactId>org.eclipse.jgit</artifactId>
-                <version>5.13.0.202109080827-r</version>
+                <version>5.13.1.202206130422-r</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.apache.httpcomponents</groupId>
