@@ -29,6 +29,7 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.slf4j.LoggerFactory.getLogger;
 import static uk.ac.manchester.cs.spinnaker.rest.utils.RestClientUtils.createBearerClient;
+import static uk.ac.manchester.cs.spinnaker.utils.ThreadUtils.waitfor;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -115,11 +116,7 @@ public class OutputManagerImpl implements OutputManager {
 
             // Wait until unlocked
             while (locked) {
-                try {
-                    wait();
-                } catch (final InterruptedException e) {
-                    // Do Nothing
-                }
+                waitfor(this);
             }
 
             // Now lock again

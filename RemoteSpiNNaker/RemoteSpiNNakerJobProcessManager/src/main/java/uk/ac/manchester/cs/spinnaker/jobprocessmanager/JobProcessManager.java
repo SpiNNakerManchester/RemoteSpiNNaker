@@ -20,6 +20,7 @@ import static java.lang.String.format;
 import static java.lang.System.exit;
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.io.FileUtils.deleteQuietly;
+import static org.apache.commons.io.IOUtils.buffer;
 import static org.eclipse.jgit.util.FileUtils.createTempDir;
 import static uk.ac.manchester.cs.spinnaker.jobprocessmanager.RemoteSpiNNakerAPI.createJobManager;
 import static uk.ac.manchester.cs.spinnaker.utils.FileDownloader.downloadFile;
@@ -354,7 +355,7 @@ public class JobProcessManager {
                     requestMachine = true;
                     break;
                 case "--authToken" :
-                    try (BufferedReader r = new BufferedReader(
+                    try (BufferedReader r = buffer(
                             new InputStreamReader(System.in))) {
                         authToken = r.readLine();
                     }

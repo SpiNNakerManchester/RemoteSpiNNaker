@@ -23,8 +23,12 @@ import static java.util.stream.Collectors.joining;
 import static org.apache.commons.io.FileUtils.copyToFile;
 import static org.apache.commons.io.FileUtils.forceDeleteOnExit;
 import static org.apache.commons.io.FileUtils.forceMkdirParent;
+import static org.apache.commons.io.IOUtils.buffer;
+import static org.apache.commons.io.IOUtils.closeQuietly;
+import static org.apache.commons.io.IOUtils.copy;
 import static org.slf4j.LoggerFactory.getLogger;
 import static uk.ac.manchester.cs.spinnaker.job.JobManagerInterface.JOB_PROCESS_MANAGER_ZIP;
+import static uk.ac.manchester.cs.spinnaker.utils.ThreadUtils.waitfor;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -44,7 +48,6 @@ import java.util.zip.ZipInputStream;
 
 import javax.annotation.PostConstruct;
 
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -331,7 +334,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         private void reportResult() {
             StringWriter loggedOutput = new StringWriter();
             try (FileReader reader = new FileReader(outputLog)) {
-                IOUtils.copy(reader, loggedOutput);
+                copy(reader, loggedOutput);
             } catch (final IOException e) {
                 logger.warn("problem in reporting log", e);
             }
@@ -348,11 +351,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         OutputStream getProcessOutputStream() throws IOException {
             synchronized (this) {
                 while ((process == null) && (startException == null)) {
-                    try {
-                        wait();
-                    } catch (final InterruptedException e) {
-                        // Do Nothing
-                    }
+                    waitfor(this);
                 }
                 if (startException != null) {
                     throw startException;
@@ -402,7 +401,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
          */
         JobOutputPipe(final InputStream input, final PrintWriter output) {
             super(threadGroup, "JobOutputPipe");
-            reader = new BufferedReader(new InputStreamReader(input));
+            reader = buffer(new InputStreamReader(input));
             writer = output;
             done = false;
             setDaemon(true);
@@ -434,11 +433,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         @Override
         public void close() {
             done = true;
-            try {
-                reader.close();
-            } catch (IOException e) {
-                // Ignore exceptions
-            }
+            closeQuietly(reader);
         }
     }
 }

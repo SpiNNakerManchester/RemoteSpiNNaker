@@ -28,6 +28,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import static uk.ac.manchester.cs.spinnaker.job.JobManagerInterface.JOB_PROCESS_MANAGER_ZIP;
 import static uk.ac.manchester.cs.spinnaker.jobmanager.JobManager.JOB_PROCESS_MANAGER_JAR;
 import static uk.ac.manchester.cs.spinnaker.utils.ThreadUtils.sleep;
+import static uk.ac.manchester.cs.spinnaker.utils.ThreadUtils.waitfor;
 
 import java.io.IOException;
 import java.net.URL;
@@ -166,11 +167,7 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
                 logger.debug("Waiting for a VM to become available "
                         + "({} of {} in use)", nVirtualMachines,
                         maxNVirtualMachines);
-                try {
-                    lock.wait();
-                } catch (final InterruptedException e) {
-                    // Does Nothing
-                }
+                waitfor(lock);
             }
             nVirtualMachines++;
         }

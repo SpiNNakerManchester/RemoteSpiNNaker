@@ -22,13 +22,15 @@ import static java.util.Arrays.asList;
 import static java.util.concurrent.Executors.newScheduledThreadPool;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toList;
+import static org.apache.commons.io.IOUtils.buffer;
+import static org.apache.commons.io.IOUtils.closeQuietly;
 import static org.slf4j.LoggerFactory.getLogger;
 import static uk.ac.manchester.cs.spinnaker.machinemanager.responses.JobState.DESTROYED;
 import static uk.ac.manchester.cs.spinnaker.machinemanager.responses.JobState.READY;
 import static uk.ac.manchester.cs.spinnaker.utils.ThreadUtils.sleep;
+import static uk.ac.manchester.cs.spinnaker.utils.ThreadUtils.waitfor;
 
 import java.io.BufferedReader;
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -66,7 +68,6 @@ import uk.ac.manchester.cs.spinnaker.machinemanager.commands.NotifyJobCommand;
 import uk.ac.manchester.cs.spinnaker.machinemanager.commands.PowerOffJobBoardsCommand;
 import uk.ac.manchester.cs.spinnaker.machinemanager.commands.PowerOnJobBoardsCommand;
 import uk.ac.manchester.cs.spinnaker.machinemanager.commands.WhereIsCommand;
-import uk.ac.manchester.cs.spinnaker.machinemanager.responses.WhereIs;
 import uk.ac.manchester.cs.spinnaker.machinemanager.responses.ExceptionResponse;
 import uk.ac.manchester.cs.spinnaker.machinemanager.responses.JobMachineInfo;
 import uk.ac.manchester.cs.spinnaker.machinemanager.responses.JobState;
@@ -74,6 +75,7 @@ import uk.ac.manchester.cs.spinnaker.machinemanager.responses.JobsChangedRespons
 import uk.ac.manchester.cs.spinnaker.machinemanager.responses.Machine;
 import uk.ac.manchester.cs.spinnaker.machinemanager.responses.Response;
 import uk.ac.manchester.cs.spinnaker.machinemanager.responses.ReturnResponse;
+import uk.ac.manchester.cs.spinnaker.machinemanager.responses.WhereIs;
 import uk.ac.manchester.cs.spinnaker.rest.utils.PropertyBasedDeserialiser;
 
 /**
@@ -226,21 +228,6 @@ public class SpallocMachineManagerImpl implements MachineManager {
     }
 
     // ------------------------------ COMMS ------------------------------
-
-    /**
-     * Wait for the given object.
-     *
-     * @param obj The object to wait for
-     * @return True if the wait was interrupted, false otherwise
-     */
-    private static boolean waitfor(final Object obj) {
-        try {
-            obj.wait();
-            return false;
-        } catch (final InterruptedException e) {
-            return true;
-        }
-    }
 
     /**
      * Communications API wrapper.
@@ -430,26 +417,13 @@ public class SpallocMachineManagerImpl implements MachineManager {
          */
         public synchronized void connect() throws IOException {
             socket = new Socket(ipAddress, port);
-            reader = new BufferedReader(
-                    new InputStreamReader(socket.getInputStream()));
+            reader = buffer(new InputStreamReader(socket.getInputStream()));
             writer = new PrintWriter(socket.getOutputStream());
 
             connected = true;
             // Send an empty JCR over
             notifications.offer(new JobsChangedResponse());
             notifyAll();
-        }
-
-        /**
-         * Close an object ignoring errors.
-         * @param closable The object to close
-         */
-        private void closeQuietly(final Closeable closable) {
-            try {
-                closable.close();
-            } catch (IOException e) {
-                // Ignore error
-            }
         }
 
         /**
@@ -853,11 +827,7 @@ public class SpallocMachineManagerImpl implements MachineManager {
 
         synchronized (machineState) {
             final JobState state = machineState.get(job.id);
-            try {
-                machineState.wait(waitTime);
-            } catch (final InterruptedException e) {
-                // Does Nothing
-            }
+            waitfor(machineState, waitTime);
             final JobState newState = machineState.get(job.id);
             return (newState != null) && newState.equals(state);
         }

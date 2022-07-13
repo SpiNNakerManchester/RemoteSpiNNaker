@@ -23,11 +23,11 @@ import static java.util.Comparator.comparing;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.Executors.newScheduledThreadPool;
 import static java.util.stream.Collectors.toList;
+import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static org.apache.commons.io.FileUtils.copyInputStreamToFile;
 import static org.apache.commons.io.FileUtils.forceDelete;
 import static org.apache.commons.io.FileUtils.forceMkdir;
@@ -36,6 +36,7 @@ import static org.apache.commons.io.FileUtils.listFiles;
 import static org.slf4j.LoggerFactory.getLogger;
 import static uk.ac.manchester.cs.spinnaker.nmpi.NMPIQueueManager.STATUS_QUEUED;
 import static uk.ac.manchester.cs.spinnaker.nmpi.NMPIQueueManager.STATUS_RUNNING;
+import static uk.ac.manchester.cs.spinnaker.utils.ThreadUtils.waitfor;
 
 import java.io.File;
 import java.io.IOException;
@@ -298,11 +299,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         synchronized (jobExecuters) {
             job = executorJobId.get(executerId);
             while (job == null) {
-                try {
-                    jobExecuters.wait();
-                } catch (InterruptedException e) {
-                    // Ignore
-                }
+                waitfor(jobExecuters);
                 job = executorJobId.get(executerId);
             }
         }
@@ -336,7 +333,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         if ((nBoards <= 0) && (nChips <= 0) && (nCores <= 0)) {
             nBoardsToRequest = DEFAULT_N_BOARDS;
             quotaNCores = (long) (
-                DEFAULT_N_BOARDS * CORES_PER_CHIP * CHIPS_PER_BOARD);
+                    DEFAULT_N_BOARDS * CORES_PER_CHIP * CHIPS_PER_BOARD);
         }
 
         // If boards not specified, use cores or chips
@@ -395,7 +392,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         List<SpinnakerMachine> machines = allocatedMachines.get(id);
         if (machines == null) {
             throw new WebApplicationException(
-                "No machines found for job " + id, NOT_FOUND);
+                    "No machines found for job " + id, NOT_FOUND);
         }
         for (SpinnakerMachine machine : machines) {
             if (machine.getMachineName().equals(machineName)) {
