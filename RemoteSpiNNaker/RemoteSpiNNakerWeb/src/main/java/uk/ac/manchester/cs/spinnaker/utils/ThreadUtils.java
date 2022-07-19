@@ -69,7 +69,7 @@ public abstract class ThreadUtils {
      *            The maximum time to wait, in milliseconds
      * @return True if the wait was interrupted, false otherwise
      */
-    public static boolean waitfor(final Object obj, long timeout) {
+    public static boolean waitfor(final Object obj, final long timeout) {
         try {
             obj.wait(timeout);
             return false;
