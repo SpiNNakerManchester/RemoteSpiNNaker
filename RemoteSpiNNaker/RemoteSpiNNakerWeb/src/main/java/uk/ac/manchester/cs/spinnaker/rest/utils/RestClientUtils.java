@@ -16,6 +16,7 @@
  */
 package uk.ac.manchester.cs.spinnaker.rest.utils;
 
+import static java.util.Objects.nonNull;
 import static org.apache.http.auth.AUTH.WWW_AUTH_RESP;
 
 import java.io.File;
@@ -129,7 +130,7 @@ public abstract class RestClientUtils {
         builder.loadTrustMaterial(new TrustSelfSignedStrategy());
         String trustStore = System.getProperty("remotespinnaker.keystore",
                 null);
-        if (trustStore != null) {
+        if (nonNull(trustStore)) {
             String password = System
                     .getProperty("remotespinnaker.keystore.password", "");
             try {
@@ -170,7 +171,7 @@ public abstract class RestClientUtils {
             client.register(new JacksonJsonProvider());
         }
         ResteasyWebTarget target = client.target(url.toString());
-        if (authorizationHeader != null) {
+        if (nonNull(authorizationHeader)) {
             return target.register((ClientRequestFilter) context -> {
                 context.getHeaders().add(WWW_AUTH_RESP, authorizationHeader);
             }).proxy(clazz);

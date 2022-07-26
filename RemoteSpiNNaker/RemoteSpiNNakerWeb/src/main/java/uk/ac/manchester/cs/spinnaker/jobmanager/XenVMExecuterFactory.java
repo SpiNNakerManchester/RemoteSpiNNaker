@@ -22,6 +22,8 @@ import static com.xensource.xenapi.Types.VbdMode.RW;
 import static com.xensource.xenapi.Types.VbdType.DISK;
 import static com.xensource.xenapi.Types.VdiType.USER;
 import static com.xensource.xenapi.Types.VmPowerState.HALTED;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
 import static java.util.UUID.randomUUID;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -572,22 +574,22 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
          */
         private synchronized void deleteVm(final XenConnection conn)
                 throws XenAPIException, XmlRpcException {
-            if (conn == null) {
+            if (isNull(conn)) {
                 return;
             }
-            if (disk != null) {
+            if (nonNull(disk)) {
                 conn.destroy(disk);
             }
-            if (extraDisk != null) {
+            if (nonNull(extraDisk)) {
                 conn.destroy(extraDisk);
             }
-            if (vdi != null) {
+            if (nonNull(vdi)) {
                 conn.destroy(vdi);
             }
-            if (extraVdi != null) {
+            if (nonNull(extraVdi)) {
                 conn.destroy(extraVdi);
             }
-            if (clonedVm != null) {
+            if (nonNull(clonedVm)) {
                 conn.destroy(clonedVm);
             }
         }

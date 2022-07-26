@@ -19,6 +19,8 @@ package uk.ac.manchester.cs.spinnaker.output;
 import static java.lang.System.currentTimeMillis;
 import static java.nio.file.Files.move;
 import static java.nio.file.Files.probeContentType;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static java.util.concurrent.Executors.newScheduledThreadPool;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -223,7 +225,7 @@ public class OutputManagerImpl implements OutputManager {
      * @return The directory of the project
      */
     private File getProjectDirectory(final String projectId) {
-        if ((projectId == null) || projectId.isEmpty()
+        if (isNull(projectId) || projectId.isEmpty()
                 || projectId.endsWith("/")) {
             throw new IllegalArgumentException("bad projectId");
         }
@@ -238,7 +240,7 @@ public class OutputManagerImpl implements OutputManager {
     public List<DataItem> addOutputs(final String projectId, final int id,
             final File baseDirectory, final Collection<File> outputs)
             throws IOException {
-        if (outputs == null) {
+        if (isNull(outputs)) {
             return null;
         }
 
@@ -307,7 +309,7 @@ public class OutputManagerImpl implements OutputManager {
                 if (!download) {
                     final String contentType =
                             probeContentType(resultFile.toPath());
-                    if (contentType != null) {
+                    if (nonNull(contentType)) {
                         logger.debug("File has content type {}", contentType);
                         return ok(resultFile, contentType).build();
                     }
@@ -362,7 +364,7 @@ public class OutputManagerImpl implements OutputManager {
             final UnicoreFileClient fileManager, final String storageId,
             final String filePath) throws IOException {
         final File[] files = directory.listFiles();
-        if (files == null) {
+        if (isNull(files)) {
             return;
         }
         for (final File file : files) {

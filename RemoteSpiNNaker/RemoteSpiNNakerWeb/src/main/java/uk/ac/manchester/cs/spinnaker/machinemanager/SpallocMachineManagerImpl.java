@@ -19,6 +19,8 @@ package uk.ac.manchester.cs.spinnaker.machinemanager;
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 import static com.fasterxml.jackson.databind.PropertyNamingStrategies.SNAKE_CASE;
 import static java.util.Arrays.asList;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static java.util.concurrent.Executors.newScheduledThreadPool;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toList;
@@ -296,7 +298,7 @@ public class SpallocMachineManagerImpl implements MachineManager {
             Response response;
             try {
                 response = responses.poll(TIMEOUT_SECONDS, SECONDS);
-                if (response == null) {
+                if (isNull(response)) {
                     throw new TimeoutException(
                             "No response from spalloc server");
                 }
@@ -308,7 +310,7 @@ public class SpallocMachineManagerImpl implements MachineManager {
                         ((ExceptionResponse) response).getException());
             }
             if (response instanceof ReturnResponse) {
-                if (responseType == null) {
+                if (isNull(responseType)) {
                     return null;
                 }
                 return mapper.readValue(
@@ -352,7 +354,7 @@ public class SpallocMachineManagerImpl implements MachineManager {
         private void readResponse() throws IOException {
             // Note, assumes one response per line
             final String line = reader.readLine();
-            if (line == null) {
+            if (isNull(line)) {
                 synchronized (this) {
                     connected = false;
                     notifyAll();
@@ -682,7 +684,7 @@ public class SpallocMachineManagerImpl implements MachineManager {
 
         if (state.getState() == DESTROYED) {
             final SpinnakerMachine machine = machinesAllocated.remove(job.id);
-            if (machine == null) {
+            if (isNull(machine)) {
                 logger.error("Unrecognized job: {}", job);
                 return;
             }
@@ -752,7 +754,7 @@ public class SpallocMachineManagerImpl implements MachineManager {
         SpallocJob job = null;
         SpinnakerMachine machineAllocated = null;
 
-        while ((job == null) || (machineAllocated == null)) {
+        while (isNull(job) || isNull(machineAllocated)) {
             try {
                 job = startJob(nBoards);
                 machineAllocated = getMachineForJob(job);
@@ -787,7 +789,7 @@ public class SpallocMachineManagerImpl implements MachineManager {
     public void releaseMachine(final SpinnakerMachine machine) {
         final SpallocJob job = jobByMachine.remove(machine);
         try {
-            if (job != null) {
+            if (nonNull(job)) {
                 stopJob(job);
             }
         } catch (final IOException e) {
@@ -810,7 +812,7 @@ public class SpallocMachineManagerImpl implements MachineManager {
     @Override
     public boolean isMachineAvailable(final SpinnakerMachine machine) {
         final SpallocJob job = jobByMachine.get(machine);
-        if (job == null) {
+        if (isNull(job)) {
             return false;
         }
         logger.debug("Job {} still available", job.id);
@@ -821,7 +823,7 @@ public class SpallocMachineManagerImpl implements MachineManager {
     public boolean waitForMachineStateChange(final SpinnakerMachine machine,
             final int waitTime) {
         final SpallocJob job = jobByMachine.get(machine);
-        if (job == null) {
+        if (isNull(job)) {
             return true;
         }
 
@@ -829,7 +831,7 @@ public class SpallocMachineManagerImpl implements MachineManager {
             final JobState state = machineState.get(job.id);
             waitfor(machineState, waitTime);
             final JobState newState = machineState.get(job.id);
-            return (newState != null) && newState.equals(state);
+            return nonNull(newState) && newState.equals(state);
         }
     }
 
@@ -837,7 +839,7 @@ public class SpallocMachineManagerImpl implements MachineManager {
     public void setMachinePower(final SpinnakerMachine machine,
             final boolean powerOn) {
         final SpallocJob job = jobByMachine.get(machine);
-        if (job == null) {
+        if (isNull(job)) {
             return;
         }
         try {
@@ -856,7 +858,7 @@ public class SpallocMachineManagerImpl implements MachineManager {
     public ChipCoordinates getChipCoordinates(final SpinnakerMachine machine,
             final int x, final int y) {
         final SpallocJob job = jobByMachine.get(machine);
-        if (job == null) {
+        if (isNull(job)) {
             return null;
         }
         try {

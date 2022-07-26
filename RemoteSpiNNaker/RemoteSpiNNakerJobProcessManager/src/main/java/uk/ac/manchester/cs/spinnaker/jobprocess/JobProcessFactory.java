@@ -16,6 +16,8 @@
  */
 package uk.ac.manchester.cs.spinnaker.jobprocess;
 
+import static java.util.Objects.isNull;
+
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.HashMap;
@@ -123,7 +125,7 @@ public class JobProcessFactory {
         @SuppressWarnings("unchecked")
         final ProcessSupplier<P> supplier =
                 (ProcessSupplier<P>) typeMap.get(parameters.getClass());
-        if (supplier == null) {
+        if (isNull(supplier)) {
             throw new IllegalArgumentException(
                     "unsupported job parameter type: " + parameters.getClass());
         }

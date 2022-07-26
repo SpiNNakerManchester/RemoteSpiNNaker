@@ -20,6 +20,8 @@ import static java.io.File.createTempFile;
 import static java.lang.Math.ceil;
 import static java.util.Arrays.asList;
 import static java.util.Comparator.comparing;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.Executors.newScheduledThreadPool;
 import static java.util.stream.Collectors.toList;
@@ -263,7 +265,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         // Add any existing provenance to be updated
         synchronized (jobProvenance) {
             ObjectNode prov = job.getProvenance();
-            if (prov != null) {
+            if (nonNull(prov)) {
                 jobProvenance.put(job.getId(), prov);
             }
         }
@@ -298,7 +300,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         Job job = null;
         synchronized (jobExecuters) {
             job = executorJobId.get(executerId);
-            while (job == null) {
+            while (isNull(job)) {
                 waitfor(jobExecuters);
                 job = executorJobId.get(executerId);
             }
@@ -390,7 +392,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     private SpinnakerMachine findMachine(final int id,
             final String machineName, final boolean remove) {
         List<SpinnakerMachine> machines = allocatedMachines.get(id);
-        if (machines == null) {
+        if (isNull(machines)) {
             throw new WebApplicationException(
                     "No machines found for job " + id, NOT_FOUND);
         }
@@ -570,14 +572,14 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
             final String baseFile, final List<String> outputs)
             throws IOException {
         final List<DataItem> outputItems = new ArrayList<>();
-        if (outputs != null) {
+        if (nonNull(outputs)) {
             final List<File> outputFiles =
                     outputs.stream().map(File::new).collect(toList());
             outputItems.addAll(outputManager.addOutputs(projectId, id,
                     new File(baseFile), outputFiles));
         }
         final File directory = jobOutputTempFiles.remove(id);
-        if (directory != null) {
+        if (nonNull(directory)) {
             outputItems.addAll(outputManager.addOutputs(projectId, id,
                     directory, listFiles(directory, null, true)));
         }
@@ -599,7 +601,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
                 JsonNode subNode = current.get(item);
 
                 // If the path is not present, add it
-                if (subNode == null) {
+                if (isNull(subNode)) {
                     subNode = current.putObject(item);
                 }
 
@@ -647,7 +649,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         long resourceUsage = 0;
         synchronized (jobResourceUsage) {
             final Long ru = jobResourceUsage.remove(id);
-            if (ru != null) {
+            if (nonNull(ru)) {
                 resourceUsage = ru;
                 jobNCores.remove(id);
             }
@@ -689,10 +691,10 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         synchronized (allocatedMachines) {
             final List<SpinnakerMachine> machines =
                     allocatedMachines.remove(id);
-            if (machines != null) {
+            if (nonNull(machines)) {
                 machines.forEach(machineManager::releaseMachine);
             }
-            return machines != null;
+            return nonNull(machines);
         }
     }
 
@@ -757,7 +759,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
             job = executorJobId.remove(requireNonNull(executorId));
             jobExecuters.remove(executorId);
         }
-        if (job != null) {
+        if (nonNull(job)) {
             final int id = job.getId();
 
             switch (job.getStatus()) {
@@ -802,7 +804,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     public Response getJobProcessManager() {
         final InputStream jobManagerStream =
                 getClass().getResourceAsStream("/" + JOB_PROCESS_MANAGER_ZIP);
-        if (jobManagerStream == null) {
+        if (isNull(jobManagerStream)) {
             throw new UnsatisfiedLinkError(
                     JOB_PROCESS_MANAGER_ZIP + " not found in classpath");
         }

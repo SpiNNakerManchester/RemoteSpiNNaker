@@ -18,6 +18,8 @@ package uk.ac.manchester.cs.spinnaker.jobprocessmanager;
 
 import static java.lang.String.format;
 import static java.lang.System.exit;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.io.FileUtils.deleteQuietly;
 import static org.apache.commons.io.IOUtils.buffer;
@@ -121,7 +123,7 @@ public class JobProcessManager {
                         toWrite = takeCache();
                     }
                 }
-                if (toWrite != null && !toWrite.isEmpty()) {
+                if (nonNull(toWrite) && !toWrite.isEmpty()) {
                     log("Sending cached data to job manager");
                     jobManager.appendLog(job.getId(), toWrite);
                 }
@@ -291,19 +293,19 @@ public class JobProcessManager {
      * @param error The error of the failure.
      */
     private void reportFailure(final Throwable error) {
-        if ((jobManager == null) || (job == null)) {
+        if (isNull(jobManager) || isNull(job)) {
             log(error);
             return;
         }
 
         try {
             String log = "";
-            if (logWriter != null) {
+            if (nonNull(logWriter)) {
                 logWriter.stop();
                 log = logWriter.getLog();
             }
             String message = error.getMessage();
-            if (message == null) {
+            if (isNull(message)) {
                 message = "No Error Message";
             }
             jobManager.setJobError(projectId, job.getId(), message, log, "",
@@ -406,7 +408,7 @@ public class JobProcessManager {
         final JobParameters parameters = JobParametersFactory
                 .getJobParameters(job, workingDirectory, setupScript, errors);
 
-        if (parameters == null) {
+        if (isNull(parameters)) {
             if (!errors.isEmpty()) {
                 throw new JobErrorsException(errors);
             }
@@ -416,7 +418,7 @@ public class JobProcessManager {
         }
 
         // Get any requested input files
-        if (job.getInputData() != null) {
+        if (nonNull(job.getInputData())) {
             for (final DataItem input : job.getInputData()) {
                 downloadFile(input.getUrl(), workingDirectory, null);
             }
@@ -473,7 +475,7 @@ public class JobProcessManager {
             case Error :
                 final Throwable error = process.getError();
                 String message = error.getMessage();
-                if (message == null) {
+                if (isNull(message)) {
                     message = "No Error Message";
                 }
                 jobManager.setJobError(projectId, job.getId(), message, log,
@@ -547,7 +549,7 @@ class Machine {
 
     @Override
     public String toString() {
-        if (machine != null) {
+        if (nonNull(machine)) {
             return machine.toString();
         }
         return url;

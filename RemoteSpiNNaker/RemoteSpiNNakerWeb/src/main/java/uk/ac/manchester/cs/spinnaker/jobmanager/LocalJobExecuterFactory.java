@@ -18,6 +18,8 @@ package uk.ac.manchester.cs.spinnaker.jobmanager;
 
 import static java.io.File.createTempFile;
 import static java.io.File.pathSeparator;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 import static org.apache.commons.io.FileUtils.copyToFile;
@@ -133,7 +135,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         // Find the JobManager resource
         final InputStream jobManagerStream =
                 getClass().getResourceAsStream("/" + JOB_PROCESS_MANAGER_ZIP);
-        if (jobManagerStream == null) {
+        if (isNull(jobManagerStream)) {
             throw new UnsatisfiedLinkError(
                     "/" + JOB_PROCESS_MANAGER_ZIP + " not found in classpath");
         }
@@ -146,7 +148,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
 
         // Extract the JobManager resources
         try (ZipInputStream input = new ZipInputStream(jobManagerStream)) {
-            for (ZipEntry entry = input.getNextEntry(); entry != null;
+            for (ZipEntry entry = input.getNextEntry(); nonNull(entry);
                     entry = input.getNextEntry()) {
                 if (entry.isDirectory()) {
                     continue;
@@ -350,10 +352,10 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
          */
         OutputStream getProcessOutputStream() throws IOException {
             synchronized (this) {
-                while ((process == null) && (startException == null)) {
+                while (isNull(process) && isNull(startException)) {
                     waitfor(this);
                 }
-                if (startException != null) {
+                if (nonNull(startException)) {
                     throw startException;
                 }
                 return process.getOutputStream();
@@ -419,7 +421,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         public void run() {
             try {
                 String line;
-                while (!done && (line = readLine()) != null) {
+                while (!done && nonNull(line = readLine())) {
                     if (!line.isEmpty()) {
                         logger.debug("{}", line);
                         writer.println(line);

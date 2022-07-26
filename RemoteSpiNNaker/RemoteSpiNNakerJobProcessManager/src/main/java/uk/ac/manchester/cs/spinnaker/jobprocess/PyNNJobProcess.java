@@ -16,6 +16,8 @@
  */
 package uk.ac.manchester.cs.spinnaker.jobprocess;
 
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -249,11 +251,11 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             } else {
                 section = ini.get(SECTION);
             }
-            if (machine != null) {
+            if (nonNull(machine)) {
                 section.put("machine_name", machine.getMachineName());
                 section.put("version", machine.getVersion());
                 final String bmpDetails = machine.getBmpDetails();
-                if (bmpDetails != null) {
+                if (nonNull(bmpDetails)) {
                     section.put("bmp_names", bmpDetails);
                 }
             } else {
@@ -680,7 +682,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         private void copyStream() throws IOException {
             while (!interrupted()) {
                 final String line = reader.readLine();
-                if (line == null) {
+                if (isNull(line)) {
                     return;
                 }
                 writer.append(line + "\n");

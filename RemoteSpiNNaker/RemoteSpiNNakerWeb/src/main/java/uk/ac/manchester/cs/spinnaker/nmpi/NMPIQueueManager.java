@@ -16,6 +16,7 @@
  */
 package uk.ac.manchester.cs.spinnaker.nmpi;
 
+import static java.util.Objects.nonNull;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.slf4j.LoggerFactory.getLogger;
 import static uk.ac.manchester.cs.spinnaker.rest.utils.RestClientUtils.createApiKeyClient;
@@ -254,7 +255,7 @@ public class NMPIQueueManager {
             final ObjectNode provenance) {
         logger.debug("Job {} is finished", id);
 
-        if (logToAppend != null) {
+        if (nonNull(logToAppend)) {
             appendJobLog(id, logToAppend);
         }
 
@@ -296,7 +297,7 @@ public class NMPIQueueManager {
         final StringWriter errors = new StringWriter();
         error.printStackTrace(new PrintWriter(errors));
         final StringBuilder logMessage = new StringBuilder();
-        if (logToAppend != null) {
+        if (nonNull(logToAppend)) {
             logMessage.append(logToAppend);
         }
         if (jobLog.containsKey(id) || (logMessage.length() > 0)) {

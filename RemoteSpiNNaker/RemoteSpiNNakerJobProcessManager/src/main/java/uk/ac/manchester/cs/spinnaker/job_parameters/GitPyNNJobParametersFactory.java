@@ -16,6 +16,7 @@
  */
 package uk.ac.manchester.cs.spinnaker.job_parameters;
 
+import static java.util.Objects.nonNull;
 import static org.eclipse.jgit.api.Git.cloneRepository;
 
 import java.io.File;
@@ -85,9 +86,9 @@ class GitPyNNJobParametersFactory extends JobParametersFactory {
             URISyntaxException {
         final CloneCommand clone = cloneRepository();
         URIish urish = new URIish(experimentDescription);
-        if (urish.getUser() != null) {
+        if (nonNull(urish.getUser())) {
             String pass = urish.getPass();
-            if (pass == null) {
+            if (nonNull(pass)) {
                 pass = "";
             }
             clone.setCredentialsProvider(
@@ -108,7 +109,7 @@ class GitPyNNJobParametersFactory extends JobParametersFactory {
 
         String script = DEFAULT_SCRIPT_NAME + SYSTEM_ARG;
         final String command = job.getCommand();
-        if ((command != null) && !command.isEmpty()) {
+        if (nonNull(command) && !command.isEmpty()) {
             script = command;
         }
 

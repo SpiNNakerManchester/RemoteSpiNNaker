@@ -16,6 +16,8 @@
  */
 package uk.ac.manchester.cs.spinnaker.model;
 
+import static java.util.Objects.isNull;
+
 /**
  * A Neuromorphic Platform Interface log core.
  */
@@ -32,7 +34,7 @@ public class NMPILog {
      *         initialised.
      */
     public String getContent() {
-        if (buffer == null) {
+        if (isNull(buffer)) {
             return null;
         }
         return buffer.toString();
@@ -54,7 +56,7 @@ public class NMPILog {
      *            The string to append.
      */
     public void appendContent(final String content) {
-        if (this.buffer == null) {
+        if (isNull(this.buffer)) {
             this.buffer = new StringBuilder(content);
         } else {
             this.buffer.append(content);
