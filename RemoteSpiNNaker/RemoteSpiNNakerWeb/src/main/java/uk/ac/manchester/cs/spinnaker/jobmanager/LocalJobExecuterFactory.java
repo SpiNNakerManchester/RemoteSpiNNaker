@@ -420,9 +420,11 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         @Override
         public void run() {
             try {
-                String line;
-                while (!done && nonNull(line = readLine())) {
-                    if (!line.isEmpty()) {
+                while (!done) {
+                    String line = readLine();
+                    if (isNull(line)) {
+                        break;
+                    } else if (!line.isEmpty()) {
                         logger.debug("{}", line);
                         writer.println(line);
                     }
