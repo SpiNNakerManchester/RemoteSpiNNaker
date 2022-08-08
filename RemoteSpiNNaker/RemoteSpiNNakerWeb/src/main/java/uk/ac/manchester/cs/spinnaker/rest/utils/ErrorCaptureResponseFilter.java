@@ -16,6 +16,7 @@
  */
 package uk.ac.manchester.cs.spinnaker.rest.utils;
 
+import static java.util.Objects.nonNull;
 import static javax.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
 import static javax.ws.rs.core.Response.Status.Family.SERVER_ERROR;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -86,7 +87,7 @@ public class ErrorCaptureResponseFilter implements ClientResponseFilter {
             logger.trace(IND2 + "{}", requestContext.getEntity());
 
             final var json = getRequestAsJSON(requestContext);
-            if (json != null) {
+            if (nonNull(json)) {
                 logger.trace(INDENT + "JSON version:");
                 logger.trace(IND2 + "{}", json);
             }

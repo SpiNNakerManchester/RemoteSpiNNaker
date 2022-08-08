@@ -18,6 +18,8 @@ package uk.ac.manchester.cs.spinnaker.utils;
 
 import static java.io.File.createTempFile;
 import static java.nio.file.Files.copy;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
 
 import java.io.File;
@@ -28,6 +30,7 @@ import java.net.URLConnection;
 import java.net.URLDecoder;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
+
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -54,7 +57,7 @@ public abstract class FileDownloader {
      * @return The filename
      */
     private static String getFileName(final String contentDisposition) {
-        if (contentDisposition != null) {
+        if (nonNull(contentDisposition)) {
             final var cdl = contentDisposition.toLowerCase();
             if (cdl.startsWith("form-data") || cdl.startsWith("attachment")) {
                 final var parser = new ParameterParser();
@@ -86,7 +89,7 @@ public abstract class FileDownloader {
         }
 
         urlConnection.setRequestProperty("Accept", "*/*");
-        if (userInfo != null && urlConnection instanceof HttpURLConnection) {
+        if (nonNull(userInfo) && urlConnection instanceof HttpURLConnection) {
             var httpConnection = (HttpURLConnection) urlConnection;
             var basicAuth = "Basic " + Base64.encodeBase64URLSafeString(
                 userInfo.getBytes("UTF8"));
@@ -116,7 +119,7 @@ public abstract class FileDownloader {
 
         // Open a connection
         var userInfo = url.getUserInfo();
-        if (userInfo != null) {
+        if (nonNull(userInfo)) {
             userInfo = URLDecoder.decode(url.getUserInfo(), "UTF8");
         }
         var urlConnection = createConnectionWithAuth(url, userInfo);
@@ -131,7 +134,7 @@ public abstract class FileDownloader {
                 if (responseCode == HttpURLConnection.HTTP_MOVED_TEMP
                         || responseCode == HttpURLConnection.HTTP_MOVED_PERM) {
                     var location = httpConnection.getHeaderField("Location");
-                    if (location == null) {
+                    if (isNull(location)) {
                         location = url.toString();
                     }
                     urlConnection = createConnectionWithAuth(
@@ -207,10 +210,10 @@ public abstract class FileDownloader {
             final URLConnection urlConnection) throws IOException {
         final var filename = getFileName(
                 urlConnection.getHeaderField("Content-Disposition"));
-        if (filename != null) {
+        if (nonNull(filename)) {
             return new File(workingDirectory, filename);
         }
-        if (defaultFilename != null) {
+        if (nonNull(defaultFilename)) {
             return new File(workingDirectory, defaultFilename);
         }
         final var path = url.getPath();

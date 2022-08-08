@@ -17,9 +17,12 @@
 package uk.ac.manchester.cs.spinnaker.machine;
 
 import static java.lang.Integer.parseInt;
-import static java.util.Arrays.asList;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 
 import java.io.Serializable;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents a SpiNNaker machine on which jobs can be executed.
@@ -142,9 +145,9 @@ public class SpinnakerMachine
     @Override
     public String toString() {
         final var output = new StringBuilder();
-        for (final var potential : asList(
+        for (final var potential : List.of(
                 machineName, version, bmpDetails, width, height, bmpDetails)) {
-            if (potential != null) {
+            if (nonNull(potential)) {
                 if (output.length() > 0) {
                     output.append(':');
                 }
@@ -309,29 +312,8 @@ public class SpinnakerMachine
         if (o instanceof SpinnakerMachine) {
             // TODO Is this the right way to determine equality?
             final var m = (SpinnakerMachine) o;
-            if (machineName == null) {
-                if (m.machineName != null) {
-                    return false;
-                }
-            } else if (m.machineName == null) {
-                return false;
-            } else {
-                if (!machineName.equals(m.machineName)) {
-                    return false;
-                }
-            }
-            if (version == null) {
-                if (m.version != null) {
-                    return false;
-                }
-            } else if (m.version == null) {
-                return false;
-            } else {
-                if (!version.equals(m.version)) {
-                    return false;
-                }
-            }
-            return true;
+            return Objects.equals(machineName, m.machineName)
+                    && Objects.equals(version, m.version);
         } else {
             return false;
         }
@@ -343,26 +325,26 @@ public class SpinnakerMachine
     @Override
     public int compareTo(final SpinnakerMachine m) {
         int cmp = 0;
-        if (machineName == null) {
-            if (m.machineName == null) {
+        if (isNull(machineName)) {
+            if (isNull(m.machineName)) {
                 cmp = 0;
             } else {
                 cmp = -1;
             }
-        } else if (m.machineName == null) {
+        } else if (isNull(m.machineName)) {
             cmp = 1;
         } else {
             cmp = machineName.compareTo(m.machineName);
         }
         if (cmp == 0) {
             // TODO Is this the right way to compare versions? It works...
-            if (version == null) {
-                if (m.version == null) {
+            if (isNull(version)) {
+                if (isNull(m.version)) {
                     cmp = 0;
                 } else {
                     cmp = -1;
                 }
-            } else if (m.version == null) {
+            } else if (isNull(m.version)) {
                 cmp = 1;
             } else {
                 cmp = version.compareTo(m.version);
@@ -376,12 +358,12 @@ public class SpinnakerMachine
      */
     @Override
     public int hashCode() {
-        // TODO Should be consistent with equality tests
+        // Must be consistent with equality tests
         int hc = 0;
-        if (machineName != null) {
+        if (nonNull(machineName)) {
             hc ^= machineName.hashCode();
         }
-        if (version != null) {
+        if (nonNull(version)) {
             hc ^= version.hashCode();
         }
         return hc;

@@ -18,13 +18,19 @@ package uk.ac.manchester.cs.spinnaker.jobmanager;
 
 import static java.io.File.createTempFile;
 import static java.io.File.pathSeparator;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 import static org.apache.commons.io.FileUtils.copyToFile;
 import static org.apache.commons.io.FileUtils.forceDeleteOnExit;
 import static org.apache.commons.io.FileUtils.forceMkdirParent;
+import static org.apache.commons.io.IOUtils.buffer;
+import static org.apache.commons.io.IOUtils.closeQuietly;
+import static org.apache.commons.io.IOUtils.copy;
 import static org.slf4j.LoggerFactory.getLogger;
 import static uk.ac.manchester.cs.spinnaker.job.JobManagerInterface.JOB_PROCESS_MANAGER_ZIP;
+import static uk.ac.manchester.cs.spinnaker.utils.ThreadUtils.waitfor;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -43,7 +49,6 @@ import java.util.zip.ZipInputStream;
 
 import javax.annotation.PostConstruct;
 
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -129,7 +134,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         // Find the JobManager resource
         final var jobManagerStream =
                 getClass().getResourceAsStream("/" + JOB_PROCESS_MANAGER_ZIP);
-        if (jobManagerStream == null) {
+        if (isNull(jobManagerStream)) {
             throw new UnsatisfiedLinkError(
                     "/" + JOB_PROCESS_MANAGER_ZIP + " not found in classpath");
         }
@@ -142,7 +147,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
 
         // Extract the JobManager resources
         try (var input = new ZipInputStream(jobManagerStream)) {
-            for (var entry = input.getNextEntry(); entry != null;
+            for (var entry = input.getNextEntry(); nonNull(entry);
                     entry = input.getNextEntry()) {
                 if (entry.isDirectory()) {
                     continue;
@@ -330,7 +335,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         private void reportResult() {
             var loggedOutput = new StringWriter();
             try (var reader = new FileReader(outputLog)) {
-                IOUtils.copy(reader, loggedOutput);
+                copy(reader, loggedOutput);
             } catch (final IOException e) {
                 logger.warn("problem in reporting log", e);
             }
@@ -346,14 +351,10 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
          */
         OutputStream getProcessOutputStream() throws IOException {
             synchronized (this) {
-                while ((process == null) && (startException == null)) {
-                    try {
-                        wait();
-                    } catch (final InterruptedException e) {
-                        // Do Nothing
-                    }
+                while (isNull(process) && isNull(startException)) {
+                    waitfor(this);
                 }
-                if (startException != null) {
+                if (nonNull(startException)) {
                     throw startException;
                 }
                 return process.getOutputStream();
@@ -400,7 +401,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
          */
         JobOutputPipe(final InputStream input, final PrintWriter output) {
             super(threadGroup, "JobOutputPipe");
-            reader = new BufferedReader(new InputStreamReader(input));
+            reader = buffer(new InputStreamReader(input));
             writer = output;
             done = false;
             setDaemon(true);
@@ -417,9 +418,11 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         @Override
         public void run() {
             try {
-                String line;
-                while (!done && (line = readLine()) != null) {
-                    if (!line.isEmpty()) {
+                while (!done) {
+                    String line = readLine();
+                    if (isNull(line)) {
+                        break;
+                    } else if (!line.isEmpty()) {
                         logger.debug("{}", line);
                         writer.println(line);
                     }
@@ -432,11 +435,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         @Override
         public void close() {
             done = true;
-            try {
-                reader.close();
-            } catch (IOException e) {
-                // Ignore exceptions
-            }
+            closeQuietly(reader);
         }
     }
 }

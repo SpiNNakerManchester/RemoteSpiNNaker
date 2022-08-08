@@ -22,12 +22,15 @@ import static com.xensource.xenapi.Types.VbdMode.RW;
 import static com.xensource.xenapi.Types.VbdType.DISK;
 import static com.xensource.xenapi.Types.VdiType.USER;
 import static com.xensource.xenapi.Types.VmPowerState.HALTED;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
 import static java.util.UUID.randomUUID;
 import static org.slf4j.LoggerFactory.getLogger;
 import static uk.ac.manchester.cs.spinnaker.job.JobManagerInterface.JOB_PROCESS_MANAGER_ZIP;
 import static uk.ac.manchester.cs.spinnaker.jobmanager.JobManager.JOB_PROCESS_MANAGER_JAR;
 import static uk.ac.manchester.cs.spinnaker.utils.ThreadUtils.sleep;
+import static uk.ac.manchester.cs.spinnaker.utils.ThreadUtils.waitfor;
 
 import java.io.IOException;
 import java.net.URL;
@@ -165,11 +168,7 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
                 logger.debug("Waiting for a VM to become available "
                         + "({} of {} in use)", nVirtualMachines,
                         maxNVirtualMachines);
-                try {
-                    lock.wait();
-                } catch (final InterruptedException e) {
-                    // Does Nothing
-                }
+                waitfor(lock);
             }
             nVirtualMachines++;
         }
@@ -574,22 +573,22 @@ public class XenVMExecuterFactory implements JobExecuterFactory {
          */
         private synchronized void deleteVm(final XenConnection conn)
                 throws XenAPIException, XmlRpcException {
-            if (conn == null) {
+            if (isNull(conn)) {
                 return;
             }
-            if (disk != null) {
+            if (nonNull(disk)) {
                 conn.destroy(disk);
             }
-            if (extraDisk != null) {
+            if (nonNull(extraDisk)) {
                 conn.destroy(extraDisk);
             }
-            if (vdi != null) {
+            if (nonNull(vdi)) {
                 conn.destroy(vdi);
             }
-            if (extraVdi != null) {
+            if (nonNull(extraVdi)) {
                 conn.destroy(extraVdi);
             }
-            if (clonedVm != null) {
+            if (nonNull(clonedVm)) {
                 conn.destroy(clonedVm);
             }
         }

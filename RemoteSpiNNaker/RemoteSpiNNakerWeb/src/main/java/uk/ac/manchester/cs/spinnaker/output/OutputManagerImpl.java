@@ -19,6 +19,8 @@ package uk.ac.manchester.cs.spinnaker.output;
 import static java.lang.System.currentTimeMillis;
 import static java.nio.file.Files.move;
 import static java.nio.file.Files.probeContentType;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static java.util.concurrent.Executors.newScheduledThreadPool;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -29,6 +31,7 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.slf4j.LoggerFactory.getLogger;
 import static uk.ac.manchester.cs.spinnaker.rest.utils.RestClientUtils.createBearerClient;
+import static uk.ac.manchester.cs.spinnaker.utils.ThreadUtils.waitfor;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -115,11 +118,7 @@ public class OutputManagerImpl implements OutputManager {
 
             // Wait until unlocked
             while (locked) {
-                try {
-                    wait();
-                } catch (final InterruptedException e) {
-                    // Do Nothing
-                }
+                waitfor(this);
             }
 
             // Now lock again
@@ -226,7 +225,7 @@ public class OutputManagerImpl implements OutputManager {
      * @return The directory of the project
      */
     private File getProjectDirectory(final String projectId) {
-        if ((projectId == null) || projectId.isEmpty()
+        if (isNull(projectId) || projectId.isEmpty()
                 || projectId.endsWith("/")) {
             throw new IllegalArgumentException("bad projectId");
         }
@@ -241,7 +240,7 @@ public class OutputManagerImpl implements OutputManager {
     public List<DataItem> addOutputs(final String projectId, final int id,
             final File baseDirectory, final Collection<File> outputs)
             throws IOException {
-        if (outputs == null) {
+        if (isNull(outputs)) {
             return null;
         }
 
@@ -310,7 +309,7 @@ public class OutputManagerImpl implements OutputManager {
                 if (!download) {
                     final var contentType =
                             probeContentType(resultFile.toPath());
-                    if (contentType != null) {
+                    if (nonNull(contentType)) {
                         logger.debug("File has content type {}", contentType);
                         return ok(resultFile, contentType).build();
                     }
@@ -365,7 +364,7 @@ public class OutputManagerImpl implements OutputManager {
             final UnicoreFileClient fileManager, final String storageId,
             final String filePath) throws IOException {
         final var files = directory.listFiles();
-        if (files == null) {
+        if (isNull(files)) {
             return;
         }
         for (final var file : files) {

@@ -43,4 +43,38 @@ public abstract class ThreadUtils {
             Thread.currentThread().interrupt();
         }
     }
+
+    /**
+     * Wait for the given object.
+     *
+     * @param obj
+     *            The object to wait for
+     * @return True if the wait was interrupted, false otherwise
+     */
+    public static boolean waitfor(final Object obj) {
+        try {
+            obj.wait();
+            return false;
+        } catch (final InterruptedException e) {
+            return true;
+        }
+    }
+
+    /**
+     * Wait for the given object.
+     *
+     * @param obj
+     *            The object to wait for
+     * @param timeout
+     *            The maximum time to wait, in milliseconds
+     * @return True if the wait was interrupted, false otherwise
+     */
+    public static boolean waitfor(final Object obj, final long timeout) {
+        try {
+            obj.wait(timeout);
+            return false;
+        } catch (final InterruptedException e) {
+            return true;
+        }
+    }
 }

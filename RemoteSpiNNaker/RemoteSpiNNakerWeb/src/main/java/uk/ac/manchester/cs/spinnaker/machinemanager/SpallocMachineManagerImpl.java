@@ -19,16 +19,20 @@ package uk.ac.manchester.cs.spinnaker.machinemanager;
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 import static com.fasterxml.jackson.databind.PropertyNamingStrategies.SNAKE_CASE;
 import static java.util.Arrays.asList;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static java.util.concurrent.Executors.newScheduledThreadPool;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toList;
+import static org.apache.commons.io.IOUtils.buffer;
+import static org.apache.commons.io.IOUtils.closeQuietly;
 import static org.slf4j.LoggerFactory.getLogger;
 import static uk.ac.manchester.cs.spinnaker.machinemanager.responses.JobState.DESTROYED;
 import static uk.ac.manchester.cs.spinnaker.machinemanager.responses.JobState.READY;
 import static uk.ac.manchester.cs.spinnaker.utils.ThreadUtils.sleep;
+import static uk.ac.manchester.cs.spinnaker.utils.ThreadUtils.waitfor;
 
 import java.io.BufferedReader;
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -65,7 +69,6 @@ import uk.ac.manchester.cs.spinnaker.machinemanager.commands.NotifyJobCommand;
 import uk.ac.manchester.cs.spinnaker.machinemanager.commands.PowerOffJobBoardsCommand;
 import uk.ac.manchester.cs.spinnaker.machinemanager.commands.PowerOnJobBoardsCommand;
 import uk.ac.manchester.cs.spinnaker.machinemanager.commands.WhereIsCommand;
-import uk.ac.manchester.cs.spinnaker.machinemanager.responses.WhereIs;
 import uk.ac.manchester.cs.spinnaker.machinemanager.responses.ExceptionResponse;
 import uk.ac.manchester.cs.spinnaker.machinemanager.responses.JobMachineInfo;
 import uk.ac.manchester.cs.spinnaker.machinemanager.responses.JobState;
@@ -73,6 +76,7 @@ import uk.ac.manchester.cs.spinnaker.machinemanager.responses.JobsChangedRespons
 import uk.ac.manchester.cs.spinnaker.machinemanager.responses.Machine;
 import uk.ac.manchester.cs.spinnaker.machinemanager.responses.Response;
 import uk.ac.manchester.cs.spinnaker.machinemanager.responses.ReturnResponse;
+import uk.ac.manchester.cs.spinnaker.machinemanager.responses.WhereIs;
 import uk.ac.manchester.cs.spinnaker.rest.utils.PropertyBasedDeserialiser;
 
 /**
@@ -227,21 +231,6 @@ public class SpallocMachineManagerImpl implements MachineManager {
     // ------------------------------ COMMS ------------------------------
 
     /**
-     * Wait for the given object.
-     *
-     * @param obj The object to wait for
-     * @return True if the wait was interrupted, false otherwise
-     */
-    private static boolean waitfor(final Object obj) {
-        try {
-            obj.wait();
-            return false;
-        } catch (final InterruptedException e) {
-            return true;
-        }
-    }
-
-    /**
      * Communications API wrapper.
      */
     class Comms {
@@ -308,7 +297,7 @@ public class SpallocMachineManagerImpl implements MachineManager {
             Response response;
             try {
                 response = responses.poll(TIMEOUT_SECONDS, SECONDS);
-                if (response == null) {
+                if (isNull(response)) {
                     throw new TimeoutException(
                             "No response from spalloc server");
                 }
@@ -320,7 +309,7 @@ public class SpallocMachineManagerImpl implements MachineManager {
                         ((ExceptionResponse) response).getException());
             }
             if (response instanceof ReturnResponse) {
-                if (responseType == null) {
+                if (isNull(responseType)) {
                     return null;
                 }
                 return mapper.readValue(
@@ -364,7 +353,7 @@ public class SpallocMachineManagerImpl implements MachineManager {
         private void readResponse() throws IOException {
             // Note, assumes one response per line
             final var line = reader.readLine();
-            if (line == null) {
+            if (isNull(line)) {
                 synchronized (this) {
                     connected = false;
                     notifyAll();
@@ -429,26 +418,13 @@ public class SpallocMachineManagerImpl implements MachineManager {
          */
         public synchronized void connect() throws IOException {
             socket = new Socket(ipAddress, port);
-            reader = new BufferedReader(
-                    new InputStreamReader(socket.getInputStream()));
+            reader = buffer(new InputStreamReader(socket.getInputStream()));
             writer = new PrintWriter(socket.getOutputStream());
 
             connected = true;
             // Send an empty JCR over
             notifications.offer(new JobsChangedResponse());
             notifyAll();
-        }
-
-        /**
-         * Close an object ignoring errors.
-         * @param closable The object to close
-         */
-        private void closeQuietly(final Closeable closable) {
-            try {
-                closable.close();
-            } catch (IOException e) {
-                // Ignore error
-            }
         }
 
         /**
@@ -707,7 +683,7 @@ public class SpallocMachineManagerImpl implements MachineManager {
 
         if (state.getState() == DESTROYED) {
             final var machine = machinesAllocated.remove(job.id);
-            if (machine == null) {
+            if (isNull(machine)) {
                 logger.error("Unrecognized job: {}", job);
                 return;
             }
@@ -777,7 +753,7 @@ public class SpallocMachineManagerImpl implements MachineManager {
         SpallocJob job = null;
         SpinnakerMachine machineAllocated = null;
 
-        while ((job == null) || (machineAllocated == null)) {
+        while (isNull(job) || isNull(machineAllocated)) {
             try {
                 job = startJob(nBoards);
                 machineAllocated = getMachineForJob(job);
@@ -812,7 +788,7 @@ public class SpallocMachineManagerImpl implements MachineManager {
     public void releaseMachine(final SpinnakerMachine machine) {
         final var job = jobByMachine.remove(machine);
         try {
-            if (job != null) {
+            if (nonNull(job)) {
                 stopJob(job);
             }
         } catch (final IOException e) {
@@ -835,7 +811,7 @@ public class SpallocMachineManagerImpl implements MachineManager {
     @Override
     public boolean isMachineAvailable(final SpinnakerMachine machine) {
         final var job = jobByMachine.get(machine);
-        if (job == null) {
+        if (isNull(job)) {
             return false;
         }
         logger.debug("Job {} still available", job.id);
@@ -846,19 +822,15 @@ public class SpallocMachineManagerImpl implements MachineManager {
     public boolean waitForMachineStateChange(final SpinnakerMachine machine,
             final int waitTime) {
         final var job = jobByMachine.get(machine);
-        if (job == null) {
+        if (isNull(job)) {
             return true;
         }
 
         synchronized (machineState) {
             final var state = machineState.get(job.id);
-            try {
-                machineState.wait(waitTime);
-            } catch (final InterruptedException e) {
-                // Does Nothing
-            }
+            waitfor(machineState, waitTime);
             final var newState = machineState.get(job.id);
-            return (newState != null) && newState.equals(state);
+            return nonNull(newState) && newState.equals(state);
         }
     }
 
@@ -866,7 +838,7 @@ public class SpallocMachineManagerImpl implements MachineManager {
     public void setMachinePower(final SpinnakerMachine machine,
             final boolean powerOn) {
         final var job = jobByMachine.get(machine);
-        if (job == null) {
+        if (isNull(job)) {
             return;
         }
         try {
@@ -885,7 +857,7 @@ public class SpallocMachineManagerImpl implements MachineManager {
     public ChipCoordinates getChipCoordinates(final SpinnakerMachine machine,
             final int x, final int y) {
         final var job = jobByMachine.get(machine);
-        if (job == null) {
+        if (isNull(job)) {
             return null;
         }
         try {

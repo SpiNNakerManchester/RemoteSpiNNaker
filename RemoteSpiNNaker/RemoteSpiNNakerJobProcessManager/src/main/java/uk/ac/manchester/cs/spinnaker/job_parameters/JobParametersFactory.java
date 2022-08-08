@@ -16,6 +16,8 @@
  */
 package uk.ac.manchester.cs.spinnaker.job_parameters;
 
+import static java.util.Objects.nonNull;
+
 import java.io.File;
 import java.util.Map;
 
@@ -81,9 +83,9 @@ public abstract class JobParametersFactory {
             final Map<String, JobParametersFactoryException> errors) {
         for (final var factory : JOB_PARAMETER_FACTORIES) {
             try {
-                final var parameters = factory.getJobParameters(
-                        job, workingDirectory, setupScript);
-                if (parameters != null) {
+				final var parameters = factory.getJobParameters(job,
+						workingDirectory, setupScript);
+                if (nonNull(parameters)) {
                     return parameters;
                 }
             } catch (final UnsupportedJobException e) {
