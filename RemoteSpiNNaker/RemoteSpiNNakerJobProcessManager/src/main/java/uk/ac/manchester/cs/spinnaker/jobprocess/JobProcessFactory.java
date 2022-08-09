@@ -18,7 +18,6 @@ package uk.ac.manchester.cs.spinnaker.jobprocess;
 
 import static java.util.Objects.isNull;
 
-import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
