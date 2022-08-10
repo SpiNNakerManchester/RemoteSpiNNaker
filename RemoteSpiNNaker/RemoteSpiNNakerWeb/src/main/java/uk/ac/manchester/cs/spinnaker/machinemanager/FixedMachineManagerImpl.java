@@ -17,7 +17,7 @@
 package uk.ac.manchester.cs.spinnaker.machinemanager;
 
 import static java.util.Objects.nonNull;
-import static uk.ac.manchester.cs.spinnaker.utils.ThreadUtils.waitfor;
+import static uk.ac.manchester.cs.spinnaker.ThreadUtils.waitfor;
 
 import java.util.ArrayList;
 import java.util.HashSet;

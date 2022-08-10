@@ -19,9 +19,9 @@ package uk.ac.manchester.cs.spinnaker.nmpi;
 import static java.util.Objects.nonNull;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.slf4j.LoggerFactory.getLogger;
+import static uk.ac.manchester.cs.spinnaker.ThreadUtils.sleep;
 import static uk.ac.manchester.cs.spinnaker.rest.utils.RestClientUtils.createApiKeyClient;
 import static uk.ac.manchester.cs.spinnaker.rest.utils.RestClientUtils.createBasicClient;
-import static uk.ac.manchester.cs.spinnaker.utils.ThreadUtils.sleep;
 
 import java.io.IOException;
 import java.io.PrintWriter;

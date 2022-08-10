@@ -27,10 +27,10 @@ import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
 import static java.util.UUID.randomUUID;
 import static org.slf4j.LoggerFactory.getLogger;
+import static uk.ac.manchester.cs.spinnaker.ThreadUtils.sleep;
+import static uk.ac.manchester.cs.spinnaker.ThreadUtils.waitfor;
 import static uk.ac.manchester.cs.spinnaker.job.JobManagerInterface.JOB_PROCESS_MANAGER_ZIP;
 import static uk.ac.manchester.cs.spinnaker.jobmanager.JobManager.JOB_PROCESS_MANAGER_JAR;
-import static uk.ac.manchester.cs.spinnaker.utils.ThreadUtils.sleep;
-import static uk.ac.manchester.cs.spinnaker.utils.ThreadUtils.waitfor;
 
 import java.io.IOException;
 import java.net.URL;

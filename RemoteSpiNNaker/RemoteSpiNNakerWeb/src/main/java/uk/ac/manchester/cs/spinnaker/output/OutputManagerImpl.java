@@ -30,8 +30,8 @@ import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.slf4j.LoggerFactory.getLogger;
+import static uk.ac.manchester.cs.spinnaker.ThreadUtils.waitfor;
 import static uk.ac.manchester.cs.spinnaker.rest.utils.RestClientUtils.createBearerClient;
-import static uk.ac.manchester.cs.spinnaker.utils.ThreadUtils.waitfor;
 
 import java.io.File;
 import java.io.FileInputStream;
