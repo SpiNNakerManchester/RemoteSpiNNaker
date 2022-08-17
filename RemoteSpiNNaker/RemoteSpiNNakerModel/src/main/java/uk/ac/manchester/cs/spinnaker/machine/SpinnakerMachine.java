@@ -17,11 +17,13 @@
 package uk.ac.manchester.cs.spinnaker.machine;
 
 import static java.lang.Integer.parseInt;
-import static java.util.Objects.isNull;
+import static java.util.Comparator.comparing;
+import static java.util.Comparator.nullsFirst;
 import static java.util.Objects.nonNull;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Comparator;
 import java.util.Objects;
 
 /**
@@ -319,38 +321,22 @@ public class SpinnakerMachine
         }
     }
 
+    /** Null-safe string comparator. */
+    private static final Comparator<String> STRCMP =
+            nullsFirst(String::compareTo);
+
+    /** Machine comparator. */
+    private static final Comparator<SpinnakerMachine> M_COMPARE =
+            comparing(SpinnakerMachine::getMachineName, STRCMP)
+                    // TODO Is this the right way to compare versions? It works
+                    .thenComparing(SpinnakerMachine::getVersion, STRCMP);
+
     /**
      * Compare to another machine; order by name then by version.
      */
     @Override
     public int compareTo(final SpinnakerMachine m) {
-        int cmp = 0;
-        if (isNull(machineName)) {
-            if (isNull(m.machineName)) {
-                cmp = 0;
-            } else {
-                cmp = -1;
-            }
-        } else if (isNull(m.machineName)) {
-            cmp = 1;
-        } else {
-            cmp = machineName.compareTo(m.machineName);
-        }
-        if (cmp == 0) {
-            // TODO Is this the right way to compare versions? It works...
-            if (isNull(version)) {
-                if (isNull(m.version)) {
-                    cmp = 0;
-                } else {
-                    cmp = -1;
-                }
-            } else if (isNull(m.version)) {
-                cmp = 1;
-            } else {
-                cmp = version.compareTo(m.version);
-            }
-        }
-        return cmp;
+        return M_COMPARE.compare(this, m);
     }
 
     /**
