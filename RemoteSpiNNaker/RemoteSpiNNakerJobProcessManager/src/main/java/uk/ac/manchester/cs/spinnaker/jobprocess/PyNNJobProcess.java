@@ -16,11 +16,16 @@
  */
 package uk.ac.manchester.cs.spinnaker.jobprocess;
 
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.apache.commons.io.FileUtils.listFiles;
 import static org.apache.commons.io.FilenameUtils.getExtension;
+import static org.apache.commons.io.IOUtils.buffer;
+import static org.apache.commons.io.IOUtils.closeQuietly;
+import static org.apache.commons.io.IOUtils.copy;
 import static uk.ac.manchester.cs.spinnaker.job.Status.Error;
 import static uk.ac.manchester.cs.spinnaker.job.Status.Finished;
 import static uk.ac.manchester.cs.spinnaker.job.Status.Running;
@@ -73,12 +78,6 @@ import uk.ac.manchester.cs.spinnaker.utils.ThreadUtils;
  * A process for running PyNN jobs.
  */
 public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
-
-    /**
-     * The size of buffer to use when transferring data between files.
-     */
-    private static final int BUFFER_SIZE = 8196;
-
     /**
      * The error level that represents a signal.
      */
@@ -252,11 +251,11 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             } else {
                 section = ini.get(SECTION);
             }
-            if (machine != null) {
+            if (nonNull(machine)) {
                 section.put("machine_name", machine.getMachineName());
                 section.put("version", machine.getVersion());
                 final String bmpDetails = machine.getBmpDetails();
-                if (bmpDetails != null) {
+                if (nonNull(bmpDetails)) {
                     section.put("bmp_names", bmpDetails);
                 }
             } else {
@@ -465,7 +464,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             for (final String item : PROVENANCE_ITEMS_TO_ADD) {
                 if (itemPath.matches(item)) {
                     provenance.add(new ProvenanceItem(
-                        new ArrayList<>(pathList), subItem.getValue()));
+                            new ArrayList<>(pathList), subItem.getValue()));
                 }
             }
             pathList.removeLast();
@@ -523,7 +522,6 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             throws IOException, JAXBException {
 
         // Go through the report files and zip them up
-        final byte[] buffer = new byte[BUFFER_SIZE];
         for (final File file : directory.listFiles()) {
             if (file.isDirectory()) {
                 zipProvenance(reportsZip, file, path + "/" + file.getName());
@@ -533,15 +531,10 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
                     addProvenance(file);
                 }
             } else {
-                final ZipEntry entry =
-                        new ZipEntry(path + "/" + file.getName());
-                reportsZip.putNextEntry(entry);
+                reportsZip.putNextEntry(
+                        new ZipEntry(path + "/" + file.getName()));
                 try (FileInputStream in = new FileInputStream(file)) {
-                    int bytesRead = in.read(buffer);
-                    while (bytesRead >= 0) {
-                        reportsZip.write(buffer, 0, bytesRead);
-                        bytesRead = in.read(buffer);
-                    }
+                    copy(in, reportsZip);
                 }
             }
         }
@@ -646,12 +639,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         ReaderLogWriter(
                 final Reader readerParam, final LogWriter writerParam) {
             super(threadGroup, "Reader Log Writer");
-            requireNonNull(readerParam);
-            if (readerParam instanceof BufferedReader) {
-                this.reader = (BufferedReader) readerParam;
-            } else {
-                this.reader = new BufferedReader(readerParam);
-            }
+            this.reader = buffer(readerParam);
             this.writer = requireNonNull(writerParam);
             setDaemon(true);
         }
@@ -698,7 +686,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         private void copyStream() throws IOException {
             while (!interrupted()) {
                 final String line = reader.readLine();
-                if (line == null) {
+                if (isNull(line)) {
                     return;
                 }
                 writer.append(line + "\n");
@@ -723,11 +711,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             }
 
             log("Log writer has exited");
-            try {
-                reader.close();
-            } catch (IOException | RuntimeException e) {
-                // Do nothing
-            }
+            closeQuietly(reader);
             ThreadUtils.sleep(FINALIZATION_DELAY);
         }
     }

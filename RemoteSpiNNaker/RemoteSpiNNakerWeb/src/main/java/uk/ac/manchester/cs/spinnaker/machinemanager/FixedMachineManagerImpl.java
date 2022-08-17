@@ -16,6 +16,9 @@
  */
 package uk.ac.manchester.cs.spinnaker.machinemanager;
 
+import static java.util.Objects.nonNull;
+import static uk.ac.manchester.cs.spinnaker.utils.ThreadUtils.waitfor;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -73,24 +76,22 @@ public class FixedMachineManagerImpl implements MachineManager {
 
     @Override
     public SpinnakerMachine getNextAvailableMachine(final int nBoards) {
-        try {
-            synchronized (lock) {
-                SpinnakerMachine machine;
-                while (!done) {
-                    machine = getLargeEnoughMachine(nBoards);
-                    if (machine != null) {
-                        // Move the machine from available to allocated
-                        machinesAvailable.remove(machine);
-                        machinesAllocated.add(machine);
-                        return machine;
-                    }
-                    // If no machine was found, wait for something to change
-                    lock.wait();
+        synchronized (lock) {
+            while (!done) {
+                final SpinnakerMachine machine = getLargeEnoughMachine(nBoards);
+                if (nonNull(machine)) {
+                    // Move the machine from available to allocated
+                    machinesAvailable.remove(machine);
+                    machinesAllocated.add(machine);
+                    return machine;
+                }
+                // If no machine was found, wait for something to change
+                if (waitfor(lock)) {
+                    break;
                 }
             }
-        } catch (final InterruptedException e) {
+            return null;
         }
-        return null;
     }
 
     /**
@@ -100,12 +101,9 @@ public class FixedMachineManagerImpl implements MachineManager {
      * @return A machine big enough, or null of none.
      */
     private SpinnakerMachine getLargeEnoughMachine(final int nBoards) {
-        for (final SpinnakerMachine nextMachine : machinesAvailable) {
-            if (nextMachine.getnBoards() >= nBoards) {
-                return nextMachine;
-            }
-        }
-        return null;
+        return machinesAvailable.stream()
+                .filter(machine -> machine.getnBoards() >= nBoards)
+                .findFirst().orElse(null);
     }
 
     @Override
@@ -137,11 +135,7 @@ public class FixedMachineManagerImpl implements MachineManager {
             final int waitTime) {
         synchronized (lock) {
             final boolean isAvailable = machinesAvailable.contains(machine);
-            try {
-                lock.wait(waitTime);
-            } catch (final InterruptedException e) {
-                // Does Nothing
-            }
+            waitfor(lock, waitTime);
             return machinesAvailable.contains(machine) != isAvailable;
         }
     }

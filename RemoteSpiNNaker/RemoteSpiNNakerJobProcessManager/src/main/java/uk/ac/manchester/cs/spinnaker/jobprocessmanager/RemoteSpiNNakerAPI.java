@@ -17,6 +17,7 @@
 package uk.ac.manchester.cs.spinnaker.jobprocessmanager;
 
 import static jakarta.ws.rs.core.HttpHeaders.AUTHORIZATION;
+import static java.util.Objects.nonNull;
 import static org.apache.commons.codec.binary.Base64.encodeBase64String;
 
 import java.nio.charset.Charset;
@@ -82,7 +83,7 @@ public abstract class RemoteSpiNNakerAPI {
         mapper.registerModule(new JodaModule());
         provider.setMapper(mapper);
         client.register(provider);
-        if (authToken != null) {
+        if (nonNull(authToken)) {
             client.register(getBasicAuthFilter(authToken));
         }
         return client.target(url).proxy(JobManagerInterface.class);

@@ -17,31 +17,40 @@
 package uk.ac.manchester.cs.spinnaker.jobmanager;
 
 import static java.lang.Math.ceil;
+import static java.util.Arrays.asList;
+import static java.util.Comparator.comparing;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
+import static java.util.concurrent.Executors.newScheduledThreadPool;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
+import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.slf4j.LoggerFactory.getLogger;
+import static uk.ac.manchester.cs.spinnaker.nmpi.NMPIQueueManager.STATUS_QUEUED;
+import static uk.ac.manchester.cs.spinnaker.nmpi.NMPIQueueManager.STATUS_RUNNING;
+import static uk.ac.manchester.cs.spinnaker.utils.ThreadUtils.waitfor;
 
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
 import javax.swing.Timer;
+import javax.annotation.PreDestroy;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -167,38 +176,38 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     private static final Logger logger = getLogger(JobManager.class);
 
     /**
-     * Job ID -> Machine allocated.
+     * Job ID &rarr; Machine(s) allocated.
      */
     private final Map<Integer, List<SpinnakerMachine>> allocatedMachines =
             new HashMap<>();
 
     /**
-     * Executor ID -> Executor.
+     * Executor ID &rarr; Executor.
      */
     private final Map<String, JobExecuter> jobExecuters = new HashMap<>();
 
     /**
-     * Executor ID -> Job ID.
+     * Executor ID &rarr; Job ID.
      */
     private final Map<String, Job> executorJobId = new HashMap<>();
 
     /**
-     * Job ID -> Output data items.
+     * Job ID &rarr; Output data items.
      */
     private final Map<Integer, List<DataItem>> jobOutputData = new HashMap<>();
 
     /**
-     * Job ID -> number of cores needed by job.
+     * Job ID &rarr; number of cores needed by job.
      */
     private final Map<Integer, Long> jobNCores = new HashMap<>();
 
     /**
-     * Job ID -> Job resource usage (in core-hours).
+     * Job ID &rarr; Job resource usage (in core-hours).
      */
     private final Map<Integer, Long> jobResourceUsage = new HashMap<>();
 
     /**
-     * Job ID -> Job Provenance data.
+     * Job ID &rarr; Job Provenance data.
      */
     private final Map<Integer, ObjectNode> jobProvenance = new HashMap<>();
 
@@ -214,13 +223,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
      *
      * Use this to synchronise on log updates actually happening.
      */
-    private final ActionListener logTimerAction = new ActionListener() {
-
-        @Override
-        public void actionPerformed(final ActionEvent event) {
-            sendLogs();
-        }
-    };
+    private final ActionListener logTimerAction = event -> sendLogs();
 
     /**
      * The timer to do log sending.
@@ -235,6 +238,13 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
      * Thread group for the executor.
      */
     private ThreadGroup threadGroup;
+
+    /**
+     * Calls {@link #updateStatus()} every {@link #STATUS_UPDATE_PERIOD}
+     * seconds.
+     */
+    private final ScheduledExecutorService scheduler =
+            newScheduledThreadPool(1);
 
     /**
      * Create a job manager.
@@ -254,12 +264,20 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         threadGroup = new ThreadGroup("NMPI");
         // Start the queue manager
         queueManager.addListener(this);
-        new Thread(threadGroup, queueManager, "QueueManager").start();
-        ScheduledExecutorService scheduler =
-                Executors.newScheduledThreadPool(1);
-        scheduler.scheduleAtFixedRate(new StatusUpdater(),
+        new Thread(threadGroup, queueManager::processResponsesFromQueue,
+                "QueueManager").start();
+        scheduler.scheduleAtFixedRate(this::updateStatus,
                 0, STATUS_UPDATE_PERIOD, TimeUnit.SECONDS);
         logUpdateTimer.start();
+    }
+
+    /**
+     * Stop the manager's worker threads.
+     */
+    @PreDestroy
+    private void stopManager() {
+        scheduler.shutdown();
+        queueManager.close(); // Stops the queue manager thread eventually
     }
 
     @Override
@@ -270,7 +288,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         // Add any existing provenance to be updated
         synchronized (jobProvenance) {
             ObjectNode prov = job.getProvenance();
-            if (prov != null) {
+            if (nonNull(prov)) {
                 jobProvenance.put(job.getId(), prov);
             }
         }
@@ -305,12 +323,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         Job job = null;
         synchronized (jobExecuters) {
             job = executorJobId.get(executerId);
-            while (job == null) {
-                try {
-                    jobExecuters.wait();
-                } catch (InterruptedException e) {
-                    // Ignore
-                }
+            while (isNull(job)) {
+                waitfor(jobExecuters);
                 job = executorJobId.get(executerId);
             }
         }
@@ -323,15 +337,9 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     public SpinnakerMachine getLargestJobMachine(final int id,
             final double runTime) {
         // TODO Check quota to get the largest machine within the quota
-
-        SpinnakerMachine largest = null;
-        for (final SpinnakerMachine machine : machineManager.getMachines()) {
-            if ((largest == null) || (machine.getArea() > largest.getArea())) {
-                largest = machine;
-            }
-        }
-
-        return largest;
+        return machineManager.getMachines().stream()
+                .max(comparing(SpinnakerMachine::getArea))
+                .orElse(null);
     }
 
     @Override
@@ -350,7 +358,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         if ((nBoards <= 0) && (nChips <= 0) && (nCores <= 0)) {
             nBoardsToRequest = DEFAULT_N_BOARDS;
             quotaNCores = (long) (
-                DEFAULT_N_BOARDS * CORES_PER_CHIP * CHIPS_PER_BOARD);
+                    DEFAULT_N_BOARDS * CORES_PER_CHIP * CHIPS_PER_BOARD);
         }
 
         // If boards not specified, use cores or chips
@@ -386,7 +394,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
             jobResourceUsage.put(id, resourceUsage);
             jobNCores.put(id, quotaNCores);
         }
-        addProvenance(id, Arrays.asList(new String[]{"spinnaker_machine"}),
+        addProvenance(id, asList("spinnaker_machine"),
                 machine.getMachineName());
 
         return machine;
@@ -407,21 +415,21 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     private SpinnakerMachine findMachine(final int id,
             final String machineName, final boolean remove) {
         List<SpinnakerMachine> machines = allocatedMachines.get(id);
-        if (machines == null) {
+        if (isNull(machines)) {
             throw new WebApplicationException(
-                "No machines found for job " + id, Status.NOT_FOUND);
+                    "No machines found for job " + id, NOT_FOUND);
         }
-        for (int i = 0; i < machines.size(); i++) {
-            final SpinnakerMachine machine = machines.get(i);
+        for (SpinnakerMachine machine : machines) {
             if (machine.getMachineName().equals(machineName)) {
                 if (remove) {
-                    machines.remove(i);
+                    machines.remove(machine);
                 }
                 return machine;
             }
         }
         throw new WebApplicationException(
-                "Machine " + machineName + " does not exist for job " + id);
+                "Machine " + machineName + " does not exist for job " + id,
+                BAD_REQUEST);
     }
 
     @Override
@@ -462,10 +470,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         final SpinnakerMachine machine =
                 machineManager.getNextAvailableMachine(nBoardsToRequest);
         synchronized (allocatedMachines) {
-            if (!allocatedMachines.containsKey(id)) {
-                allocatedMachines.put(id, new ArrayList<SpinnakerMachine>());
-            }
-            allocatedMachines.get(id).add(machine);
+            allocatedMachines.computeIfAbsent(
+                    id, ignored -> new ArrayList<>()).add(machine);
         }
         return machine;
     }
@@ -500,23 +506,16 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         final List<SpinnakerMachine> machines = getMachineForJob(id);
 
         // Return false if any machine is gone
-        for (final SpinnakerMachine machine : machines) {
-            if (!machineManager.isMachineAvailable(machine)) {
-                return new JobMachineAllocated(false);
-            }
+        if (!machines.stream().allMatch(machineManager::isMachineAvailable)) {
+            return new JobMachineAllocated(false);
         }
 
         // Wait for the state change of any machine
         waitForAnyMachineStateChange(waitTime, machines);
 
         // Again check for a machine which is gone
-        for (final SpinnakerMachine machine : machines) {
-            if (!machineManager.isMachineAvailable(machine)) {
-                return new JobMachineAllocated(false);
-            }
-        }
-
-        return new JobMachineAllocated(true);
+        return new JobMachineAllocated(machines.stream()
+                .allMatch(machineManager::isMachineAvailable));
     }
 
     /**
@@ -529,15 +528,12 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
      */
     private void waitForAnyMachineStateChange(final int waitTime,
             final List<SpinnakerMachine> machines) {
-        final BlockingQueue<Object> stateChangeSync =
+        final BlockingQueue<SpinnakerMachine> stateChangeSync =
                 new LinkedBlockingQueue<>();
         for (final SpinnakerMachine machine : machines) {
-            final Thread stateThread = new Thread(threadGroup, new Runnable() {
-                @Override
-                public void run() {
-                    machineManager.waitForMachineStateChange(machine, waitTime);
-                    stateChangeSync.offer(this);
-                }
+            final Thread stateThread = new Thread(threadGroup, () -> {
+                machineManager.waitForMachineStateChange(machine, waitTime);
+                stateChangeSync.offer(machine);
             }, "waiting for " + machine);
             stateThread.setDaemon(true);
             stateThread.start();
@@ -562,9 +558,11 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
      * Performs the actual sending of logs; activated on a timer.
      */
     private void sendLogs() {
-        // Synchronise the running of this action to 1. avoid doing it twice and
-        // 2. To allow other things to wait for the update to complete before
-        // changing the log any other way.
+        /*
+         * Synchronise the running of this action to 1. avoid doing it twice and
+         * 2. To allow other things to wait for the update to complete before
+         * changing the log any other way.
+         */
         synchronized (logTimerAction) {
             // Take a copy of the logs to update to allow processing to continue
             Map<Integer, String> localLogsToUpdate;
@@ -584,12 +582,16 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
                     logger.debug("Updating log for " + jobId);
                     queueManager.appendJobLog(jobId, message);
 
-                // We catch throwable here because we really don't want this
-                // to stop it working in the future
+                    /*
+                     * We catch throwable here because we really don't want this
+                     * to stop it working in the future.
+                     */
                 } catch (Throwable e) {
                     logger.debug("Error updating log - will be retried", e);
-                    // On failure, re-prepend the message to the logs to be
-                    // updated again later.
+                    /*
+                     * On failure, re-prepend the message to the logs to be
+                     * updated again later.
+                     */
                     synchronized (logUpdateTimer) {
                         String existing = logsToUpdate.getOrDefault(jobId, "");
                         logsToUpdate.put(jobId, message + existing);
@@ -617,27 +619,20 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
             DataItem item = outputManager.addOutput(
                     projectId, id, baseDirectory, output, input);
             synchronized (jobOutputData) {
-                List<DataItem> items = jobOutputData.get(id);
-                if (items == null) {
-                    items = new ArrayList<>();
-                    jobOutputData.put(id, items);
-                }
-                items.add(item);
+                jobOutputData.computeIfAbsent(id, ignored -> new ArrayList<>())
+                        .add(item);
             }
         } catch (IOException e) {
-            throw new WebApplicationException(e, Status.INTERNAL_SERVER_ERROR);
+            throw new WebApplicationException(e, INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
     public void addProvenance(final int id, final List<String> path,
             final String value) {
-
         synchronized (jobProvenance) {
-            if (!jobProvenance.containsKey(id)) {
-                jobProvenance.put(id, new ObjectNode(JsonNodeFactory.instance));
-            }
-            final ObjectNode provenance = jobProvenance.get(id);
+            final ObjectNode provenance = jobProvenance.computeIfAbsent(id,
+                    ignored -> new ObjectNode(JsonNodeFactory.instance));
 
             // Traverse the object node to find the path to add to
             ObjectNode current = provenance;
@@ -647,7 +642,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
                 JsonNode subNode = current.get(item);
 
                 // If the path is not present, add it
-                if (subNode == null) {
+                if (isNull(subNode)) {
                     subNode = current.putObject(item);
                 }
 
@@ -655,8 +650,10 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
                 if (subNode instanceof ObjectNode) {
                     current = (ObjectNode) subNode;
 
-                // If the item exists and is not an ObjectNode, this is an
-                // error as a non-object can't contain values
+                    /*
+                     * If the item exists and is not an ObjectNode, this is an
+                     * error as a non-object can't contain values
+                     */
                 } else {
                     add = false;
                     logger.warn("Could not add provenance item {} to job {}: "
@@ -710,7 +707,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         long resourceUsage = 0;
         synchronized (jobResourceUsage) {
             final Long ru = jobResourceUsage.remove(id);
-            if (ru != null) {
+            if (nonNull(ru)) {
                 resourceUsage = ru;
                 jobNCores.remove(id);
             }
@@ -743,12 +740,10 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         synchronized (allocatedMachines) {
             final List<SpinnakerMachine> machines =
                     allocatedMachines.remove(id);
-            if (machines != null) {
-                for (final SpinnakerMachine machine : machines) {
-                    machineManager.releaseMachine(machine);
-                }
+            if (nonNull(machines)) {
+                machines.forEach(machineManager::releaseMachine);
             }
-            return machines != null;
+            return nonNull(machines);
         }
     }
 
@@ -798,12 +793,6 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     }
 
     /**
-     * An empty stack trace element.
-     */
-    private static final StackTraceElement[] STE_TMPL =
-            new StackTraceElement[0];
-
-    /**
      * Convert a remote exception to a local one.
      *
      * @param error The error message.
@@ -812,13 +801,10 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
      */
     private Exception reconstructRemoteException(final String error,
             final RemoteStackTrace stackTrace) {
-        final ArrayList<StackTraceElement> elements = new ArrayList<>();
-        for (final RemoteStackTraceElement element : stackTrace.getElements()) {
-            elements.add(element.toSTE());
-        }
-
         final Exception exception = new Exception(error);
-        exception.setStackTrace(elements.toArray(STE_TMPL));
+        exception.setStackTrace(stackTrace.getElements().stream()
+                .map(RemoteStackTraceElement::toSTE)
+                .toArray(StackTraceElement[]::new));
         return exception;
     }
 
@@ -837,14 +823,14 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
             job = executorJobId.remove(requireNonNull(executorId));
             jobExecuters.remove(executorId);
         }
-        if (job != null) {
+        if (nonNull(job)) {
             final int id = job.getId();
-            logger.debug("Executer {} for Job {} has exited", executorId, id);
 
-            String status = job.getStatus();
-            if (status == NMPIQueueManager.STATUS_QUEUED
-                    || status == NMPIQueueManager.STATUS_RUNNING) {
-                logger.debug("Job {} has not exited cleanly", id);
+            switch (job.getStatus()) {
+            case STATUS_QUEUED:
+            case STATUS_RUNNING:
+                logger.debug("Executer {} for Job {} has exited, "
+                        + "but job not exited cleanly", executorId, id);
                 releaseAllocatedMachines(id);
                 final long resourceUsage = getResourceUsage(id);
                 final ObjectNode prov = getProvenance(id);
@@ -852,6 +838,9 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
                 queueManager.setJobError(id, logToAppend, data,
                         new Exception("Job did not finish cleanly"),
                         resourceUsage, prov);
+            default:
+                logger.debug("Executer {} for Job {} has exited",
+                        executorId, id);
             }
         } else {
             logger.error("An executer {} has exited without a job. "
@@ -868,39 +857,31 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     public Response getJobProcessManager() {
         final InputStream jobManagerStream =
                 getClass().getResourceAsStream("/" + JOB_PROCESS_MANAGER_ZIP);
-        if (jobManagerStream == null) {
+        if (isNull(jobManagerStream)) {
             throw new UnsatisfiedLinkError(
                     JOB_PROCESS_MANAGER_ZIP + " not found in classpath");
         }
-        return Response.ok(jobManagerStream).type(APPLICATION_ZIP).build();
+        return ok(jobManagerStream).type(APPLICATION_ZIP).build();
     }
 
     @Override
     public Response getSetupScript() throws IOException {
-        final InputStream setupScriptStream =
-                setupScript.getInputStream();
-        return Response.ok(setupScriptStream).type(
-                APPLICATION_OCTET_STREAM).build();
+        return ok(setupScript.getInputStream())
+                .type(APPLICATION_OCTET_STREAM).build();
     }
 
     /**
      * Updates the status.
      */
-    private class StatusUpdater implements Runnable {
-
-        @Override
-        public void run() {
-            int nBoardsInUse = 0;
-            synchronized (allocatedMachines) {
-                for (List<SpinnakerMachine> machines
-                        : allocatedMachines.values()) {
-                    for (SpinnakerMachine machine : machines) {
-                        nBoardsInUse += machine.getnBoards();
-                    }
-                }
+    private void updateStatus() {
+        int nBoardsInUse = 0;
+        synchronized (allocatedMachines) {
+            for (List<SpinnakerMachine> machines: allocatedMachines.values()) {
+                nBoardsInUse += machines.stream()
+                        .mapToInt(SpinnakerMachine::getnBoards).sum();
             }
-            statusMonitorManager.updateStatus(
-                    jobExecuters.size(), nBoardsInUse);
         }
+        statusMonitorManager.updateStatus(
+                jobExecuters.size(), nBoardsInUse);
     }
 }
