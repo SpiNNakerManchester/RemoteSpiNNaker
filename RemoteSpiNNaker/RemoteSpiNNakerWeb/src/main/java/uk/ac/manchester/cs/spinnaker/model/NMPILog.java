@@ -16,15 +16,16 @@
  */
 package uk.ac.manchester.cs.spinnaker.model;
 
+import static java.util.Objects.isNull;
+
 /**
  * A Neuromorphic Platform Interface log core.
  */
 public class NMPILog {
-
     /**
      * The content of the log.
      */
-    private StringBuilder content;
+    private StringBuilder buffer;
 
     /**
      * Gets the current log contents.
@@ -33,32 +34,32 @@ public class NMPILog {
      *         initialised.
      */
     public String getContent() {
-        if (content == null) {
+        if (isNull(buffer)) {
             return null;
         }
-        return content.toString();
+        return buffer.toString();
     }
 
     /**
      * Set the content.
      *
-     * @param contentParam The content to set
+     * @param content The content to set
      */
-    public void setContent(final String contentParam) {
-        this.content = new StringBuilder(contentParam);
+    public void setContent(final String content) {
+        this.buffer = new StringBuilder(content);
     }
 
     /**
      * Append the string to the log.
      *
-     * @param contentParam
+     * @param content
      *            The string to append.
      */
-    public void appendContent(final String contentParam) {
-        if (this.content == null) {
-            this.content = new StringBuilder(contentParam);
+    public void appendContent(final String content) {
+        if (isNull(this.buffer)) {
+            this.buffer = new StringBuilder(content);
         } else {
-            this.content.append(contentParam);
+            this.buffer.append(content);
         }
     }
 }

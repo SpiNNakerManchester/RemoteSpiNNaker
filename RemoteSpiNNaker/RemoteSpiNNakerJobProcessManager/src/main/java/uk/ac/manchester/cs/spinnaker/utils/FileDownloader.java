@@ -18,6 +18,8 @@ package uk.ac.manchester.cs.spinnaker.utils;
 
 import static java.io.File.createTempFile;
 import static java.nio.file.Files.copy;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
 
 import java.io.File;
@@ -26,13 +28,12 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLDecoder;
-import java.util.Map;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
-import javax.net.ssl.HostnameVerifier;
+import java.util.Map;
+
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
@@ -59,7 +60,7 @@ public abstract class FileDownloader {
      * @return The filename
      */
     private static String getFileName(final String contentDisposition) {
-        if (contentDisposition != null) {
+        if (nonNull(contentDisposition)) {
             final String cdl = contentDisposition.toLowerCase();
             if (cdl.startsWith("form-data") || cdl.startsWith("attachment")) {
                 final ParameterParser parser = new ParameterParser();
@@ -93,7 +94,7 @@ public abstract class FileDownloader {
         }
 
         urlConnection.setRequestProperty("Accept", "*/*");
-        if (userInfo != null && urlConnection instanceof HttpURLConnection) {
+        if (nonNull(userInfo) && urlConnection instanceof HttpURLConnection) {
             HttpURLConnection httpConnection =
                 (HttpURLConnection) urlConnection;
             String basicAuth = "Basic " + Base64.encodeBase64URLSafeString(
@@ -124,7 +125,7 @@ public abstract class FileDownloader {
 
         // Open a connection
         String userInfo = url.getUserInfo();
-        if (userInfo != null) {
+        if (nonNull(userInfo)) {
             userInfo = URLDecoder.decode(url.getUserInfo(), "UTF8");
         }
         URLConnection urlConnection = createConnectionWithAuth(url, userInfo);
@@ -140,7 +141,7 @@ public abstract class FileDownloader {
                 if (responseCode == HttpURLConnection.HTTP_MOVED_TEMP
                         || responseCode == HttpURLConnection.HTTP_MOVED_PERM) {
                     String location = httpConnection.getHeaderField("Location");
-                    if (location == null) {
+                    if (isNull(location)) {
                         location = url.toString();
                     }
                     urlConnection = createConnectionWithAuth(
@@ -194,13 +195,7 @@ public abstract class FileDownloader {
             sc.init(null, new TrustManager[] {tm}, new SecureRandom());
 
             connection.setSSLSocketFactory(sc.getSocketFactory());
-            connection.setHostnameVerifier(new HostnameVerifier() {
-                @Override
-                public boolean verify(
-                        final String hostname, final SSLSession session) {
-                    return true;
-                }
-            });
+            connection.setHostnameVerifier((hostname, session) -> true);
         } catch (Exception e) {
             throw new IOException("Error processing HTTPS request", e);
         }
@@ -222,10 +217,10 @@ public abstract class FileDownloader {
             final URLConnection urlConnection) throws IOException {
         final String filename = getFileName(
                 urlConnection.getHeaderField("Content-Disposition"));
-        if (filename != null) {
+        if (nonNull(filename)) {
             return new File(workingDirectory, filename);
         }
-        if (defaultFilename != null) {
+        if (nonNull(defaultFilename)) {
             return new File(workingDirectory, defaultFilename);
         }
         final String path = url.getPath();

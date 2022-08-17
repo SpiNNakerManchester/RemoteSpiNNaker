@@ -19,14 +19,19 @@ package uk.ac.manchester.cs.spinnaker.output;
 import static java.lang.System.currentTimeMillis;
 import static java.nio.file.Files.move;
 import static java.nio.file.Files.probeContentType;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static java.util.concurrent.Executors.newScheduledThreadPool;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Response.serverError;
+import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.slf4j.LoggerFactory.getLogger;
 import static uk.ac.manchester.cs.spinnaker.rest.utils.RestClientUtils.createBearerClient;
+import static uk.ac.manchester.cs.spinnaker.utils.ThreadUtils.waitfor;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -84,7 +89,7 @@ public class OutputManagerImpl implements OutputManager {
     /**
      * Map of locks for files.
      */
-    private final Map<File, JobLock.Token> synchronizers = new HashMap<>();
+    private final Map<File, LockToken> synchronizers = new HashMap<>();
 
     /**
      * The logger.
@@ -92,56 +97,50 @@ public class OutputManagerImpl implements OutputManager {
     private static final Logger logger = getLogger(OutputManagerImpl.class);
 
     /**
+     * A lock token. Initially locked.
+     */
+    private static class LockToken {
+        /**
+         * True if the token is locked.
+         */
+        private boolean locked = true;
+
+        /**
+         * True if the token is waiting for a lock.
+         */
+        private boolean waiting = false;
+
+        /**
+         * Wait until the token is unlocked.
+         */
+        private synchronized void waitForUnlock() {
+            waiting = true;
+
+            // Wait until unlocked
+            while (locked) {
+                waitfor(this);
+            }
+
+            // Now lock again
+            locked = true;
+            waiting = false;
+        }
+
+        /**
+         * Unlock the token.
+         * @return True if the token is waiting again.
+         */
+        private synchronized boolean unlock() {
+            locked = false;
+            notifyAll();
+            return waiting;
+        }
+    }
+
+    /**
      * A class to lock a job.
      */
     private class JobLock implements AutoCloseable {
-
-        /**
-         * A lock token.
-         */
-        private class Token {
-
-            /**
-             * True if the token is locked.
-             */
-            private boolean locked = true;
-
-            /**
-             * True if the token is waiting for a lock.
-             */
-            private boolean waiting = false;
-
-            /**
-             * Wait until the token is unlocked.
-             */
-            private synchronized void waitForUnlock() {
-                waiting = true;
-
-                // Wait until unlocked
-                while (locked) {
-                    try {
-                        wait();
-                    } catch (final InterruptedException e) {
-                        // Do Nothing
-                    }
-                }
-
-                // Now lock again
-                locked = true;
-                waiting = false;
-            }
-
-            /**
-             * Unlock the token.
-             * @return True if the token is waiting again.
-             */
-            private synchronized boolean unlock() {
-                locked = false;
-                notifyAll();
-                return waiting;
-            }
-        }
-
         /**
          * The directory being locked by this token.
          */
@@ -154,11 +153,11 @@ public class OutputManagerImpl implements OutputManager {
         JobLock(final File dirParam) {
             this.dir = dirParam;
 
-            Token lock;
+            LockToken lock;
             synchronized (synchronizers) {
                 if (!synchronizers.containsKey(dirParam)) {
                     // Constructed pre-locked
-                    synchronizers.put(dirParam, new Token());
+                    synchronizers.put(dirParam, new LockToken());
                     return;
                 }
                 lock = synchronizers.get(dirParam);
@@ -170,7 +169,7 @@ public class OutputManagerImpl implements OutputManager {
         @Override
         public void close() {
             synchronized (synchronizers) {
-                final Token lock = synchronizers.get(dir);
+                final LockToken lock = synchronizers.get(dir);
                 if (!lock.unlock()) {
                     synchronizers.remove(dir);
                 }
@@ -209,12 +208,7 @@ public class OutputManagerImpl implements OutputManager {
      */
     @PostConstruct
     private void initPurgeScheduler() {
-        scheduler.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                removeOldFiles();
-            }
-        }, 0, 1, DAYS);
+        scheduler.scheduleAtFixedRate(this::removeOldFiles, 0, 1, DAYS);
     }
 
     /**
@@ -231,7 +225,7 @@ public class OutputManagerImpl implements OutputManager {
      * @return The directory of the project
      */
     private File getProjectDirectory(final String projectId) {
-        if ((projectId == null) || projectId.isEmpty()
+        if (isNull(projectId) || projectId.isEmpty()
                 || projectId.endsWith("/")) {
             throw new IllegalArgumentException("bad projectId");
         }
@@ -246,7 +240,7 @@ public class OutputManagerImpl implements OutputManager {
     public List<DataItem> addOutputs(final String projectId, final int id,
             final File baseDirectory, final Collection<File> outputs)
             throws IOException {
-        if (outputs == null) {
+        if (isNull(outputs)) {
             return null;
         }
 
@@ -301,24 +295,23 @@ public class OutputManagerImpl implements OutputManager {
         try (JobLock op = new JobLock(idDirectory)) {
             if (purgeFile.exists()) {
                 logger.debug("{} was purged", idDirectory);
-                return Response
-                        .status(NOT_FOUND).entity("Results from job "
-                                + idDirectory.getName() + " have been removed")
+                return status(NOT_FOUND).entity("Results from job "
+                        + idDirectory.getName() + " have been removed")
                         .build();
             }
 
             if (!resultFile.canRead()) {
                 logger.debug("{} was not found", resultFile);
-                return Response.status(NOT_FOUND).build();
+                return status(NOT_FOUND).build();
             }
 
             try {
                 if (!download) {
                     final String contentType =
                             probeContentType(resultFile.toPath());
-                    if (contentType != null) {
+                    if (nonNull(contentType)) {
                         logger.debug("File has content type {}", contentType);
-                        return Response.ok(resultFile, contentType).build();
+                        return ok(resultFile, contentType).build();
                     }
                 }
             } catch (final IOException e) {
@@ -326,7 +319,7 @@ public class OutputManagerImpl implements OutputManager {
                         resultFile, e);
             }
 
-            return Response.ok(resultFile).header("Content-Disposition",
+            return ok(resultFile).header("Content-Disposition",
                     "attachment; filename=" + filename).build();
         }
     }
@@ -371,7 +364,7 @@ public class OutputManagerImpl implements OutputManager {
             final UnicoreFileClient fileManager, final String storageId,
             final String filePath) throws IOException {
         final File[] files = directory.listFiles();
-        if (files == null) {
+        if (isNull(files)) {
             return;
         }
         for (final File file : files) {
@@ -408,7 +401,7 @@ public class OutputManagerImpl implements OutputManager {
                 new File(getProjectDirectory(projectId), String.valueOf(id));
         if (!idDirectory.canRead()) {
             logger.debug("{} was not found", idDirectory);
-            return Response.status(NOT_FOUND).build();
+            return status(NOT_FOUND).build();
         }
 
         try {
@@ -420,16 +413,16 @@ public class OutputManagerImpl implements OutputManager {
             }
         } catch (final MalformedURLException e) {
             logger.error("bad user-supplied URL", e);
-            return Response.status(BAD_REQUEST)
+            return status(BAD_REQUEST)
                     .entity("The URL specified was malformed").build();
         } catch (final Throwable e) {
             logger.error("failure in upload", e);
-            return Response.status(INTERNAL_SERVER_ERROR)
+            return serverError()
                     .entity("General error reading or uploading a file")
                     .build();
         }
 
-        return Response.ok().entity("ok").build();
+        return ok("ok").build();
     }
 
     /**

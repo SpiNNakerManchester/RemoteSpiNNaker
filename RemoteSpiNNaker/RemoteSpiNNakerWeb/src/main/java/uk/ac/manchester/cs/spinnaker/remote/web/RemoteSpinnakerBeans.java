@@ -97,13 +97,8 @@ public class RemoteSpinnakerBeans {
     public static ConversionServiceFactoryBean conversionService() {
         final ConversionServiceFactoryBean factory =
                 new ConversionServiceFactoryBean();
-        factory.setConverters(
-                singleton(new Converter<String, SpinnakerMachine>() {
-                    @Override
-                    public SpinnakerMachine convert(final String value) {
-                        return SpinnakerMachine.parse(value);
-                    }
-                }));
+        factory.setConverters(singleton((Converter<String, SpinnakerMachine>)
+                SpinnakerMachine::parse));
         return factory;
     }
 

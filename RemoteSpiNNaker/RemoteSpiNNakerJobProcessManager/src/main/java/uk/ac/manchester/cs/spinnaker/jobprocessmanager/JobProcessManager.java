@@ -18,15 +18,16 @@ package uk.ac.manchester.cs.spinnaker.jobprocessmanager;
 
 import static java.lang.String.format;
 import static java.lang.System.exit;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.io.FileUtils.deleteQuietly;
+import static org.apache.commons.io.IOUtils.buffer;
 import static org.eclipse.jgit.util.FileUtils.createTempDir;
 import static uk.ac.manchester.cs.spinnaker.jobprocessmanager.RemoteSpiNNakerAPI.createJobManager;
 import static uk.ac.manchester.cs.spinnaker.utils.FileDownloader.downloadFile;
 import static uk.ac.manchester.cs.spinnaker.utils.Log.log;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -86,7 +87,7 @@ public class JobProcessManager {
             new JobProcessFactory("JobProcess");
     static {
         JOB_PROCESS_FACTORY.addMapping(PyNNJobParameters.class,
-                PyNNJobProcess.class);
+                PyNNJobProcess::new);
     }
 
     /**
@@ -108,12 +109,7 @@ public class JobProcessManager {
          * Make a log writer that uploads the log every half second.
          */
         UploadingJobManagerLogWriter() {
-            sendTimer = new Timer(UPDATE_INTERVAL, new ActionListener() {
-                @Override
-                public void actionPerformed(final ActionEvent e) {
-                    sendLog();
-                }
-            });
+            sendTimer = new Timer(UPDATE_INTERVAL, e -> sendLog());
         }
 
         /**
@@ -127,7 +123,7 @@ public class JobProcessManager {
                         toWrite = takeCache();
                     }
                 }
-                if (toWrite != null && !toWrite.isEmpty()) {
+                if (nonNull(toWrite) && !toWrite.isEmpty()) {
                     log("Sending cached data to job manager");
                     jobManager.appendLog(job.getId(), toWrite);
                 }
@@ -263,7 +259,6 @@ public class JobProcessManager {
             final File setupScript = downloadFile(downloadUrl,
                     workingDirectory, JobManagerInterface.SETUP_SCRIPT);
 
-
             final JobParameters parameters = getJobParameters(
                     workingDirectory, setupScript.getAbsolutePath());
 
@@ -298,19 +293,19 @@ public class JobProcessManager {
      * @param error The error of the failure.
      */
     private void reportFailure(final Throwable error) {
-        if ((jobManager == null) || (job == null)) {
+        if (isNull(jobManager) || isNull(job)) {
             log(error);
             return;
         }
 
         try {
             String log = "";
-            if (logWriter != null) {
+            if (nonNull(logWriter)) {
                 logWriter.stop();
                 log = logWriter.getLog();
             }
             String message = error.getMessage();
-            if (message == null) {
+            if (isNull(message)) {
                 message = "No Error Message";
             }
             jobManager.setJobError(projectId, job.getId(), message, log, "",
@@ -362,7 +357,7 @@ public class JobProcessManager {
                     requestMachine = true;
                     break;
                 case "--authToken" :
-                    try (BufferedReader r = new BufferedReader(
+                    try (BufferedReader r = buffer(
                             new InputStreamReader(System.in))) {
                         authToken = r.readLine();
                     }
@@ -413,7 +408,7 @@ public class JobProcessManager {
         final JobParameters parameters = JobParametersFactory
                 .getJobParameters(job, workingDirectory, setupScript, errors);
 
-        if (parameters == null) {
+        if (isNull(parameters)) {
             if (!errors.isEmpty()) {
                 throw new JobErrorsException(errors);
             }
@@ -423,7 +418,7 @@ public class JobProcessManager {
         }
 
         // Get any requested input files
-        if (job.getInputData() != null) {
+        if (nonNull(job.getInputData())) {
             for (final DataItem input : job.getInputData()) {
                 downloadFile(input.getUrl(), workingDirectory, null);
             }
@@ -480,7 +475,7 @@ public class JobProcessManager {
             case Error :
                 final Throwable error = process.getError();
                 String message = error.getMessage();
-                if (message == null) {
+                if (isNull(message)) {
                     message = "No Error Message";
                 }
                 jobManager.setJobError(projectId, job.getId(), message, log,
@@ -554,7 +549,7 @@ class Machine {
 
     @Override
     public String toString() {
-        if (machine != null) {
+        if (nonNull(machine)) {
             return machine.toString();
         }
         return url;

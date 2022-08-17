@@ -16,6 +16,7 @@
  */
 package uk.ac.manchester.cs.spinnaker.job_parameters;
 
+import static java.util.Objects.nonNull;
 import static org.rauschig.jarchivelib.ArchiverFactory.createArchiver;
 import static org.rauschig.jarchivelib.CompressionType.BZIP2;
 import static org.rauschig.jarchivelib.CompressionType.GZIP;
@@ -195,7 +196,7 @@ class ZipPyNNJobParametersFactory extends JobParametersFactory {
 
         String script = DEFAULT_SCRIPT_NAME + SYSTEM_ARG;
         final String command = job.getCommand();
-        if ((command != null) && !command.isEmpty()) {
+        if (nonNull(command) && !command.isEmpty()) {
             script = command;
         }
 

@@ -24,10 +24,15 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 
+import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
+
 import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
+import uk.ac.manchester.cs.spinnaker.job.nmpi.QueueEmpty;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.QueueNextResponse;
 import uk.ac.manchester.cs.spinnaker.model.APIKeyResponse;
 import uk.ac.manchester.cs.spinnaker.model.NMPILog;
+import uk.ac.manchester.cs.spinnaker.rest.utils.CustomJacksonJsonProvider;
+import uk.ac.manchester.cs.spinnaker.rest.utils.PropertyBasedDeserialiser;
 
 /**
  * The REST API for the HBP Neuromorphic Platform Interface queue.
@@ -95,4 +100,33 @@ public interface NMPIQueue {
     @Path("log/{id}")
     @Consumes("application/json")
     void updateLog(@PathParam("id") int id, NMPILog log);
+
+    /**
+     * Create a JSON provider capable of handling the messages on the NMPI
+     * queue.
+     *
+     * @return The provider.
+     */
+    static JacksonJsonProvider createProvider() {
+        CustomJacksonJsonProvider provider = new CustomJacksonJsonProvider();
+        provider.addDeserialiser(QueueNextResponse.class,
+                new NMPIQueueResponseDeserialiser());
+        return provider;
+    }
+}
+
+/**
+ * How to understand messages coming from the queue.
+ */
+@SuppressWarnings("serial")
+class NMPIQueueResponseDeserialiser
+        extends PropertyBasedDeserialiser<QueueNextResponse> {
+    /**
+     * Make a deserialiser.
+     */
+    NMPIQueueResponseDeserialiser() {
+        super(QueueNextResponse.class);
+        register("id", Job.class);
+        register("warning", QueueEmpty.class);
+    }
 }

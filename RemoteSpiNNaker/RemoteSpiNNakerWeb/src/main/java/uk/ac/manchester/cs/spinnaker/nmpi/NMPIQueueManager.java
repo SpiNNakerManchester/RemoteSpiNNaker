@@ -16,6 +16,7 @@
  */
 package uk.ac.manchester.cs.spinnaker.nmpi;
 
+import static java.util.Objects.nonNull;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.slf4j.LoggerFactory.getLogger;
 import static uk.ac.manchester.cs.spinnaker.rest.utils.RestClientUtils.createApiKeyClient;
@@ -46,13 +47,11 @@ import uk.ac.manchester.cs.spinnaker.job.nmpi.QueueEmpty;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.QueueNextResponse;
 import uk.ac.manchester.cs.spinnaker.model.NMPILog;
 import uk.ac.manchester.cs.spinnaker.rest.NMPIQueue;
-import uk.ac.manchester.cs.spinnaker.rest.utils.CustomJacksonJsonProvider;
-import uk.ac.manchester.cs.spinnaker.rest.utils.PropertyBasedDeserialiser;
 
 /**
  * Manages the NMPI queue, receiving jobs and submitting them to be run.
  */
-public class NMPIQueueManager implements Runnable {
+public class NMPIQueueManager {
 
     /**
      * Job status when finished.
@@ -118,27 +117,6 @@ public class NMPIQueueManager implements Runnable {
      */
     @PostConstruct
     private void initAPIClient() {
-        final CustomJacksonJsonProvider provider =
-                new CustomJacksonJsonProvider();
-
-        /**
-         * How to understand messages coming from the queue.
-         */
-        @SuppressWarnings("serial")
-        class QueueResponseDeserialiser
-                extends PropertyBasedDeserialiser<QueueNextResponse> {
-            /**
-             * Make a deserialiser.
-             */
-            QueueResponseDeserialiser() {
-                super(QueueNextResponse.class);
-                register("id", Job.class);
-                register("warning", QueueEmpty.class);
-            }
-        }
-        provider.addDeserialiser(QueueNextResponse.class,
-                new QueueResponseDeserialiser());
-
         String apiKey = nmpiPassword;
         if (!nmpiPasswordIsApiKey) {
             queue = createBasicClient(nmpiUrl, nmpiUsername, nmpiPassword,
@@ -146,7 +124,7 @@ public class NMPIQueueManager implements Runnable {
             apiKey = queue.getToken(nmpiUsername).getKey();
         }
         queue = createApiKeyClient(nmpiUrl, nmpiUsername, apiKey,
-                NMPIQueue.class, provider);
+                NMPIQueue.class, NMPIQueue.createProvider());
     }
 
     /**
@@ -159,12 +137,7 @@ public class NMPIQueueManager implements Runnable {
      */
     private Job getJob(final int id) {
         synchronized (jobCache) {
-            Job job = jobCache.get(id);
-            if (job == null) {
-                job = queue.getJob(id);
-                jobCache.put(id, job);
-            }
-            return job;
+            return jobCache.computeIfAbsent(id, queue::getJob);
         }
     }
 
@@ -178,8 +151,7 @@ public class NMPIQueueManager implements Runnable {
         listeners.add(listener);
     }
 
-    @Override
-    public void run() {
+    public void processResponsesFromQueue() {
         while (!done) {
             try {
                 // logger.debug("Getting next job");
@@ -242,11 +214,8 @@ public class NMPIQueueManager implements Runnable {
      *            The messages to append
      */
     public void appendJobLog(final int id, final String logToAppend) {
-        NMPILog existingLog = jobLog.get(id);
-        if (existingLog == null) {
-            existingLog = new NMPILog();
-            jobLog.put(id, existingLog);
-        }
+        NMPILog existingLog = jobLog.computeIfAbsent(id,
+                ignored -> new NMPILog());
         existingLog.appendContent(logToAppend);
         logger.debug("Job {} log is being updated", id);
         queue.updateLog(id, existingLog);
@@ -286,7 +255,7 @@ public class NMPIQueueManager implements Runnable {
             final ObjectNode provenance) {
         logger.debug("Job {} is finished", id);
 
-        if (logToAppend != null) {
+        if (nonNull(logToAppend)) {
             appendJobLog(id, logToAppend);
         }
 
@@ -328,7 +297,7 @@ public class NMPIQueueManager implements Runnable {
         final StringWriter errors = new StringWriter();
         error.printStackTrace(new PrintWriter(errors));
         final StringBuilder logMessage = new StringBuilder();
-        if (logToAppend != null) {
+        if (nonNull(logToAppend)) {
             logMessage.append(logToAppend);
         }
         if (jobLog.containsKey(id) || (logMessage.length() > 0)) {

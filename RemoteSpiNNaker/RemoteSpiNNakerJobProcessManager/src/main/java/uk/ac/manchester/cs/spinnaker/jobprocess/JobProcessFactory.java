@@ -16,10 +16,13 @@
  */
 package uk.ac.manchester.cs.spinnaker.jobprocess;
 
+import static java.util.Objects.isNull;
+
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import uk.ac.manchester.cs.spinnaker.job.JobParameters;
 
@@ -57,13 +60,25 @@ public class JobProcessFactory {
     }
 
     /**
-     * A map between parameter types and process types. Note that the type is
-     * guaranteed by the {@link #addMapping(Class,Class)} method, which is the
-     * only place that this map should be modified.
+     * A version of {@link Supplier} that builds a job process. Required to work
+     * around type inference rules.
+     *
+     * @param <P>
+     *            The type of job parameters handled by the job process this
+     *            supplier produces.
+     */
+    @FunctionalInterface
+    public interface ProcessSupplier<P extends JobParameters>
+            extends Supplier<JobProcess<P>> {
+    }
+
+    /**
+     * A map between parameter types and process suppliers. Note that the type
+     * is guaranteed by the {@link #addMapping(Class,ProcessSupplier)} method,
+     * which is the only place that this map should be modified.
      */
     private final Map<Class<? extends JobParameters>,
-            Class<? extends JobProcess<? extends JobParameters>>> typeMap =
-                    new HashMap<>();
+            ProcessSupplier<? extends JobParameters>> typeMap = new HashMap<>();
 
     /**
      * Adds a new type mapping.
@@ -72,13 +87,13 @@ public class JobProcessFactory {
      *            The type of parameters that this mapping will handle.
      * @param parameterType
      *            The job parameter type
-     * @param processType
-     *            The job process type
+     * @param processSupplier
+     *            The job process supplier
      */
     public <P extends JobParameters> void addMapping(
             final Class<P> parameterType,
-            final Class<? extends JobProcess<P>> processType) {
-        typeMap.put(parameterType, processType);
+            final ProcessSupplier<P> processSupplier) {
+        typeMap.put(parameterType, processSupplier);
     }
 
     /**
@@ -98,27 +113,26 @@ public class JobProcessFactory {
      * @param parameters
      *            The parameters of the job
      * @return A JobProcess matching the parameters
-     * @throws IllegalAccessException
-     *             If there is an error creating the class
-     * @throws InstantiationException
-     *             If there is an error creating the class
+     * @throws IllegalArgumentException
+     *             If the type of the job parameters is unexpected.
      */
-    public <P extends JobParameters> JobProcess<P>
-            createProcess(final P parameters)
-                    throws InstantiationException, IllegalAccessException {
+    public <P extends JobParameters> JobProcess<P> createProcess(
+            final P parameters) {
         /*
          * We know that this is of the correct type, because the addMapping
          * method will only allow the correct type mapping in
          */
         @SuppressWarnings("unchecked")
-        final Class<JobProcess<P>> processType =
-                (Class<JobProcess<P>>) typeMap.get(parameters.getClass());
+        final ProcessSupplier<P> supplier =
+                (ProcessSupplier<P>) typeMap.get(parameters.getClass());
+        if (isNull(supplier)) {
+            throw new IllegalArgumentException(
+                    "unsupported job parameter type: " + parameters.getClass());
+        }
 
-        final JobProcess<P> process = processType.newInstance();
-
+        final JobProcess<P> process = supplier.get();
         // Magically set the thread group if there is one
         setField(process, "threadGroup", threadGroup);
-
         return process;
     }
 

@@ -18,12 +18,19 @@ package uk.ac.manchester.cs.spinnaker.jobmanager;
 
 import static java.io.File.createTempFile;
 import static java.io.File.pathSeparator;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.joining;
 import static org.apache.commons.io.FileUtils.copyToFile;
 import static org.apache.commons.io.FileUtils.forceDeleteOnExit;
 import static org.apache.commons.io.FileUtils.forceMkdirParent;
+import static org.apache.commons.io.IOUtils.buffer;
+import static org.apache.commons.io.IOUtils.closeQuietly;
+import static org.apache.commons.io.IOUtils.copy;
 import static org.slf4j.LoggerFactory.getLogger;
 import static uk.ac.manchester.cs.spinnaker.job.JobManagerInterface.JOB_PROCESS_MANAGER_ZIP;
+import static uk.ac.manchester.cs.spinnaker.utils.ThreadUtils.waitfor;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -33,6 +40,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -127,7 +135,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         // Find the JobManager resource
         final InputStream jobManagerStream =
                 getClass().getResourceAsStream("/" + JOB_PROCESS_MANAGER_ZIP);
-        if (jobManagerStream == null) {
+        if (isNull(jobManagerStream)) {
             throw new UnsatisfiedLinkError(
                     "/" + JOB_PROCESS_MANAGER_ZIP + " not found in classpath");
         }
@@ -140,7 +148,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
 
         // Extract the JobManager resources
         try (ZipInputStream input = new ZipInputStream(jobManagerStream)) {
-            for (ZipEntry entry = input.getNextEntry(); entry != null;
+            for (ZipEntry entry = input.getNextEntry(); nonNull(entry);
                     entry = input.getNextEntry()) {
                 if (entry.isDirectory()) {
                     continue;
@@ -184,7 +192,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
     /**
      * The executer thread.
      */
-    class Executer implements JobExecuter, Runnable {
+    protected class Executer implements JobExecuter {
 
         /**
          * The job manager to report to.
@@ -249,11 +257,11 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
 
         @Override
         public void startExecuter() {
-            new Thread(threadGroup, this, "Executer (" + id + ")").start();
+            new Thread(threadGroup, this::runSubprocess,
+                    "Executer (" + id + ")").start();
         }
 
-        @Override
-        public void run() {
+        private void runSubprocess() {
             try (JobOutputPipe pipe = startSubprocess(constructArguments())) {
                 logger.debug("Waiting for process to finish");
                 try {
@@ -276,15 +284,11 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
             final List<String> command = new ArrayList<>();
             command.add(javaExec.getAbsolutePath());
 
-            final StringBuilder classPathBuilder = new StringBuilder();
-            String separator = "";
-            for (final File file : jobProcessManagerClasspath) {
-                classPathBuilder.append(separator).append(file);
-                separator = pathSeparator;
-            }
+            String classPath = jobProcessManagerClasspath.stream()
+                    .map(File::toString).collect(joining(pathSeparator));
             command.add("-cp");
-            command.add(classPathBuilder.toString());
-            logger.debug("Classpath: {}", classPathBuilder);
+            command.add(classPath);
+            logger.debug("Classpath: {}", classPath);
 
             command.add(JOB_PROCESS_MANAGER_MAIN_CLASS);
             logger.debug("Main command: {}", JOB_PROCESS_MANAGER_MAIN_CLASS);
@@ -306,42 +310,37 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
             builder.directory(jobExecuterDirectory);
             logger.debug("Working directory: {}", jobExecuterDirectory);
             builder.redirectErrorStream(true);
-            JobOutputPipe pipe = null;
             synchronized (this) {
                 try {
                     logger.debug("Starting execution process");
                     process = builder.start();
                     logger.debug("Starting pipe from process");
-                    pipe = new JobOutputPipe(process.getInputStream(),
+                    JobOutputPipe pipe = new JobOutputPipe(
+                            process.getInputStream(),
                             new PrintWriter(outputLog));
                     pipe.start();
+                    return pipe;
                 } catch (final IOException e) {
                     logger.error("Error running external job", e);
                     startException = e;
+                    return null;
+                } finally {
+                    notifyAll();
                 }
-                notifyAll();
             }
-            return pipe;
         }
 
         /**
          * Report the results of the job using the log.
          */
         private void reportResult() {
-            final StringBuilder logToAppend = new StringBuilder();
-            try (BufferedReader reader =
-                    new BufferedReader(new FileReader(outputLog))) {
-                while (true) {
-                    final String line = reader.readLine();
-                    if (line == null) {
-                        break;
-                    }
-                    logToAppend.append(line).append("\n");
-                }
+            StringWriter loggedOutput = new StringWriter();
+            try (FileReader reader = new FileReader(outputLog)) {
+                copy(reader, loggedOutput);
             } catch (final IOException e) {
                 logger.warn("problem in reporting log", e);
             }
-            jobManager.setExecutorExited(id, logToAppend.toString());
+            jobManager.setExecutorExited(id, loggedOutput.toString());
         }
 
         /**
@@ -351,16 +350,12 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
          * @throws IOException If the output stream of the process can't be
          *     obtained
          */
-        public OutputStream getProcessOutputStream() throws IOException {
+        OutputStream getProcessOutputStream() throws IOException {
             synchronized (this) {
-                while ((process == null) && (startException == null)) {
-                    try {
-                        wait();
-                    } catch (final InterruptedException e) {
-                        // Do Nothing
-                    }
+                while (isNull(process) && isNull(startException)) {
+                    waitfor(this);
                 }
-                if (startException != null) {
+                if (nonNull(startException)) {
                     throw startException;
                 }
                 return process.getOutputStream();
@@ -372,7 +367,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
          *
          * @return The location of the log file
          */
-        public File getLogFile() {
+        File getLogFile() {
             return outputLog;
         }
     }
@@ -408,26 +403,28 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
          */
         JobOutputPipe(final InputStream input, final PrintWriter output) {
             super(threadGroup, "JobOutputPipe");
-            reader = new BufferedReader(new InputStreamReader(input));
+            reader = buffer(new InputStreamReader(input));
             writer = output;
             done = false;
             setDaemon(true);
+        }
+
+        private String readLine() {
+            try {
+                return reader.readLine();
+            } catch (final IOException e) {
+                return null;
+            }
         }
 
         @Override
         public void run() {
             try {
                 while (!done) {
-                    String line;
-                    try {
-                        line = reader.readLine();
-                    } catch (final IOException e) {
+                    String line = readLine();
+                    if (isNull(line)) {
                         break;
-                    }
-                    if (line == null) {
-                        break;
-                    }
-                    if (!line.isEmpty()) {
+                    } else if (!line.isEmpty()) {
                         logger.debug("{}", line);
                         writer.println(line);
                     }
@@ -440,11 +437,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         @Override
         public void close() {
             done = true;
-            try {
-                reader.close();
-            } catch (IOException e) {
-                // Ignore exceptions
-            }
+            closeQuietly(reader);
         }
     }
 }
