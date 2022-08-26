@@ -36,6 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <javadoc.version>3.4.1</javadoc.version>
         <jaxb.version>2.3.1</jaxb.version>
         <xml-bind.version>4.0.0</xml-bind.version>
+        <ws.rs.version>3.1.0</ws.rs.version>
     </properties>
 
     <dependencyManagement>
@@ -171,6 +172,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 				<groupId>jakarta.xml.bind</groupId>
 				<artifactId>jakarta.xml.bind-api</artifactId>
 				<version>${xml-bind.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>jakarta.ws.rs</groupId>
+				<artifactId>jakarta.ws.rs-api</artifactId>
+				<version>${ws.rs.version}</version>
 			</dependency>
             <dependency>
                 <groupId>com.nimbusds</groupId>
