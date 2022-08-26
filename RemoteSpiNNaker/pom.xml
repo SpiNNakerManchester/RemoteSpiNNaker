@@ -28,11 +28,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.release>11</maven.compiler.release>
 
-        <resteasy.version>6.0.3.Final</resteasy.version>
+        <resteasy.version>6.1.0.Final</resteasy.version>
         <jackson.version>2.13.3</jackson.version>
         <springsecurity.version>5.7.3</springsecurity.version>
         <spring.version>5.3.22</spring.version>
-        <slf4j.version>1.7.36</slf4j.version>
+        <slf4j.version>2.0.0</slf4j.version>
         <javadoc.version>3.4.1</javadoc.version>
         <jaxb.version>2.3.1</jaxb.version>
         <xml-bind.version>4.0.0</xml-bind.version>
@@ -53,7 +53,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             <dependency>
                 <groupId>org.eclipse.jgit</groupId>
                 <artifactId>org.eclipse.jgit</artifactId>
-                <version>5.13.1.202206130422-r</version>
+                <version>6.0.0.202111291000-r</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.apache.httpcomponents</groupId>
