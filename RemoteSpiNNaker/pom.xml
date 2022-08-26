@@ -30,7 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
         <resteasy.version>6.0.3.Final</resteasy.version>
         <jackson.version>2.13.3</jackson.version>
-        <springsecurity.version>5.7.2</springsecurity.version>
+        <springsecurity.version>5.7.3</springsecurity.version>
         <spring.version>5.3.22</spring.version>
         <slf4j.version>1.7.36</slf4j.version>
         <javadoc.version>3.4.1</javadoc.version>
@@ -175,7 +175,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             <dependency>
                 <groupId>com.nimbusds</groupId>
                 <artifactId>nimbus-jose-jwt</artifactId>
-                <version>9.23</version>
+                <version>9.24.2</version>
             </dependency>
             <dependency>
                 <groupId>net.minidev</groupId>
@@ -328,7 +328,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-jxr-plugin</artifactId>
-					<version>3.2.0</version>
+					<version>3.3.0</version>
 				</plugin>
             </plugins>
         </pluginManagement>
@@ -508,7 +508,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jxr-plugin</artifactId>
-				<version>3.2.0</version>
+				<version>3.3.0</version>
 				<reportSets>
 					<reportSet>
 						<reports>
