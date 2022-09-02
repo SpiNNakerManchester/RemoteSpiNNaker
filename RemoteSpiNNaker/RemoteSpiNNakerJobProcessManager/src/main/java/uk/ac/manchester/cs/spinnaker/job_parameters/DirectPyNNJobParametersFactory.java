@@ -16,11 +16,11 @@
  */
 package uk.ac.manchester.cs.spinnaker.job_parameters;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 
 import uk.ac.manchester.cs.spinnaker.job.JobParameters;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
@@ -31,12 +31,6 @@ import uk.ac.manchester.cs.spinnaker.job.pynn.PyNNJobParameters;
  * itself as a PyNN script.
  */
 class DirectPyNNJobParametersFactory extends JobParametersFactory {
-
-    /**
-     * Encoding of the output script.
-     */
-    private static final String ENCODING = "UTF-8";
-
     @Override
     public JobParameters getJobParameters(final Job job,
             final File workingDirectory, final String setupScript)
@@ -62,14 +56,13 @@ class DirectPyNNJobParametersFactory extends JobParametersFactory {
     * @param workingDirectory The directory where the job should be started
     * @param setupScript The setup script to run
     * @return The parameters created
-    * @throws FileNotFoundException If the file can't be found to write
-    * @throws UnsupportedEncodingException If the encoding failed (unlikely)
+    * @throws IOException If the file can't be found to write
     */
     private JobParameters constructParameters(final Job job,
             final File workingDirectory, final String setupScript)
-            throws FileNotFoundException, UnsupportedEncodingException {
+            throws IOException {
         final var scriptFile = new File(workingDirectory, DEFAULT_SCRIPT_NAME);
-        try (var writer = new PrintWriter(scriptFile, ENCODING)) {
+        try (var writer = new PrintWriter(scriptFile, UTF_8)) {
             writer.print(job.getCode());
         }
 

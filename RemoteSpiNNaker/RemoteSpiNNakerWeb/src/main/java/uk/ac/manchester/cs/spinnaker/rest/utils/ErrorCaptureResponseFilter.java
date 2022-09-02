@@ -16,6 +16,7 @@
  */
 package uk.ac.manchester.cs.spinnaker.rest.utils;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.nonNull;
 import static javax.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
 import static javax.ws.rs.core.Response.Status.Family.SERVER_ERROR;
@@ -102,7 +103,7 @@ public class ErrorCaptureResponseFilter implements ClientResponseFilter {
     private String getRequestAsJSON(final ClientRequestContext requestContext) {
         try {
             final var jsonWriter = new StringWriter();
-            try (var jsonOutput = new WriterOutputStream(jsonWriter, "UTF-8")) {
+            try (var jsonOutput = new WriterOutputStream(jsonWriter, UTF_8)) {
                 provider.writeTo(requestContext.getEntity(),
                         requestContext.getEntityClass(),
                         requestContext.getEntityType(),

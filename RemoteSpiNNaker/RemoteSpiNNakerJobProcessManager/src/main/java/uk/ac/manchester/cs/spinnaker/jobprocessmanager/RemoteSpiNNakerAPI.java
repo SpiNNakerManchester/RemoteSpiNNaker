@@ -17,10 +17,10 @@
 package uk.ac.manchester.cs.spinnaker.jobprocessmanager;
 
 import static jakarta.ws.rs.core.HttpHeaders.AUTHORIZATION;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.nonNull;
 import static org.apache.commons.codec.binary.Base64.encodeBase64String;
 
-import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
 
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
@@ -43,11 +43,6 @@ public abstract class RemoteSpiNNakerAPI {
      */
     private RemoteSpiNNakerAPI() {
     }
-
-    /**
-     * The character set for the authorisation payload.
-     */
-    private static final Charset UTF8 = Charset.forName("UTF-8");
 
     /**
      * The timeout of socket operation in seconds.
@@ -98,7 +93,7 @@ public abstract class RemoteSpiNNakerAPI {
     private static ClientRequestFilter
             getBasicAuthFilter(final String authToken) {
         final var payload = "Basic "
-                + encodeBase64String(authToken.getBytes(UTF8));
+                + encodeBase64String(authToken.getBytes(UTF_8));
         return requestContext -> {
             requestContext.getHeaders().add(AUTHORIZATION, payload);
         };

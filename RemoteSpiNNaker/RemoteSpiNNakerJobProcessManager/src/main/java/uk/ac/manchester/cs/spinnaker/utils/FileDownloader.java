@@ -17,6 +17,7 @@
 package uk.ac.manchester.cs.spinnaker.utils;
 
 import static java.io.File.createTempFile;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.Files.copy;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
@@ -92,7 +93,7 @@ public abstract class FileDownloader {
         if (nonNull(userInfo) && urlConnection instanceof HttpURLConnection) {
             var httpConnection = (HttpURLConnection) urlConnection;
             var basicAuth = "Basic " + Base64.encodeBase64URLSafeString(
-                userInfo.getBytes("UTF8"));
+                userInfo.getBytes(UTF_8));
             httpConnection.setRequestProperty("Authorization", basicAuth);
             httpConnection.setInstanceFollowRedirects(false);
         }
@@ -120,7 +121,7 @@ public abstract class FileDownloader {
         // Open a connection
         var userInfo = url.getUserInfo();
         if (nonNull(userInfo)) {
-            userInfo = URLDecoder.decode(url.getUserInfo(), "UTF8");
+            userInfo = URLDecoder.decode(url.getUserInfo(), UTF_8);
         }
         var urlConnection = createConnectionWithAuth(url, userInfo);
 
