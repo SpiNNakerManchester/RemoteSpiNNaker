@@ -419,7 +419,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         public void run() {
             try {
                 while (!done) {
-                    String line = readLine();
+                    var line = readLine();
                     if (isNull(line)) {
                         break;
                     } else if (!line.isEmpty()) {

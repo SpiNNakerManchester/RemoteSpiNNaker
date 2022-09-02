@@ -284,7 +284,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         final var executer =
                 jobExecuterFactory.createJobExecuter(this, baseUrl);
         synchronized (jobExecuters) {
-            String executerId = executer.getExecuterId();
+            var executerId = executer.getExecuterId();
             jobExecuters.put(executerId, executer);
             executorJobId.put(executerId, job);
             jobExecuters.notifyAll();
