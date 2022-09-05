@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 		<maven.compiler.release>11</maven.compiler.release>
 
         <resteasy.version>6.1.0.Final</resteasy.version>
-        <jackson.version>2.13.3</jackson.version>
+        <jackson.version>2.13.4</jackson.version>
         <springsecurity.version>5.7.3</springsecurity.version>
         <spring.version>5.3.22</spring.version>
         <slf4j.version>2.0.0</slf4j.version>
