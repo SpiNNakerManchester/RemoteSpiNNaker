@@ -19,6 +19,7 @@ package uk.ac.manchester.cs.spinnaker.job_parameters;
 import static java.util.Objects.nonNull;
 
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 
 import uk.ac.manchester.cs.spinnaker.job.JobParameters;
@@ -58,10 +59,10 @@ public abstract class JobParametersFactory {
             throws UnsupportedJobException, JobParametersFactoryException;
 
     /** The factories for converting jobs into parameters. */
-    private static final JobParametersFactory[] JOB_PARAMETER_FACTORIES =
-            new JobParametersFactory[]{new GitPyNNJobParametersFactory(),
-                new ZipPyNNJobParametersFactory(),
-                new DirectPyNNJobParametersFactory()};
+    private static final List<JobParametersFactory> JOB_PARAMETER_FACTORIES =
+            List.of(new GitPyNNJobParametersFactory(),
+                    new ZipPyNNJobParametersFactory(),
+                    new DirectPyNNJobParametersFactory());
 
     /**
      * Get the parameters from a job.
@@ -81,11 +82,10 @@ public abstract class JobParametersFactory {
     public static JobParameters getJobParameters(final Job job,
             final File workingDirectory, final String setupScript,
             final Map<String, JobParametersFactoryException> errors) {
-        for (final JobParametersFactory factory : JOB_PARAMETER_FACTORIES) {
+        for (final var factory : JOB_PARAMETER_FACTORIES) {
             try {
-                final JobParameters parameters =
-                        factory.getJobParameters(job, workingDirectory,
-                                setupScript);
+                final var parameters = factory.getJobParameters(job,
+                        workingDirectory, setupScript);
                 if (nonNull(parameters)) {
                     return parameters;
                 }

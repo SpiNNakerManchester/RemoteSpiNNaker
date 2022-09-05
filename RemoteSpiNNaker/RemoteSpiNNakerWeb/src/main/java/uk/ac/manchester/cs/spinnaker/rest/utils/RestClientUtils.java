@@ -37,7 +37,6 @@ import org.apache.http.util.EncodingUtils;
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder.HostnameVerificationPolicy;
-import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
@@ -98,7 +97,7 @@ public abstract class RestClientUtils {
     protected static ResteasyClient createRestClient(final URL url) {
         try {
             // Create and return a client
-            ResteasyClient client = clientBuilder()
+            var client = clientBuilder()
                     .connectTimeout(TIMEOUT, TimeUnit.SECONDS)
                     .readTimeout(TIMEOUT, TimeUnit.SECONDS)
                     .connectionPoolSize(MAX_CONNECTIONS)
@@ -126,12 +125,11 @@ public abstract class RestClientUtils {
      */
     private static SSLContext getSSLContext() throws NoSuchAlgorithmException,
             KeyStoreException, KeyManagementException {
-        SSLContextBuilder builder = new SSLContextBuilder();
+        var builder = new SSLContextBuilder();
         builder.loadTrustMaterial(new TrustSelfSignedStrategy());
-        String trustStore = System.getProperty("remotespinnaker.keystore",
-                null);
+        var trustStore = System.getProperty("remotespinnaker.keystore", null);
         if (nonNull(trustStore)) {
-            String password = System
+            var password = System
                     .getProperty("remotespinnaker.keystore.password", "");
             try {
                 builder.loadTrustMaterial(new File(trustStore),
@@ -163,14 +161,14 @@ public abstract class RestClientUtils {
     private static <T> T createClient(final URL url,
             final String authorizationHeader, final Class<T> clazz,
             final Object... providers) {
-        ResteasyClient client = createRestClient(url);
-        for (Object provider : providers) {
+        var client = createRestClient(url);
+        for (var provider : providers) {
             client.register(provider);
         }
         if (providers.length == 0) {
             client.register(new JacksonJsonProvider());
         }
-        ResteasyWebTarget target = client.target(url.toString());
+        var target = client.target(url.toString());
         if (nonNull(authorizationHeader)) {
             return target.register((ClientRequestFilter) context -> {
                 context.getHeaders().add(WWW_AUTH_RESP, authorizationHeader);
@@ -200,9 +198,9 @@ public abstract class RestClientUtils {
     public static <T> T createBasicClient(final URL url, final String username,
             final String password, final Class<T> clazz,
             final Object... providers) {
-        String userPass = Base64.encodeBase64String(
+        var userPass = Base64.encodeBase64String(
                 EncodingUtils.getAsciiBytes(username + ":" + password));
-        String authHeader = "Basic " + userPass;
+        var authHeader = "Basic " + userPass;
         return createClient(url, authHeader, clazz, providers);
     }
 

@@ -19,9 +19,9 @@ package uk.ac.manchester.cs.spinnaker.nmpi;
 import static java.util.Objects.nonNull;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.slf4j.LoggerFactory.getLogger;
+import static uk.ac.manchester.cs.spinnaker.ThreadUtils.sleep;
 import static uk.ac.manchester.cs.spinnaker.rest.utils.RestClientUtils.createApiKeyClient;
 import static uk.ac.manchester.cs.spinnaker.rest.utils.RestClientUtils.createBasicClient;
-import static uk.ac.manchester.cs.spinnaker.utils.ThreadUtils.sleep;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -117,7 +117,7 @@ public class NMPIQueueManager {
      */
     @PostConstruct
     private void initAPIClient() {
-        String apiKey = nmpiPassword;
+        var apiKey = nmpiPassword;
         if (!nmpiPasswordIsApiKey) {
             queue = createBasicClient(nmpiUrl, nmpiUsername, nmpiPassword,
                     NMPIQueue.class);
@@ -189,7 +189,7 @@ public class NMPIQueueManager {
         }
         logger.debug("Job {} received", job.getId());
         try {
-            for (final NMPIQueueListener listener : listeners) {
+            for (final var listener : listeners) {
                 listener.addJob(job);
             }
             logger.debug("Setting job status to queued");
@@ -214,8 +214,7 @@ public class NMPIQueueManager {
      *            The messages to append
      */
     public void appendJobLog(final int id, final String logToAppend) {
-        NMPILog existingLog = jobLog.computeIfAbsent(id,
-                ignored -> new NMPILog());
+        var existingLog = jobLog.computeIfAbsent(id, ignored -> new NMPILog());
         existingLog.appendContent(logToAppend);
         logger.debug("Job {} log is being updated", id);
         queue.updateLog(id, existingLog);
@@ -229,7 +228,7 @@ public class NMPIQueueManager {
      */
     public void setJobRunning(final int id) {
         logger.debug("Job {} is running", id);
-        final Job job = getJob(id);
+        final var job = getJob(id);
         job.setStatus(STATUS_RUNNING);
         logger.debug("Updating job status on server");
         queue.updateJob(id, job);
@@ -259,7 +258,7 @@ public class NMPIQueueManager {
             appendJobLog(id, logToAppend);
         }
 
-        final Job job = getJob(id);
+        final var job = getJob(id);
         job.setStatus(STATUS_FINISHED);
         job.setOutputData(outputs);
         job.setTimestampCompletion(new DateTime(UTC));
@@ -294,9 +293,9 @@ public class NMPIQueueManager {
             final List<DataItem> outputs, final Throwable error,
             final long resourceUsage, final ObjectNode provenance) {
         logger.debug("Job {} finished with an error", id);
-        final StringWriter errors = new StringWriter();
+        final var errors = new StringWriter();
         error.printStackTrace(new PrintWriter(errors));
-        final StringBuilder logMessage = new StringBuilder();
+        final var logMessage = new StringBuilder();
         if (nonNull(logToAppend)) {
             logMessage.append(logToAppend);
         }
@@ -307,7 +306,7 @@ public class NMPIQueueManager {
         logMessage.append(errors.toString());
         appendJobLog(id, logMessage.toString());
 
-        final Job job = getJob(id);
+        final var job = getJob(id);
         job.setStatus(STATUS_ERROR);
         job.setTimestampCompletion(new DateTime(UTC));
         job.setOutputData(outputs);

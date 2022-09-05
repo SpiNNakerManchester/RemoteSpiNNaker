@@ -19,10 +19,10 @@ package uk.ac.manchester.cs.spinnaker.machine;
 import static java.lang.Integer.parseInt;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.nullsFirst;
-import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Comparator;
 import java.util.Objects;
 
@@ -126,8 +126,7 @@ public class SpinnakerMachine
                     + value + "\" - missing start and end brackets");
         }
 
-        final String[] parts =
-                value.substring(1, value.length() - 1).split(":");
+        final var parts = value.substring(1, value.length() - 1).split(":");
         if (parts.length != N_PARTS) {
             throw new IllegalArgumentException(
                     "Wrong number of :-separated arguments - " + parts.length
@@ -147,19 +146,17 @@ public class SpinnakerMachine
      */
     @Override
     public String toString() {
-        String output = null;
-
-        for (Object potential : new Object[]{
-                machineName, version, bmpDetails, width, height, bmpDetails}) {
+        final var output = new StringBuilder();
+        for (final var potential : List.of(
+                machineName, version, bmpDetails, width, height, bmpDetails)) {
             if (nonNull(potential)) {
-                if (isNull(output)) {
-                    output = potential.toString();
-                } else {
-                    output += ":" + potential.toString();
+                if (output.length() > 0) {
+                    output.append(':');
                 }
+                output.append(potential);
             }
         }
-        return output;
+        return output.toString();
     }
 
     /**
@@ -316,7 +313,7 @@ public class SpinnakerMachine
     public boolean equals(final Object o) {
         if (o instanceof SpinnakerMachine) {
             // TODO Is this the right way to determine equality?
-            final SpinnakerMachine m = (SpinnakerMachine) o;
+            final var m = (SpinnakerMachine) o;
             return Objects.equals(machineName, m.machineName)
                     && Objects.equals(version, m.version);
         } else {

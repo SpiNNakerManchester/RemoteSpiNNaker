@@ -17,13 +17,12 @@
 package uk.ac.manchester.cs.spinnaker.jobprocessmanager;
 
 import static jakarta.ws.rs.core.HttpHeaders.AUTHORIZATION;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.nonNull;
 import static org.apache.commons.codec.binary.Base64.encodeBase64String;
 
-import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
 
-import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,11 +43,6 @@ public abstract class RemoteSpiNNakerAPI {
      */
     private RemoteSpiNNakerAPI() {
     }
-
-    /**
-     * The character set for the authorisation payload.
-     */
-    private static final Charset UTF8 = Charset.forName("UTF-8");
 
     /**
      * The timeout of socket operation in seconds.
@@ -73,13 +67,13 @@ public abstract class RemoteSpiNNakerAPI {
      */
     public static JobManagerInterface createJobManager(final String url,
             final String authToken) {
-        final ResteasyClientBuilder builder = clientBuilder()
+        final var builder = clientBuilder()
                 .connectTimeout(TIMEOUT, TimeUnit.SECONDS)
                 .readTimeout(TIMEOUT, TimeUnit.SECONDS);
         // TODO Add HTTPS trust store, etc.
-        final ResteasyClient client = builder.build();
-        JacksonJsonProvider provider = new JacksonJsonProvider();
-        ObjectMapper mapper = new ObjectMapper();
+        final var client = builder.build();
+        var provider = new JacksonJsonProvider();
+        var mapper = new ObjectMapper();
         mapper.registerModule(new JodaModule());
         provider.setMapper(mapper);
         client.register(provider);
@@ -98,8 +92,8 @@ public abstract class RemoteSpiNNakerAPI {
      */
     private static ClientRequestFilter
             getBasicAuthFilter(final String authToken) {
-        final String payload = "Basic "
-                + encodeBase64String(authToken.getBytes(UTF8));
+        final var payload = "Basic "
+                + encodeBase64String(authToken.getBytes(UTF_8));
         return requestContext -> {
             requestContext.getHeaders().add(AUTHORIZATION, payload);
         };

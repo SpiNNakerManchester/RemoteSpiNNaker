@@ -24,7 +24,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.QueueEmpty;
-import uk.ac.manchester.cs.spinnaker.job.nmpi.QueueNextResponse;
 import uk.ac.manchester.cs.spinnaker.rest.NMPIQueue;
 
 /**
@@ -45,18 +44,18 @@ public final class TestRestClient {
      * @throws Exception if anything goes wrong
      */
     public static void main(final String[] args) throws Exception {
-        URL nmpiUrl = new URL("https://nmpi.hbpneuromorphic.eu/");
-        String nmpiUsername = "uman";
-        String apiKey = "QWvPf6WzISelx7MhIJqzoi-BgZqj95PPJYnpBuLTKcGN5b8sbP9"
+        var nmpiUrl = new URL("https://nmpi.hbpneuromorphic.eu/");
+        var nmpiUsername = "uman";
+        var apiKey = "QWvPf6WzISelx7MhIJqzoi-BgZqj95PPJYnpBuLTKcGN5b8sbP9"
                 + "fiUR2UQ6I--PHuoeOIeF0tmKptKC5rbIMRiRlGGG51zDvRDzqoIVTm4LU6L"
                 + "fV8MXYRlzXi4Dc75w-";
-        NMPIQueue queue = createApiKeyClient(nmpiUrl, nmpiUsername, apiKey,
+        var queue = createApiKeyClient(nmpiUrl, nmpiUsername, apiKey,
                 NMPIQueue.class, NMPIQueue.createProvider());
-        QueueNextResponse response = queue.getNextJob("SpiNNaker");
+        var response = queue.getNextJob("SpiNNaker");
         if (response instanceof QueueEmpty) {
             System.err.println("No items in queue");
         } else if (response instanceof Job) {
-            ObjectMapper om = new ObjectMapper();
+            var om = new ObjectMapper();
             System.err.println(
                     om.writerWithDefaultPrettyPrinter().writeValueAsString(
                             response));

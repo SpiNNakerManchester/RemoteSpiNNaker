@@ -23,13 +23,12 @@ import org.junit.Test;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-@SuppressWarnings("rawtypes")
 public class TestSerialization {
     ObjectMapper mapper = new ObjectMapper();
 
     @Test
     public void testCreateJob() throws JsonProcessingException {
-        final Command cmd = new CreateJobCommand(123, "abc def");
+        final var cmd = new CreateJobCommand(123, "abc def");
         assertEquals(
                 "{\"command\":\"create_job\",\"args\":[123],"
                 + "\"kwargs\":{\"owner\":\"abc def\"}}",
@@ -38,7 +37,7 @@ public class TestSerialization {
 
     @Test
     public void testDestroyJob() throws JsonProcessingException {
-        final Command cmd = new DestroyJobCommand(123);
+        final var cmd = new DestroyJobCommand(123);
         assertEquals(
                 "{\"command\":\"destroy_job\",\"args\":[123],\"kwargs\":{}}",
                 mapper.writeValueAsString(cmd));
@@ -46,7 +45,7 @@ public class TestSerialization {
 
     @Test
     public void testGetJobMachineInfo() throws JsonProcessingException {
-        final Command cmd = new GetJobMachineInfoCommand(123);
+        final var cmd = new GetJobMachineInfoCommand(123);
         assertEquals(
                 "{\"command\":\"get_job_machine_info\",\"args\":[123],"
                 + "\"kwargs\":{}}",
@@ -55,7 +54,7 @@ public class TestSerialization {
 
     @Test
     public void testGetJobState() throws JsonProcessingException {
-        final Command cmd = new GetJobStateCommand(123);
+        final var cmd = new GetJobStateCommand(123);
         assertEquals(
                 "{\"command\":\"get_job_state\",\"args\":[123],\"kwargs\":{}}",
                 mapper.writeValueAsString(cmd));
@@ -63,7 +62,7 @@ public class TestSerialization {
 
     @Test
     public void testJobKeepAlive() throws JsonProcessingException {
-        final Command cmd = new JobKeepAliveCommand(123);
+        final var cmd = new JobKeepAliveCommand(123);
         assertEquals(
                 "{\"command\":\"job_keepalive\",\"args\":[123],\"kwargs\":{}}",
                 mapper.writeValueAsString(cmd));
@@ -71,7 +70,7 @@ public class TestSerialization {
 
     @Test
     public void testListMachines() throws JsonProcessingException {
-        final Command cmd = new ListMachinesCommand();
+        final var cmd = new ListMachinesCommand();
         assertEquals(
                 "{\"command\":\"list_machines\",\"args\":[],\"kwargs\":{}}",
                 mapper.writeValueAsString(cmd));
@@ -79,7 +78,7 @@ public class TestSerialization {
 
     @Test
     public void testNoNotifyJob() throws JsonProcessingException {
-        final Command cmd = new NoNotifyJobCommand(123);
+        final var cmd = new NoNotifyJobCommand(123);
         assertEquals(
                 "{\"command\":\"no_notify_job\",\"args\":[123],\"kwargs\":{}}",
                 mapper.writeValueAsString(cmd));
@@ -87,7 +86,7 @@ public class TestSerialization {
 
     @Test
     public void testNotifyJob() throws JsonProcessingException {
-        final Command cmd = new NotifyJobCommand(123);
+        final var cmd = new NotifyJobCommand(123);
         assertEquals(
                 "{\"command\":\"notify_job\",\"args\":[123],\"kwargs\":{}}",
                 mapper.writeValueAsString(cmd));

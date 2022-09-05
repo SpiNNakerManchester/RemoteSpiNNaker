@@ -29,7 +29,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import org.rauschig.jarchivelib.ArchiveFormat;
-import org.rauschig.jarchivelib.Archiver;
 import org.rauschig.jarchivelib.CompressionType;
 
 import uk.ac.manchester.cs.spinnaker.job.JobParameters;
@@ -47,7 +46,7 @@ class ZipPyNNJobParametersFactory extends JobParametersFactory {
             final File workingDirectory, final String setupScript)
             throws UnsupportedJobException, JobParametersFactoryException {
         // Test that there is a URL
-        final String jobCodeLocation = job.getCode().trim();
+        final var jobCodeLocation = job.getCode().trim();
         if (!jobCodeLocation.startsWith("http://")
                 && !jobCodeLocation.startsWith("https://")) {
             throw new UnsupportedJobException();
@@ -92,7 +91,7 @@ class ZipPyNNJobParametersFactory extends JobParametersFactory {
     private boolean extractAutodetectedArchive(final File output,
             final File workingDirectory) throws IOException {
         try {
-            final Archiver archiver = createArchiver(output);
+            final var archiver = createArchiver(output);
             archiver.extract(output, workingDirectory);
             return true;
         } catch (final IllegalArgumentException e) {
@@ -109,9 +108,9 @@ class ZipPyNNJobParametersFactory extends JobParametersFactory {
      */
     private boolean extractArchiveUsingKnownFormats(final File workingDirectory,
             final File output) {
-        for (final ArchiveFormat format : ArchiveFormat.values()) {
+        for (final var format : ArchiveFormat.values()) {
             try {
-                final Archiver archiver = createArchiver(format);
+                final var archiver = createArchiver(format);
                 archiver.extract(output, workingDirectory);
                 return true;
             } catch (final IOException e) {
@@ -130,10 +129,10 @@ class ZipPyNNJobParametersFactory extends JobParametersFactory {
      */
     private boolean extractTypedArchive(final File workingDirectory,
             final File output) {
-        for (final ArchiveFormat format : ArchiveFormat.values()) {
-            for (final CompressionType type : SUPPORTED_TYPES) {
+        for (final var format : ArchiveFormat.values()) {
+            for (final var type : SUPPORTED_TYPES) {
                 try {
-                    final Archiver archiver = createArchiver(format, type);
+                    final var archiver = createArchiver(format, type);
                     archiver.extract(output, workingDirectory);
                     return true;
                 } catch (final IOException e) {
@@ -160,7 +159,7 @@ class ZipPyNNJobParametersFactory extends JobParametersFactory {
             final File workingDirectory, final URL url,
             final String setupScript)
             throws IOException, JobParametersFactoryException {
-        final File output = downloadFile(url, workingDirectory, null);
+        final var output = downloadFile(url, workingDirectory, null);
 
         /* Test if there is a recognised archive */
         boolean archiveExtracted =
@@ -194,8 +193,8 @@ class ZipPyNNJobParametersFactory extends JobParametersFactory {
                     "The URL could not be decompressed with any known method");
         }
 
-        String script = DEFAULT_SCRIPT_NAME + SYSTEM_ARG;
-        final String command = job.getCommand();
+        var script = DEFAULT_SCRIPT_NAME + SYSTEM_ARG;
+        final var command = job.getCommand();
         if (nonNull(command) && !command.isEmpty()) {
             script = command;
         }

@@ -22,7 +22,6 @@ import static org.eclipse.jgit.api.Git.cloneRepository;
 import java.io.File;
 import java.net.URISyntaxException;
 
-import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.TransportException;
@@ -44,7 +43,7 @@ class GitPyNNJobParametersFactory extends JobParametersFactory {
             final File workingDirectory, final String setupScript)
             throws UnsupportedJobException, JobParametersFactoryException {
         // Test that there is a URL
-        final String jobCodeLocation = job.getCode().trim();
+        final var jobCodeLocation = job.getCode().trim();
         if (!jobCodeLocation.startsWith("http://")
                 && !jobCodeLocation.startsWith("https://")) {
             throw new UnsupportedJobException();
@@ -84,10 +83,10 @@ class GitPyNNJobParametersFactory extends JobParametersFactory {
             final String setupScript)
             throws GitAPIException, InvalidRemoteException, TransportException,
             URISyntaxException {
-        final CloneCommand clone = cloneRepository();
-        URIish urish = new URIish(experimentDescription);
+        final var clone = cloneRepository();
+        var urish = new URIish(experimentDescription);
         if (nonNull(urish.getUser())) {
-            String pass = urish.getPass();
+            var pass = urish.getPass();
             if (nonNull(pass)) {
                 pass = "";
             }
@@ -96,19 +95,19 @@ class GitPyNNJobParametersFactory extends JobParametersFactory {
         }
 
         // Clone into a sub-directory of the working directory
-        String subdir = urish.getHumanishName();
+        var subdir = urish.getHumanishName();
         if (subdir.equals("")) {
             subdir = "repo";
         }
-        final File cloneDir = new File(workingDirectory, subdir);
+        final var cloneDir = new File(workingDirectory, subdir);
 
         clone.setURI(experimentDescription);
         clone.setDirectory(cloneDir);
         clone.setCloneSubmodules(true);
         clone.call();
 
-        String script = DEFAULT_SCRIPT_NAME + SYSTEM_ARG;
-        final String command = job.getCommand();
+        var script = DEFAULT_SCRIPT_NAME + SYSTEM_ARG;
+        final var command = job.getCommand();
         if (nonNull(command) && !command.isEmpty()) {
             script = command;
         }
