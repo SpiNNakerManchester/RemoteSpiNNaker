@@ -25,6 +25,8 @@ import static java.io.File.createTempFile;
 import static org.apache.commons.io.FileUtils.deleteQuietly;
 import static org.apache.commons.io.IOUtils.buffer;
 import static org.eclipse.jgit.util.FileUtils.createTempDir;
+import static uk.ac.manchester.cs.spinnaker.job.JobManagerInterface.PATH;
+import static uk.ac.manchester.cs.spinnaker.job.JobManagerInterface.SETUP_SCRIPT;
 import static uk.ac.manchester.cs.spinnaker.jobprocessmanager.RemoteSpiNNakerAPI.createJobManager;
 import static uk.ac.manchester.cs.spinnaker.utils.FileDownloader.downloadFile;
 import static uk.ac.manchester.cs.spinnaker.utils.Log.log;
@@ -297,11 +299,10 @@ public class JobProcessManager {
             workingDirectory = createTempDir("job", ".tmp", null);
 
             // Download the setup script
-            final var downloadUrl = serverUrl + JobManagerInterface.PATH
-                    + "/" + JobManagerInterface.SETUP_SCRIPT;
+            final var downloadUrl = serverUrl + PATH + "/" + SETUP_SCRIPT;
             log("Downloading setup script from " + downloadUrl);
             final var setupScript = downloadFile(downloadUrl,
-                    workingDirectory, JobManagerInterface.SETUP_SCRIPT);
+                    workingDirectory, SETUP_SCRIPT);
 
             final var parameters = getJobParameters(
                     setupScript.getAbsolutePath());
@@ -500,7 +501,7 @@ public class JobProcessManager {
                     .getLogFile());
         }
         for (final var output : outputs) {
-            try (final var input = new FileInputStream(output)) {
+            try (var input = new FileInputStream(output)) {
                 jobManager.addOutput(projectId, job.getId(),
                         workingDirectory.getAbsolutePath(),
                         output.getAbsolutePath(), input);
@@ -509,7 +510,7 @@ public class JobProcessManager {
 
         for (final var item : process.getProvenance()) {
             jobManager.addProvenance(
-                job.getId(), item.getPath(), item.getValue());
+                    job.getId(), item.getPath(), item.getValue());
         }
 
         switch (status) {
@@ -542,9 +543,9 @@ public class JobProcessManager {
  */
 class Machine {
     /** The machine. Knows its service URL. */
-    private SpinnakerMachine machine;
+    private final SpinnakerMachine machine;
     /** The service URL. */
-    private String url;
+    private final String url;
 
     /**
      * Create a machine known by object.
@@ -554,6 +555,7 @@ class Machine {
      */
     Machine(final SpinnakerMachine machineParam) {
         this.machine = machineParam;
+        this.url = null;
     }
 
     /**
@@ -566,6 +568,7 @@ class Machine {
      */
     Machine(final String baseUrl, final int id) {
         this.url = format("%sjob/%d/machine", baseUrl, id);
+        this.machine = null;
     }
 
     /**
@@ -599,18 +602,10 @@ class Machine {
  * How to write to the log.
  */
 abstract class JobManagerLogWriter implements LogWriter {
-
-    /**
-     * Create a machine known by object.
-     *
-     * @param machine
-     *            The machine object.
-     */
     /**
      * The cached message.
      */
     private final StringBuilder cached = new StringBuilder();
-
 
     /**
      * Does the log have anything in it?

@@ -17,6 +17,8 @@
 package uk.ac.manchester.cs.spinnaker.utils;
 
 import static java.io.File.createTempFile;
+import static java.net.HttpURLConnection.HTTP_MOVED_PERM;
+import static java.net.HttpURLConnection.HTTP_MOVED_TEMP;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.Files.copy;
 import static java.util.Objects.isNull;
@@ -131,9 +133,9 @@ public abstract class FileDownloader {
                 redirect = false;
                 final var httpConnection = (HttpURLConnection) urlConnection;
                 httpConnection.connect();
-                int responseCode = httpConnection.getResponseCode();
-                if (responseCode == HttpURLConnection.HTTP_MOVED_TEMP
-                        || responseCode == HttpURLConnection.HTTP_MOVED_PERM) {
+                final int responseCode = httpConnection.getResponseCode();
+                if (responseCode == HTTP_MOVED_TEMP
+                        || responseCode == HTTP_MOVED_PERM) {
                     var location = httpConnection.getHeaderField("Location");
                     if (isNull(location)) {
                         location = url.toString();

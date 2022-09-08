@@ -285,7 +285,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
 
         // Add any existing provenance to be updated
         synchronized (jobProvenance) {
-            var prov = job.getProvenance();
+            final var prov = job.getProvenance();
             if (nonNull(prov)) {
                 jobProvenance.put(job.getId(), prov);
             }
@@ -307,7 +307,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
         final var executer =
                 jobExecuterFactory.createJobExecuter(this, baseUrl);
         synchronized (jobExecuters) {
-            var executerId = executer.getExecuterId();
+            final var executerId = executer.getExecuterId();
             jobExecuters.put(executerId, executer);
             executorJobId.put(executerId, job);
             jobExecuters.notifyAll();
@@ -411,12 +411,12 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
      */
     private SpinnakerMachine findMachine(final int id,
             final String machineName, final boolean remove) {
-        var machines = allocatedMachines.get(id);
+        final var machines = allocatedMachines.get(id);
         if (isNull(machines)) {
             throw new WebApplicationException(
                     "No machines found for job " + id, NOT_FOUND);
         }
-        for (var machine : machines) {
+        for (final var machine : machines) {
             if (machine.getMachineName().equals(machineName)) {
                 if (remove) {
                     machines.remove(machine);
@@ -432,7 +432,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     @Override
     public void releaseMachine(final int id, final String machineName) {
         synchronized (allocatedMachines) {
-            var machine = findMachine(id, machineName, true);
+            final var machine = findMachine(id, machineName, true);
             machineManager.releaseMachine(machine);
         }
     }
@@ -441,7 +441,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     public void setMachinePower(final int id, final String machineName,
             final boolean powerOn) {
         synchronized (allocatedMachines) {
-            var machine = findMachine(id, machineName, false);
+            final var machine = findMachine(id, machineName, false);
             machineManager.setMachinePower(machine, powerOn);
         }
     }
@@ -450,7 +450,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     public ChipCoordinates getChipCoordinates(final int id,
             final String machineName, final int chipX, final int chipY) {
         synchronized (allocatedMachines) {
-            var machine = findMachine(id, machineName, false);
+            final var machine = findMachine(id, machineName, false);
             return machineManager.getChipCoordinates(machine, chipX, chipY);
         }
     }
@@ -582,7 +582,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
                      * We catch throwable here because we really don't want this
                      * to stop it working in the future.
                      */
-                } catch (Throwable e) {
+                } catch (final Throwable e) {
                     logger.debug("Error updating log - will be retried", e);
                     /*
                      * On failure, re-prepend the message to the logs to be
@@ -618,7 +618,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
                 jobOutputData.computeIfAbsent(id, ignored -> new ArrayList<>())
                         .add(item);
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new WebApplicationException(e, INTERNAL_SERVER_ERROR);
         }
     }

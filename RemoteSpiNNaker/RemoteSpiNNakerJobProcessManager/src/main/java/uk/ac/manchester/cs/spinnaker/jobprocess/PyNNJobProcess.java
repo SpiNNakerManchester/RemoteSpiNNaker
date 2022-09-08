@@ -42,7 +42,6 @@ import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -105,12 +104,13 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
     /**
      * The set of ignored file extensions in the outputs.
      */
-    private static final Set<String> IGNORED_EXTENSIONS = new HashSet<>();
+    private static final Set<String> IGNORED_EXTENSIONS = Set.of("pyc");
 
     /**
      * The set of ignored directories in the outputs.
      */
-    private static final Set<String> IGNORED_DIRECTORIES = new HashSet<>();
+    private static final Set<String> IGNORED_DIRECTORIES = Set.of(
+            "application_generated_data_files", "reports");
 
     /** The timeout for running jobs, in <em>hours.</em> */
     private static final int RUN_TIMEOUT = 7 * 24;
@@ -123,21 +123,16 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
      */
     private static final Pattern ARGUMENT_FINDER =
             Pattern.compile("([^\"]\\S*|\".+?\")\\s*");
-    static {
-        IGNORED_EXTENSIONS.add("pyc");
-        IGNORED_DIRECTORIES.add("application_generated_data_files");
-        IGNORED_DIRECTORIES.add("reports");
-    };
 
     /**
      * Provenance data items to be added to final provenance data.
      */
-    private static final String[] PROVENANCE_ITEMS_TO_ADD = new String[]{
+    private static final List<String> PROVENANCE_ITEMS_TO_ADD = List.of(
         "version_data/.*", "router_provenance/total_multi_cast_sent_packets",
         "router_provenance/total_created_packets",
         "router_provenance/total_dropped_packets",
         "router_provenance/total_missed_dropped_packets",
-        "router_provenance/total_lost_dropped_packets"};
+        "router_provenance/total_lost_dropped_packets");
 
     /**
      * The directory where the process is executed.
@@ -297,7 +292,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
             e.printStackTrace(printWriter);
             try {
                 logWriter.append(stringWriter.toString());
-            } catch (IOException ioEx) {
+            } catch (final IOException ioEx) {
                 ioEx.printStackTrace();
             }
             e.printStackTrace();
@@ -651,7 +646,7 @@ public class PyNNJobProcess implements JobProcess<PyNNJobParameters> {
         public void run() {
             try {
                 copyStream();
-            } catch (IOException | RuntimeException e) {
+            } catch (final IOException | RuntimeException e) {
                 return;
             } finally {
                 synchronized (this) {

@@ -314,7 +314,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
                     logger.debug("Starting execution process");
                     process = builder.start();
                     logger.debug("Starting pipe from process");
-                    var pipe = new JobOutputPipe(
+                    final var pipe = new JobOutputPipe(
                             process.getInputStream(),
                             new PrintWriter(outputLog));
                     pipe.start();
