@@ -29,25 +29,20 @@ import static uk.ac.manchester.cs.spinnaker.jobprocessmanager.RemoteSpiNNakerAPI
 import static uk.ac.manchester.cs.spinnaker.utils.FileDownloader.downloadFile;
 import static uk.ac.manchester.cs.spinnaker.utils.Log.log;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.swing.Timer;
 
 import uk.ac.manchester.cs.spinnaker.job.JobManagerInterface;
 import uk.ac.manchester.cs.spinnaker.job.RemoteStackTrace;
-import uk.ac.manchester.cs.spinnaker.job.Status;
-import uk.ac.manchester.cs.spinnaker.job.nmpi.DataItem;
 import uk.ac.manchester.cs.spinnaker.job.nmpi.Job;
 import uk.ac.manchester.cs.spinnaker.job_parameters.JobParameters;
 import uk.ac.manchester.cs.spinnaker.job_parameters.JobParametersFactory;
@@ -56,7 +51,6 @@ import uk.ac.manchester.cs.spinnaker.job_parameters.PyNNJobParameters;
 import uk.ac.manchester.cs.spinnaker.jobprocess.JobProcess;
 import uk.ac.manchester.cs.spinnaker.jobprocess.JobProcessFactory;
 import uk.ac.manchester.cs.spinnaker.jobprocess.LogWriter;
-import uk.ac.manchester.cs.spinnaker.jobprocess.ProvenanceItem;
 import uk.ac.manchester.cs.spinnaker.jobprocess.PyNNJobProcess;
 import uk.ac.manchester.cs.spinnaker.machine.SpinnakerMachine;
 
@@ -303,23 +297,22 @@ public class JobProcessManager {
             workingDirectory = createTempDir("job", ".tmp", null);
 
             // Download the setup script
-            String downloadUrl = serverUrl + JobManagerInterface.PATH
+            var downloadUrl = serverUrl + JobManagerInterface.PATH
                     + "/" + JobManagerInterface.SETUP_SCRIPT;
             log("Downloading setup script from " + downloadUrl);
-            final File setupScript = downloadFile(downloadUrl,
+            final var setupScript = downloadFile(downloadUrl,
                     workingDirectory, JobManagerInterface.SETUP_SCRIPT);
 
-            final JobParameters parameters = getJobParameters(
+            final var parameters = getJobParameters(
                     setupScript.getAbsolutePath());
 
             // Create a process to process the request
             log("Creating process from parameters");
-            final JobProcess<JobParameters> process =
-                    JOB_PROCESS_FACTORY.createProcess(parameters);
+            final var process = JOB_PROCESS_FACTORY.createProcess(parameters);
             logWriter = getLogWriter();
 
             // Read the machine
-            final Machine machine = getMachine();
+            final var machine = getMachine();
 
             // Execute the process
             log("Running job " + job.getId() + " on " + machine + " using "
@@ -349,12 +342,12 @@ public class JobProcessManager {
         }
 
         try {
-            String log = "";
+            var log = "";
             if (nonNull(logWriter)) {
                 logWriter.stop();
                 log = logWriter.getLog();
             }
-            String message = error.getMessage();
+            var message = error.getMessage();
             if (isNull(message)) {
                 message = "No Error Message";
             }
@@ -388,33 +381,33 @@ public class JobProcessManager {
 
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
-                case "--serverUrl" :
-                    serverUrl = args[++i];
-                    break;
-                case "--executerId" :
-                    executerId = args[++i];
-                    break;
-                case "--deleteOnExit" :
-                    deleteOnExit = true;
-                    break;
-                case "--local" :
-                    isLocal = true;
-                    break;
-                case "--liveUploadOutput" :
-                    liveUploadOutput = true;
-                    break;
-                case "--requestMachine" :
-                    requestMachine = true;
-                    break;
-                case "--authToken" :
-                    try (BufferedReader r = buffer(
-                            new InputStreamReader(System.in))) {
-                        authToken = r.readLine();
-                    }
-                    break;
-                default :
-                    throw new IllegalArgumentException(
-                            "unknown option: " + args[i]);
+            case "--serverUrl" :
+                serverUrl = args[++i];
+                break;
+            case "--executerId" :
+                executerId = args[++i];
+                break;
+            case "--deleteOnExit" :
+                deleteOnExit = true;
+                break;
+            case "--local" :
+                isLocal = true;
+                break;
+            case "--liveUploadOutput" :
+                liveUploadOutput = true;
+                break;
+            case "--requestMachine" :
+                requestMachine = true;
+                break;
+            case "--authToken" :
+                try (var r = buffer(
+                        new InputStreamReader(System.in))) {
+                    authToken = r.readLine();
+                }
+                break;
+            default :
+                throw new IllegalArgumentException(
+                        "unknown option: " + args[i]);
             }
         }
 
@@ -451,10 +444,9 @@ public class JobProcessManager {
      */
     private JobParameters getJobParameters(final String setupScript)
             throws IOException {
-        final Map<String, JobParametersFactoryException> errors =
-                new HashMap<>();
-        final JobParameters parameters = JobParametersFactory
-                .getJobParameters(job, workingDirectory, setupScript, errors);
+        final var errors = new HashMap<String, JobParametersFactoryException>();
+        final var parameters = JobParametersFactory.getJobParameters(
+                job, workingDirectory, setupScript, errors);
 
         if (isNull(parameters)) {
             if (!errors.isEmpty()) {
@@ -469,7 +461,7 @@ public class JobProcessManager {
 
         // Get any requested input files
         if (nonNull(job.getInputData())) {
-            for (final DataItem input : job.getInputData()) {
+            for (final var input : job.getInputData()) {
                 downloadFile(input.getUrl(), workingDirectory, null);
             }
         }
@@ -499,48 +491,48 @@ public class JobProcessManager {
      */
     private void processOutcome(final JobProcess<?> process, final String log)
             throws IOException {
-        final Status status = process.getStatus();
+        final var status = process.getStatus();
         log("Process has finished with status " + status);
 
-        final List<File> outputs = process.getOutputs();
+        final var outputs = process.getOutputs();
         if (logWriter instanceof UploadingJobManagerLogWriter) {
             outputs.add(((UploadingJobManagerLogWriter) logWriter)
                     .getLogFile());
         }
-        for (final File output : outputs) {
-            try (InputStream input = new FileInputStream(output)) {
+        for (final var output : outputs) {
+            try (var input = new FileInputStream(output)) {
                 jobManager.addOutput(projectId, job.getId(),
                         workingDirectory.getAbsolutePath(),
                         output.getAbsolutePath(), input);
             }
         }
 
-        for (final ProvenanceItem item : process.getProvenance()) {
+        for (final var item : process.getProvenance()) {
             jobManager.addProvenance(
                 job.getId(), item.getPath(), item.getValue());
         }
 
         switch (status) {
-            case Error :
-                final Throwable error = process.getError();
-                String message = error.getMessage();
-                if (isNull(message)) {
-                    message = "No Error Message";
-                }
-                jobManager.setJobError(job.getId(), message, log,
-                        new RemoteStackTrace(error));
-                break;
-            case Finished :
-                jobManager.setJobFinished(job.getId(), log);
+        case Error :
+            final var error = process.getError();
+            var message = error.getMessage();
+            if (isNull(message)) {
+                message = "No Error Message";
+            }
+            jobManager.setJobError(job.getId(), message, log,
+                    new RemoteStackTrace(error));
+            break;
+        case Finished :
+            jobManager.setJobFinished(job.getId(), log);
 
-                // Clean up
-                process.cleanup();
-                if (deleteOnExit) {
-                    deleteQuietly(workingDirectory);
-                }
-                break;
-            default :
-                throw new IllegalStateException("Unknown status returned!");
+            // Clean up
+            process.cleanup();
+            if (deleteOnExit) {
+                deleteQuietly(workingDirectory);
+            }
+            break;
+        default :
+            throw new IllegalStateException("Unknown status returned!");
         }
     }
 }
@@ -710,10 +702,10 @@ class JobErrorsException extends IOException {
      */
     private static String
             buildMessage(final Map<String, ? extends Exception> errors) {
-        StringWriter buffer = new StringWriter();
-        PrintWriter bufferWriter = new PrintWriter(buffer);
+        var buffer = new StringWriter();
+        var bufferWriter = new PrintWriter(buffer);
         bufferWriter.println(MAIN_MSG);
-        for (String key : errors.keySet()) {
+        for (final var key : errors.keySet()) {
             bufferWriter.print(key);
             bufferWriter.println(":");
             errors.get(key).printStackTrace(bufferWriter);

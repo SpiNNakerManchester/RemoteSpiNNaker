@@ -18,7 +18,6 @@ package uk.ac.manchester.cs.spinnaker.jobprocess;
 
 import static java.util.Objects.isNull;
 
-import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -123,14 +122,14 @@ public class JobProcessFactory {
          * method will only allow the correct type mapping in
          */
         @SuppressWarnings("unchecked")
-        final ProcessSupplier<P> supplier =
+        final var supplier =
                 (ProcessSupplier<P>) typeMap.get(parameters.getClass());
         if (isNull(supplier)) {
             throw new IllegalArgumentException(
                     "unsupported job parameter type: " + parameters.getClass());
         }
 
-        final JobProcess<P> process = supplier.get();
+        final var process = supplier.get();
         // Magically set the thread group if there is one
         setField(process, "threadGroup", threadGroup);
         return process;
@@ -147,7 +146,7 @@ public class JobProcessFactory {
     private static void setField(final Class<?> clazz, final String fieldName,
             final Object value) {
         try {
-            final Field threadGroupField = clazz.getDeclaredField(fieldName);
+            final var threadGroupField = clazz.getDeclaredField(fieldName);
             threadGroupField.setAccessible(true);
             threadGroupField.set(null, value);
         } catch (NoSuchFieldException | SecurityException
@@ -166,7 +165,7 @@ public class JobProcessFactory {
     private static void setField(final Object instance, final String fieldName,
             final Object value) {
         try {
-            final Field threadGroupField =
+            final var threadGroupField =
                     instance.getClass().getDeclaredField(fieldName);
             threadGroupField.setAccessible(true);
             threadGroupField.set(instance, value);

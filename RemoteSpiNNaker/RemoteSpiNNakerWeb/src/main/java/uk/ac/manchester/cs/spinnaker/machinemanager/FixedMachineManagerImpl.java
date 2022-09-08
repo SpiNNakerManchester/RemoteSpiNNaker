@@ -17,7 +17,7 @@
 package uk.ac.manchester.cs.spinnaker.machinemanager;
 
 import static java.util.Objects.nonNull;
-import static uk.ac.manchester.cs.spinnaker.utils.ThreadUtils.waitfor;
+import static uk.ac.manchester.cs.spinnaker.ThreadUtils.waitfor;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -66,7 +66,7 @@ public class FixedMachineManagerImpl implements MachineManager {
 
     @Override
     public List<SpinnakerMachine> getMachines() {
-        final List<SpinnakerMachine> machines = new ArrayList<>();
+        final var machines = new ArrayList<SpinnakerMachine>();
         synchronized (lock) {
             machines.addAll(machinesAvailable);
             machines.addAll(machinesAllocated);
@@ -78,7 +78,7 @@ public class FixedMachineManagerImpl implements MachineManager {
     public SpinnakerMachine getNextAvailableMachine(final int nBoards) {
         synchronized (lock) {
             while (!done) {
-                final SpinnakerMachine machine = getLargeEnoughMachine(nBoards);
+                final var machine = getLargeEnoughMachine(nBoards);
                 if (nonNull(machine)) {
                     // Move the machine from available to allocated
                     machinesAvailable.remove(machine);

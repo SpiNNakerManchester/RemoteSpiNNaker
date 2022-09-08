@@ -108,7 +108,7 @@ public interface NMPIQueue {
      * @return The provider.
      */
     static JacksonJsonProvider createProvider() {
-        CustomJacksonJsonProvider provider = new CustomJacksonJsonProvider();
+        var provider = new CustomJacksonJsonProvider();
         provider.addDeserialiser(QueueNextResponse.class,
                 new NMPIQueueResponseDeserialiser());
         return provider;

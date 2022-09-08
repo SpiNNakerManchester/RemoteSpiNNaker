@@ -16,14 +16,12 @@
  */
 package uk.ac.manchester.cs.spinnaker.status;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.slf4j.LoggerFactory.getLogger;
 import static uk.ac.manchester.cs.spinnaker.rest.utils.RestClientUtils.clientBuilder;
 
-import java.util.concurrent.TimeUnit;
-
 import javax.annotation.PostConstruct;
 
-import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -75,9 +73,9 @@ public class StatusCakeStatusMonitorManagerImpl
     @PostConstruct
     private void init() {
         // TODO use RestClientUtils.createClient()
-        final ResteasyClient client = clientBuilder().
-                connectTimeout(TIMEOUT, TimeUnit.SECONDS).
-                readTimeout(TIMEOUT, TimeUnit.SECONDS).build();
+        final var client = clientBuilder().
+                connectTimeout(TIMEOUT, SECONDS).
+                readTimeout(TIMEOUT, SECONDS).build();
         statusCake = client.target(SERVICE_URL).proxy(StatusCake.class);
     }
 

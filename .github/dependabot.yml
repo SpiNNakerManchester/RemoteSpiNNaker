@@ -17,3 +17,17 @@ updates:
       - "rowleya"
     reviewers:
       - "dkfellows"
+  - package-ecosystem: maven
+    directory: "/RemoteSpiNNaker"
+    schedule:
+      interval: "weekly"
+    target-branch: "java-11"
+    labels:
+      - "bug"
+      - "dependabot"
+    milestone: 7   # This is the *ID* for the 7.0.0 milestone
+    assignees:
+      - "rowleya"
+    reviewers:
+      - "dkfellows"
+      

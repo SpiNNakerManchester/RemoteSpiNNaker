@@ -84,7 +84,7 @@ public class CustomJacksonJsonProvider extends JacksonJsonProvider {
      */
     private void registerMapper(final Class<?> type,
             final MediaType mediaType) {
-        final ObjectMapper mapper = locateMapper(type, mediaType);
+        final var mapper = locateMapper(type, mediaType);
         if (!registeredMappers.contains(mapper)) {
             mapper.registerModule(module);
             mapper.setPropertyNamingStrategy(SNAKE_CASE);

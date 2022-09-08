@@ -29,8 +29,8 @@ import static org.apache.commons.io.IOUtils.buffer;
 import static org.apache.commons.io.IOUtils.closeQuietly;
 import static org.apache.commons.io.IOUtils.copy;
 import static org.slf4j.LoggerFactory.getLogger;
+import static uk.ac.manchester.cs.spinnaker.ThreadUtils.waitfor;
 import static uk.ac.manchester.cs.spinnaker.job.JobManagerInterface.JOB_PROCESS_MANAGER_ZIP;
-import static uk.ac.manchester.cs.spinnaker.utils.ThreadUtils.waitfor;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -45,7 +45,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import javax.annotation.PostConstruct;
@@ -71,8 +70,8 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
      * @throws IOException If the file can't be instantiated
      */
     private static File getJavaExec() throws IOException {
-        final File binDir = new File(System.getProperty("java.home"), "bin");
-        File exec = new File(binDir, "java");
+        final var binDir = new File(System.getProperty("java.home"), "bin");
+        var exec = new File(binDir, "java");
         if (!exec.canExecute()) {
             exec = new File(binDir, "java.exe");
         }
@@ -133,7 +132,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
     @PostConstruct
     private void installJobExecuter() throws IOException {
         // Find the JobManager resource
-        final InputStream jobManagerStream =
+        final var jobManagerStream =
                 getClass().getResourceAsStream("/" + JOB_PROCESS_MANAGER_ZIP);
         if (isNull(jobManagerStream)) {
             throw new UnsatisfiedLinkError(
@@ -147,13 +146,13 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         jobExecuterDirectory.deleteOnExit();
 
         // Extract the JobManager resources
-        try (ZipInputStream input = new ZipInputStream(jobManagerStream)) {
-            for (ZipEntry entry = input.getNextEntry(); nonNull(entry);
+        try (var input = new ZipInputStream(jobManagerStream)) {
+            for (var entry = input.getNextEntry(); nonNull(entry);
                     entry = input.getNextEntry()) {
                 if (entry.isDirectory()) {
                     continue;
                 }
-                final File entryFile =
+                final var entryFile =
                         new File(jobExecuterDirectory, entry.getName());
                 forceMkdirParent(entryFile);
                 copyToFile(input, entryFile);
@@ -169,8 +168,8 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
     @Override
     public JobExecuter createJobExecuter(final JobManager manager,
             final URL baseUrl) throws IOException {
-        final String uuid = UUID.randomUUID().toString();
-        final List<String> arguments = new ArrayList<>();
+        final var uuid = UUID.randomUUID().toString();
+        final var arguments = new ArrayList<String>();
         arguments.add("--serverUrl");
         arguments.add(requireNonNull(baseUrl).toString());
         arguments.add("--local");
@@ -262,7 +261,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         }
 
         private void runSubprocess() {
-            try (JobOutputPipe pipe = startSubprocess(constructArguments())) {
+            try (var pipe = startSubprocess(constructArguments())) {
                 logger.debug("Waiting for process to finish");
                 try {
                     process.waitFor();
@@ -281,10 +280,10 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
          * @return The arguments as a list of strings.
          */
         private List<String> constructArguments() {
-            final List<String> command = new ArrayList<>();
+            final var command = new ArrayList<String>();
             command.add(javaExec.getAbsolutePath());
 
-            String classPath = jobProcessManagerClasspath.stream()
+            var classPath = jobProcessManagerClasspath.stream()
                     .map(File::toString).collect(joining(pathSeparator));
             command.add("-cp");
             command.add(classPath);
@@ -292,7 +291,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
 
             command.add(JOB_PROCESS_MANAGER_MAIN_CLASS);
             logger.debug("Main command: {}", JOB_PROCESS_MANAGER_MAIN_CLASS);
-            for (final String argument : arguments) {
+            for (final var argument : arguments) {
                 command.add(argument);
                 logger.debug("Argument: {}", argument);
             }
@@ -306,7 +305,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
          * @return The output of the process as a pipe
          */
         private JobOutputPipe startSubprocess(final List<String> command) {
-            final ProcessBuilder builder = new ProcessBuilder(command);
+            final var builder = new ProcessBuilder(command);
             builder.directory(jobExecuterDirectory);
             logger.debug("Working directory: {}", jobExecuterDirectory);
             builder.redirectErrorStream(true);
@@ -315,7 +314,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
                     logger.debug("Starting execution process");
                     process = builder.start();
                     logger.debug("Starting pipe from process");
-                    JobOutputPipe pipe = new JobOutputPipe(
+                    var pipe = new JobOutputPipe(
                             process.getInputStream(),
                             new PrintWriter(outputLog));
                     pipe.start();
@@ -334,8 +333,8 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
          * Report the results of the job using the log.
          */
         private void reportResult() {
-            StringWriter loggedOutput = new StringWriter();
-            try (FileReader reader = new FileReader(outputLog)) {
+            var loggedOutput = new StringWriter();
+            try (var reader = new FileReader(outputLog)) {
                 copy(reader, loggedOutput);
             } catch (final IOException e) {
                 logger.warn("problem in reporting log", e);
@@ -376,7 +375,6 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
      * The pipe copier.
      */
     class JobOutputPipe extends Thread implements AutoCloseable {
-
         /**
          *  The input to the pipe.
          */
@@ -421,7 +419,7 @@ public class LocalJobExecuterFactory implements JobExecuterFactory {
         public void run() {
             try {
                 while (!done) {
-                    String line = readLine();
+                    var line = readLine();
                     if (isNull(line)) {
                         break;
                     } else if (!line.isEmpty()) {

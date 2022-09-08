@@ -43,7 +43,7 @@ public class NullExceptionMapper
 
     @Override
     public Response toResponse(final NullPointerException exception) {
-        String msg = exception.getMessage();
+        var msg = exception.getMessage();
         if (isNull(msg) || msg.isEmpty()) {
             msg = "bad parameter";
         }

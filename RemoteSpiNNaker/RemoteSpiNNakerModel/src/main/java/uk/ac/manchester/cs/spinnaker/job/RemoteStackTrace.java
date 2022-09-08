@@ -43,7 +43,7 @@ public class RemoteStackTrace {
      *            The exception to make the stack trace from.
      */
     public RemoteStackTrace(final Throwable throwable) {
-        for (final StackTraceElement element : throwable.getStackTrace()) {
+        for (final var element : throwable.getStackTrace()) {
             elements.add(new RemoteStackTraceElement(element));
         }
     }
