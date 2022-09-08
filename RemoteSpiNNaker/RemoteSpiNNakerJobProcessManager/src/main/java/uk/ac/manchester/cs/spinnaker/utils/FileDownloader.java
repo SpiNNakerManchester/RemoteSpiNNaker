@@ -82,7 +82,7 @@ public abstract class FileDownloader {
      */
     private static URLConnection createConnectionWithAuth(final URL url,
             final String userInfo) throws IOException {
-        var urlConnection = requireNonNull(url).openConnection();
+        final var urlConnection = requireNonNull(url).openConnection();
         urlConnection.setDoInput(true);
 
         if (urlConnection instanceof HttpsURLConnection) {
@@ -91,8 +91,8 @@ public abstract class FileDownloader {
 
         urlConnection.setRequestProperty("Accept", "*/*");
         if (nonNull(userInfo) && urlConnection instanceof HttpURLConnection) {
-            var httpConnection = (HttpURLConnection) urlConnection;
-            var basicAuth = "Basic " + Base64.encodeBase64URLSafeString(
+            final var httpConnection = (HttpURLConnection) urlConnection;
+            final var basicAuth = "Basic " + Base64.encodeBase64URLSafeString(
                 userInfo.getBytes(UTF_8));
             httpConnection.setRequestProperty("Authorization", basicAuth);
             httpConnection.setInstanceFollowRedirects(false);
@@ -129,7 +129,7 @@ public abstract class FileDownloader {
             boolean redirect = false;
             do {
                 redirect = false;
-                var httpConnection = (HttpURLConnection) urlConnection;
+                final var httpConnection = (HttpURLConnection) urlConnection;
                 httpConnection.connect();
                 int responseCode = httpConnection.getResponseCode();
                 if (responseCode == HttpURLConnection.HTTP_MOVED_TEMP
@@ -139,7 +139,7 @@ public abstract class FileDownloader {
                         location = url.toString();
                     }
                     urlConnection = createConnectionWithAuth(
-                        new URL(location), userInfo);
+                            new URL(location), userInfo);
                     redirect = true;
 
                 }
@@ -148,7 +148,7 @@ public abstract class FileDownloader {
 
         // Work out the output filename
         final var output = getTargetFile(url, workingDirectory,
-            defaultFilename, urlConnection);
+                defaultFilename, urlConnection);
 
         // Write the file
         copy(urlConnection.getInputStream(), output.toPath());
@@ -169,8 +169,8 @@ public abstract class FileDownloader {
             final HttpsURLConnection connection) throws IOException {
         // Set up to trust everyone
         try {
-            var sc = SSLContext.getInstance("SSL");
-            var tm = new X509TrustManager() {
+            final var sc = SSLContext.getInstance("SSL");
+            final var tm = new X509TrustManager() {
                 @Override
                 public X509Certificate[] getAcceptedIssuers() {
                     return null;

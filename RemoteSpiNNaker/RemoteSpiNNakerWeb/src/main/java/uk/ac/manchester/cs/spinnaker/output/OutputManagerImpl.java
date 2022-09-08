@@ -238,7 +238,7 @@ public class OutputManagerImpl implements OutputManager {
             throw new IllegalArgumentException("bad " + type);
         }
         int element = 0;
-        for (var name : bits) {
+        for (final var name : bits) {
             element++;
             switch (name) {
             case "":
@@ -510,11 +510,11 @@ public class OutputManagerImpl implements OutputManager {
                     - jobDirectory.lastModified()) > timeToKeepResults)) {
                 logger.info("Removing results for job {}",
                         jobDirectory.getName());
-                try (var op = new JobLock(jobDirectory)) {
+                try (final var op = new JobLock(jobDirectory)) {
                     removeDirectory(jobDirectory);
                 }
 
-                try (var purgedFileWriter =
+                try (final var purgedFileWriter =
                         new PrintWriter(getPurgeFile(jobDirectory))) {
                     purgedFileWriter.println(currentTimeMillis());
                 } catch (final IOException e) {

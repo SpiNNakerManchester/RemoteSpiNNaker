@@ -146,7 +146,7 @@ public class JobProcessManager {
             logFileWriter.append(logMsg);
             logFileWriter.flush();
             if (logSize < MAX_LOG_STREAMED) {
-                int nextSize = logSize + logMsg.length();
+                final int nextSize = logSize + logMsg.length();
                 if (nextSize < MAX_LOG_STREAMED) {
                     // The log is still small enough after adding the new
                     // message, add it to the streamed data
@@ -297,7 +297,7 @@ public class JobProcessManager {
             workingDirectory = createTempDir("job", ".tmp", null);
 
             // Download the setup script
-            var downloadUrl = serverUrl + JobManagerInterface.PATH
+            final var downloadUrl = serverUrl + JobManagerInterface.PATH
                     + "/" + JobManagerInterface.SETUP_SCRIPT;
             log("Downloading setup script from " + downloadUrl);
             final var setupScript = downloadFile(downloadUrl,
@@ -500,7 +500,7 @@ public class JobProcessManager {
                     .getLogFile());
         }
         for (final var output : outputs) {
-            try (var input = new FileInputStream(output)) {
+            try (final var input = new FileInputStream(output)) {
                 jobManager.addOutput(projectId, job.getId(),
                         workingDirectory.getAbsolutePath(),
                         output.getAbsolutePath(), input);
@@ -702,8 +702,8 @@ class JobErrorsException extends IOException {
      */
     private static String
             buildMessage(final Map<String, ? extends Exception> errors) {
-        var buffer = new StringWriter();
-        var bufferWriter = new PrintWriter(buffer);
+        final var buffer = new StringWriter();
+        final var bufferWriter = new PrintWriter(buffer);
         bufferWriter.println(MAIN_MSG);
         for (final var key : errors.keySet()) {
             bufferWriter.print(key);

@@ -870,7 +870,7 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
     private void updateStatus() {
         int nBoardsInUse = 0;
         synchronized (allocatedMachines) {
-            for (var machines: allocatedMachines.values()) {
+            for (final var machines: allocatedMachines.values()) {
                 nBoardsInUse += machines.stream()
                         .mapToInt(SpinnakerMachine::getnBoards).sum();
             }
