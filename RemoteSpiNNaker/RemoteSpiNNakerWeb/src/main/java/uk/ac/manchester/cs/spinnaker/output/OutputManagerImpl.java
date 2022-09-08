@@ -510,11 +510,11 @@ public class OutputManagerImpl implements OutputManager {
                     - jobDirectory.lastModified()) > timeToKeepResults)) {
                 logger.info("Removing results for job {}",
                         jobDirectory.getName());
-                try (final var op = new JobLock(jobDirectory)) {
+                try (var op = new JobLock(jobDirectory)) {
                     removeDirectory(jobDirectory);
                 }
 
-                try (final var purgedFileWriter =
+                try (var purgedFileWriter =
                         new PrintWriter(getPurgeFile(jobDirectory))) {
                     purgedFileWriter.println(currentTimeMillis());
                 } catch (final IOException e) {

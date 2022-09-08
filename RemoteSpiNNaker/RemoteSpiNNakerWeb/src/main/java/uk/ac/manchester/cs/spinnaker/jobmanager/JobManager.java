@@ -589,7 +589,8 @@ public class JobManager implements NMPIQueueListener, JobManagerInterface {
                      * updated again later.
                      */
                     synchronized (logUpdateTimer) {
-                        final var existing = logsToUpdate.getOrDefault(jobId, "");
+                        final var existing =
+                                logsToUpdate.getOrDefault(jobId, "");
                         logsToUpdate.put(jobId, message + existing);
                     }
                 }
