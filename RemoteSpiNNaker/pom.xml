@@ -32,7 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <jackson.version>2.13.4</jackson.version>
         <springsecurity.version>5.7.3</springsecurity.version>
         <spring.version>5.3.22</spring.version>
-        <slf4j.version>2.0.0</slf4j.version>
+        <slf4j.version>2.0.1</slf4j.version>
         <javadoc.version>3.4.1</javadoc.version>
         <jaxb.version>2.3.1</jaxb.version>
         <xml-bind.version>4.0.0</xml-bind.version>
