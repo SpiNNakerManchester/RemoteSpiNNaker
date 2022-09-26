@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.release>11</maven.compiler.release>
 
-        <resteasy.version>6.1.0.Final</resteasy.version>
+        <resteasy.version>6.2.0.Final</resteasy.version>
         <jackson.version>2.13.4</jackson.version>
         <springsecurity.version>5.7.3</springsecurity.version>
         <spring.version>5.3.23</spring.version>
@@ -181,7 +181,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             <dependency>
                 <groupId>com.nimbusds</groupId>
                 <artifactId>nimbus-jose-jwt</artifactId>
-                <version>9.25</version>
+                <version>9.25.3</version>
             </dependency>
             <dependency>
                 <groupId>net.minidev</groupId>
@@ -217,7 +217,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.2.2</version>
+                    <version>3.3.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
