@@ -106,10 +106,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             <groupId>org.springframework</groupId>
             <artifactId>spring-webmvc</artifactId>
         </dependency>
+        <!-- NOT CURRENTLY USED
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-core</artifactId>
         </dependency>
+        -->
         <dependency>
             <groupId>net.java.dev.vcc.thirdparty</groupId>
             <artifactId>xen-api</artifactId>
