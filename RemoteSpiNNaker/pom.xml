@@ -30,7 +30,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
         <resteasy.version>6.2.1.Final</resteasy.version>
         <jackson.version>2.14.1</jackson.version>
+        <!--
         <springsecurity.version>5.7.5</springsecurity.version>
+        -->
         <spring.version>5.3.24</spring.version>
         <slf4j.version>2.0.4</slf4j.version>
         <javadoc.version>3.4.1</javadoc.version>
@@ -127,6 +129,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 <artifactId>spring-webmvc</artifactId>
                 <version>${spring.version}</version>
             </dependency>
+            <!-- NOT CURRENTLY USED
             <dependency>
                 <groupId>org.springframework.security</groupId>
                 <artifactId>spring-security-core</artifactId>
@@ -142,6 +145,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 <artifactId>spring-security-config</artifactId>
                 <version>${springsecurity.version}</version>
             </dependency>
+            -->
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-log4j12</artifactId>
