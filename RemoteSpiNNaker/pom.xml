@@ -282,7 +282,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 <plugin>
                     <groupId>org.eclipse.jetty</groupId>
                     <artifactId>jetty-maven-plugin</artifactId>
-                    <version>11.0.12</version>
+                    <version>11.0.13</version>
                 </plugin>
 				<plugin>
 					<groupId>org.jacoco</groupId>
