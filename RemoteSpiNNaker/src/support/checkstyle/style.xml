@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-Copyright (c) 2014-2019 The University of Manchester
+Copyright (c) 2014 The University of Manchester
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,19 +23,19 @@ limitations under the License.
   Checkstyle configuration that checks the sun coding conventions from:
 
     - the Java Language Specification at
-      http://java.sun.com/docs/books/jls/second_edition/html/index.html
+      https://java.sun.com/docs/books/jls/second_edition/html/index.html
 
-    - the Sun Code Conventions at http://java.sun.com/docs/codeconv/
+    - the Sun Code Conventions at https://java.sun.com/docs/codeconv/
 
     - the Javadoc guidelines at
-      http://java.sun.com/j2se/javadoc/writingdoccomments/index.html
+      https://java.sun.com/j2se/javadoc/writingdoccomments/index.html
 
-    - the JDK Api documentation http://java.sun.com/j2se/docs/api/index.html
+    - the JDK Api documentation https://java.sun.com/j2se/docs/api/index.html
 
     - some best practices
 
   Checkstyle is very configurable. Be sure to read the documentation at
-  http://checkstyle.sf.net (or in your downloaded distribution).
+  https://checkstyle.sourceforge.io/ (or in your downloaded distribution).
 
   Most Checks are configurable, be sure to consult the documentation.
 
@@ -57,21 +57,21 @@ limitations under the License.
     <property name="fileExtensions" value="java, properties, xml"/>
 
     <!-- Checks that a package-info.java file exists for each package.     -->
-    <!-- See http://checkstyle.sf.net/config_javadoc.html#JavadocPackage -->
+    <!-- See https://checkstyle.sourceforge.io//config_javadoc.html#JavadocPackage -->
     <module name="JavadocPackage"/>
 
     <!-- Checks whether files end with a new line.                        -->
-    <!-- See http://checkstyle.sf.net/config_misc.html#NewlineAtEndOfFile -->
+    <!-- See https://checkstyle.sourceforge.io//config_misc.html#NewlineAtEndOfFile -->
     <module name="NewlineAtEndOfFile">
         <property name="lineSeparator" value="lf_cr_crlf"/>
     </module>
 
     <!-- Checks that property files contain the same keys.         -->
-    <!-- See http://checkstyle.sf.net/config_misc.html#Translation -->
+    <!-- See https://checkstyle.sourceforge.io//config_misc.html#Translation -->
     <module name="Translation"/>
 
     <!-- Checks for Size Violations.                    -->
-    <!-- See http://checkstyle.sf.net/config_sizes.html -->
+    <!-- See https://checkstyle.sourceforge.io//config_sizes.html -->
     <module name="FileLength"/>
     <module name="LineLength">
         <property name="ignorePattern" value="^(package|import) .*"/>
@@ -79,11 +79,11 @@ limitations under the License.
     </module>
 
     <!-- Checks for whitespace                               -->
-    <!-- See http://checkstyle.sf.net/config_whitespace.html -->
+    <!-- See https://checkstyle.sourceforge.io//config_whitespace.html -->
     <module name="FileTabCharacter"/>
 
     <!-- Miscellaneous other checks.                   -->
-    <!-- See http://checkstyle.sf.net/config_misc.html -->
+    <!-- See https://checkstyle.sourceforge.io//config_misc.html -->
     <module name="RegexpSingleline">
        <property name="format" value="\s+$"/>
        <property name="minimum" value="0"/>
@@ -92,7 +92,7 @@ limitations under the License.
     </module>
 
     <!-- Checks for Headers                                -->
-    <!-- See http://checkstyle.sf.net/config_header.html   -->
+    <!-- See https://checkstyle.sourceforge.io//config_header.html   -->
     <!-- <module name="Header"> -->
     <!--   <property name="headerFile" value="${checkstyle.header.file}"/> -->
     <!--   <property name="fileExtensions" value="java"/> -->
@@ -101,14 +101,14 @@ limitations under the License.
     <module name="TreeWalker">
 
         <!-- Checks for Javadoc comments.                     -->
-        <!-- See http://checkstyle.sf.net/config_javadoc.html -->
+        <!-- See https://checkstyle.sourceforge.io//config_javadoc.html -->
         <module name="JavadocMethod"/>
         <module name="JavadocType"/>
         <module name="JavadocVariable"/>
         <module name="JavadocStyle"/>
 
         <!-- Checks for Naming Conventions.                  -->
-        <!-- See http://checkstyle.sf.net/config_naming.html -->
+        <!-- See https://checkstyle.sourceforge.io//config_naming.html -->
         <module name="ConstantName">
             <property name="format"
                 value="^log(ger)?$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$"/>
@@ -123,7 +123,7 @@ limitations under the License.
         <module name="TypeName"/>
 
         <!-- Checks for imports                              -->
-        <!-- See http://checkstyle.sf.net/config_import.html -->
+        <!-- See https://checkstyle.sourceforge.io//config_imports.html -->
         <module name="AvoidStarImport"/>
         <module name="IllegalImport"/> <!-- defaults to sun.* packages -->
         <module name="RedundantImport"/>
@@ -132,12 +132,12 @@ limitations under the License.
         </module>
 
         <!-- Checks for Size Violations.                    -->
-        <!-- See http://checkstyle.sf.net/config_sizes.html -->
+        <!-- See https://checkstyle.sourceforge.io//config_sizes.html -->
         <module name="MethodLength"/>
         <module name="ParameterNumber"/>
 
         <!-- Checks for whitespace                               -->
-        <!-- See http://checkstyle.sf.net/config_whitespace.html -->
+        <!-- See https://checkstyle.sourceforge.io//config_whitespace.html -->
         <module name="EmptyForIteratorPad"/>
         <module name="GenericWhitespace"/>
         <module name="MethodParamPad"/>
@@ -150,19 +150,19 @@ limitations under the License.
         <module name="WhitespaceAround"/>
 
         <!-- Modifier Checks                                    -->
-        <!-- See http://checkstyle.sf.net/config_modifiers.html -->
+        <!-- See https://checkstyle.sf.net/config_modifier.html -->
         <module name="ModifierOrder"/>
         <module name="RedundantModifier"/>
 
         <!-- Checks for blocks. You know, those {}'s         -->
-        <!-- See http://checkstyle.sf.net/config_blocks.html -->
+        <!-- See https://checkstyle.sourceforge.io//config_blocks.html -->
         <module name="AvoidNestedBlocks"/>
         <module name="EmptyBlock"/>
         <module name="LeftCurly"/>
         <module name="NeedBraces"/>
         <module name="RightCurly"/>
         <!-- Checks for common coding problems               -->
-        <!-- See http://checkstyle.sf.net/config_coding.html -->
+        <!-- See https://checkstyle.sourceforge.io//config_coding.html -->
         <module name="AvoidInlineConditionals"/>
         <module name="EmptyStatement"/>
         <module name="EqualsHashCode"/>
@@ -175,14 +175,14 @@ limitations under the License.
         <module name="SimplifyBooleanReturn"/>
 
         <!-- Checks for class design                         -->
-        <!-- See http://checkstyle.sf.net/config_design.html -->
+        <!-- See https://checkstyle.sourceforge.io//config_design.html -->
         <module name="FinalClass"/>
         <module name="HideUtilityClassConstructor"/>
         <module name="InterfaceIsType"/>
         <module name="VisibilityModifier"/>
 
         <!-- Miscellaneous other checks.                   -->
-        <!-- See http://checkstyle.sf.net/config_misc.html -->
+        <!-- See https://checkstyle.sourceforge.io//config_misc.html -->
         <module name="ArrayTypeStyle"/>
         <module name="FinalParameters"/>
         <!-- <module name="TodoComment"/> -->
