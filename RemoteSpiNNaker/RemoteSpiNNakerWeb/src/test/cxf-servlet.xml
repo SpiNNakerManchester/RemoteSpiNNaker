@@ -20,15 +20,15 @@ limitations under the License.
 	xmlns:cxf="http://cxf.apache.org/core" xmlns:context="http://www.springframework.org/schema/context"
 	xsi:schemaLocation="
           http://www.springframework.org/schema/beans
-              http://www.springframework.org/schema/beans/spring-beans.xsd
+              https://www.springframework.org/schema/beans/spring-beans.xsd
           http://cxf.apache.org/jaxrs
-              http://cxf.apache.org/schemas/jaxrs.xsd
+              https://cxf.apache.org/schemas/jaxrs.xsd
           http://cxf.apache.org/transports/http/configuration
-              http://cxf.apache.org/schemas/configuration/http-conf.xsd
+              https://cxf.apache.org/schemas/configuration/http-conf.xsd
           http://cxf.apache.org/core
-              http://cxf.apache.org/schemas/core.xsd
+              https://cxf.apache.org/schemas/core.xsd
           http://www.springframework.org/schema/context
-              http://www.springframework.org/schema/context/spring-context.xsd">
+              https://www.springframework.org/schema/context/spring-context.xsd">
 
 	<cxf:bus>
 		<cxf:features>

@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>uk.ac.manchester.cs.spinnaker</groupId>
     <artifactId>RemoteSpiNNaker</artifactId>
@@ -385,10 +385,10 @@ limitations under the License.
 
 	<name>Remote SpiNNaker</name>
 	<description>Remote Access to SpiNNaker via the HBP NMPI Queue.</description>
-	<url>http://spinnakermanchester.github.io/</url>
+	<url>https://spinnakermanchester.github.io/</url>
 	<organization>
 		<name>SpiNNaker Team @ University of Manchester</name>
-		<url>http://apt.cs.manchester.ac.uk/projects/SpiNNaker/</url>
+		<url>https://apt.cs.manchester.ac.uk/projects/SpiNNaker/</url>
 	</organization>
 	<licenses>
 		<license>
@@ -413,14 +413,14 @@ limitations under the License.
 		<site>
 			<id>github-pages</id>
 			<name>GitHub Pages</name>
-			<url>http://spinnakermanchester.github.io/RemoteSpiNNaker</url>
+			<url>https://spinnakermanchester.github.io/RemoteSpiNNaker</url>
 		</site>
 	</distributionManagement>
 	<mailingLists>
 		<mailingList>
 			<name>SpiNNaker Users Group</name>
 			<post>spinnakerusers@googlegroups.com</post>
-			<subscribe>http://groups.google.com/group/spinnakerusers/subscribe</subscribe>
+			<subscribe>https://groups.google.com/group/spinnakerusers/subscribe</subscribe>
 			<unsubscribe>spinnakerusers+unsubscribe@googlegroups.com</unsubscribe>
 		</mailingList>
 	</mailingLists>
