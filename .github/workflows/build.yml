@@ -20,12 +20,14 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
       matrix:
         java: [11, 14, 17]
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout repository
+      uses: actions/checkout@v3
     - name: Set dynamic information
       env:
         BRANCH_NAME_OR_REF: ${{ github.head_ref || github.ref }}
@@ -34,17 +36,14 @@ jobs:
         echo "CI_PULL_REQUEST=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")" >> $GITHUB_ENV
         echo "SETTINGS_FILE=$PWD/.github/settings.xml" >> $GITHUB_ENV
     - name: Set up JDK ${{ matrix.java }}
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v3.11.0
       with:
+        distribution: 'zulu'
         java-version: ${{ matrix.java }}
-    - name: Cache Maven packages
-      uses: actions/cache@v2
-      with:
-        path: ~/.m2
-        key: test-m2-j${{ matrix.java }}-${{ hashFiles('**/pom.xml') }}
-        restore-keys: test-m2-j${{ matrix.java }}
+        cache: 'maven'
     - name: Maven library-update
-      run: mvn -B dependency:resolve dependency:resolve-plugins --settings $SETTINGS_FILE
+      # This step may fail; it isn't a problem (it exists to stabilize the next step)
+      run: mvn -B dependency:resolve dependency:resolve-plugins --settings $SETTINGS_FILE || true
       working-directory: RemoteSpiNNaker
       continue-on-error: true
 
@@ -53,7 +52,9 @@ jobs:
       working-directory: RemoteSpiNNaker
     - name: Maven test
       id: test
-      run: mvn verify --settings $SETTINGS_FILE -Dmaven.javadoc.skip=true jacoco:report
+      run: |
+        mvn verify --settings $SETTINGS_FILE -Dmaven.javadoc.skip=true jacoco:report
+        echo ":white_check_mark: Test with Java ${{ matrix.java }}: passed" >> $GITHUB_STEP_SUMMARY
       working-directory: RemoteSpiNNaker
     - name: "Report: Coverage via coveralls.io"
       run: |
@@ -75,42 +76,50 @@ jobs:
 
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
       matrix:
         java: [11]
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout repository
+      uses: actions/checkout@v3
     - name: Set dynamic information
       run: |
         echo "SETTINGS_FILE=$PWD/.github/settings.xml" >> $GITHUB_ENV
     - name: Set up JDK ${{ matrix.java }}
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v3.11.0
       with:
+        distribution: 'zulu'
         java-version: ${{ matrix.java }}
-    - name: Cache Maven packages
-      uses: actions/cache@v2
-      with:
-        path: ~/.m2
-        key: validate-m2-j${{ matrix.java }}-${{ hashFiles('**/pom.xml') }}
-        restore-keys: validate-m2-j${{ matrix.java }}
+        cache: 'maven'
     - name: Maven library-update
-      run: mvn -B dependency:resolve dependency:resolve-plugins --settings $SETTINGS_FILE
+      # This step may fail; it isn't a problem (it exists to stabilize the next step)
+      run: mvn -B dependency:resolve dependency:resolve-plugins --settings $SETTINGS_FILE || true
       working-directory: RemoteSpiNNaker
       continue-on-error: true
 
     - name: Maven rat
-      run: mvn apache-rat:check --settings $SETTINGS_FILE -V || (find . -type f -name 'rat*.txt' -print | xargs grep -l unapproved | xargs cat; exit 1)
+      run: | 
+        mvn apache-rat:check --settings $SETTINGS_FILE -V || (find . -type f -name 'rat*.txt' -print | xargs grep -l unapproved | xargs cat; exit 1)
+        echo ":white_check_mark: File copyright check" >> $GITHUB_STEP_SUMMARY
       working-directory: RemoteSpiNNaker
     - name: Maven compile
       run: mvn install --settings $SETTINGS_FILE -DskipTests=true -Dmaven.javadoc.skip=true
       working-directory: RemoteSpiNNaker
     - name: Maven checkstyle
-      run: mvn checkstyle:check --settings $SETTINGS_FILE -Dmaven.javadoc.skip=true
+      run: |
+        mvn checkstyle:check --settings $SETTINGS_FILE -Dmaven.javadoc.skip=true
+        echo ":white_check_mark: Code style check" >> $GITHUB_STEP_SUMMARY
       working-directory: RemoteSpiNNaker
     - name: Maven javadoc
-      run: mvn javadoc:aggregate --settings $SETTINGS_FILE
+      run: |
+        mvn javadoc:aggregate --settings $SETTINGS_FILE
+        echo ":white_check_mark: Documentation build" >> $GITHUB_STEP_SUMMARY
       working-directory: RemoteSpiNNaker
+
+    - name: Validate CITATION.cff
+      uses: dieghernan/cff-validator@main
 
     - name: "Post-Run: Purge SNAPSHOTs"
       # Do not cache SNAPSHOT dependencies; we don't use external snapshots
@@ -118,6 +127,3 @@ jobs:
       run: mvn dependency:purge-local-repository --settings $SETTINGS_FILE -DsnapshotsOnly=true -DreResolve=false
       working-directory: RemoteSpiNNaker
       continue-on-error: true
-
-    - name: Validate CITATION.cff
-      uses: dieghernan/cff-validator@main

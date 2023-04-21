@@ -44,4 +44,15 @@ updates:
       - "rowleya"
     reviewers:
       - "dkfellows"
-      
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "bug"
+      - "dependabot"
+    milestone: 7   # This is the *ID* for the 7.0.0 milestone
+    assignees:
+      - "dkfellows"
+    reviewers:
+      - "rowleya"
