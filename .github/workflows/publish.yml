@@ -42,7 +42,8 @@ jobs:
           cache: 'maven'
 
       - name: Ensure dependencies are present
-        run: mvn -B dependency:resolve dependency:resolve-plugins --settings $SETTINGS_FILE
+        # This step may fail; it isn't a problem (it exists to stabilize the next step)
+        run: mvn -B dependency:resolve dependency:resolve-plugins --settings $SETTINGS_FILE || true
         working-directory: RemoteSpiNNaker
         continue-on-error: true
 
