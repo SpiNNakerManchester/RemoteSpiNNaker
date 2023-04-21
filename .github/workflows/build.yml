@@ -52,7 +52,9 @@ jobs:
       working-directory: RemoteSpiNNaker
     - name: Maven test
       id: test
-      run: mvn verify --settings $SETTINGS_FILE -Dmaven.javadoc.skip=true jacoco:report
+      run: |
+        mvn verify --settings $SETTINGS_FILE -Dmaven.javadoc.skip=true jacoco:report
+        echo ":white_check_mark: Test with Java ${{ matrix.java }}: passed" >> $GITHUB_STEP_SUMMARY
       working-directory: RemoteSpiNNaker
     - name: "Report: Coverage via coveralls.io"
       run: |
@@ -98,16 +100,22 @@ jobs:
       continue-on-error: true
 
     - name: Maven rat
-      run: mvn apache-rat:check --settings $SETTINGS_FILE -V || (find . -type f -name 'rat*.txt' -print | xargs grep -l unapproved | xargs cat; exit 1)
+      run: | 
+        mvn apache-rat:check --settings $SETTINGS_FILE -V || (find . -type f -name 'rat*.txt' -print | xargs grep -l unapproved | xargs cat; exit 1)
+        echo ":white_check_mark: File copyright check" >> $GITHUB_STEP_SUMMARY
       working-directory: RemoteSpiNNaker
     - name: Maven compile
       run: mvn install --settings $SETTINGS_FILE -DskipTests=true -Dmaven.javadoc.skip=true
       working-directory: RemoteSpiNNaker
     - name: Maven checkstyle
-      run: mvn checkstyle:check --settings $SETTINGS_FILE -Dmaven.javadoc.skip=true
+      run: |
+        mvn checkstyle:check --settings $SETTINGS_FILE -Dmaven.javadoc.skip=true
+        echo ":white_check_mark: Code style check" >> $GITHUB_STEP_SUMMARY
       working-directory: RemoteSpiNNaker
     - name: Maven javadoc
-      run: mvn javadoc:aggregate --settings $SETTINGS_FILE
+      run: |
+        mvn javadoc:aggregate --settings $SETTINGS_FILE
+        echo ":white_check_mark: Documentation build" >> $GITHUB_STEP_SUMMARY
       working-directory: RemoteSpiNNaker
 
     - name: Validate CITATION.cff
