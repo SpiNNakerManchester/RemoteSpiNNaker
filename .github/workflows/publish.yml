@@ -20,6 +20,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
       matrix:
         java: [14]
@@ -27,26 +28,24 @@ jobs:
       SITE_DIR: target/staging
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v3
       - name: Set dynamic information
         run: |
           echo "SETTINGS_FILE=$PWD/.github/settings.xml" >> $GITHUB_ENV
           echo "SITE_DIR=$PWD/RemoteSpiNNaker/$SITE_DIR" >> $GITHUB_ENV
       - name: Set up JDK ${{ matrix.java }}
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v3.11.0
         with:
+          distribution: 'zulu'
           java-version: ${{ matrix.java }}
-      - name: Cache Maven packages
-        uses: actions/cache@v2
-        with:
-          path: ~/.m2
-          key: publish-m2-j${{ matrix.java }}-${{ hashFiles('**/pom.xml') }}
-          restore-keys: publish-m2-j${{ matrix.java }}
+          cache: 'maven'
 
       - name: Ensure dependencies are present
         run: mvn -B dependency:resolve dependency:resolve-plugins --settings $SETTINGS_FILE
         working-directory: RemoteSpiNNaker
         continue-on-error: true
+
       - name: Build
         run: mvn install --settings $SETTINGS_FILE -DskipTests=true -Dmaven.javadoc.skip=true
         working-directory: RemoteSpiNNaker
@@ -56,7 +55,7 @@ jobs:
           touch $SITE_DIR/.nojekyll
         working-directory: RemoteSpiNNaker
       - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@3.7.1
+        uses: JamesIves/github-pages-deploy-action@v4.4.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: gh-pages

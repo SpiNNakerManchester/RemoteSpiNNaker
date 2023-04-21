@@ -20,12 +20,14 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
       matrix:
         java: [11, 14, 17]
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout repository
+      uses: actions/checkout@v3
     - name: Set dynamic information
       env:
         BRANCH_NAME_OR_REF: ${{ github.head_ref || github.ref }}
@@ -34,15 +36,11 @@ jobs:
         echo "CI_PULL_REQUEST=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")" >> $GITHUB_ENV
         echo "SETTINGS_FILE=$PWD/.github/settings.xml" >> $GITHUB_ENV
     - name: Set up JDK ${{ matrix.java }}
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v3.11.0
       with:
+        distribution: 'zulu'
         java-version: ${{ matrix.java }}
-    - name: Cache Maven packages
-      uses: actions/cache@v2
-      with:
-        path: ~/.m2
-        key: test-m2-j${{ matrix.java }}-${{ hashFiles('**/pom.xml') }}
-        restore-keys: test-m2-j${{ matrix.java }}
+        cache: 'maven'
     - name: Maven library-update
       run: mvn -B dependency:resolve dependency:resolve-plugins --settings $SETTINGS_FILE
       working-directory: RemoteSpiNNaker
@@ -75,25 +73,23 @@ jobs:
 
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
       matrix:
         java: [11]
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout repository
+      uses: actions/checkout@v3
     - name: Set dynamic information
       run: |
         echo "SETTINGS_FILE=$PWD/.github/settings.xml" >> $GITHUB_ENV
     - name: Set up JDK ${{ matrix.java }}
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v3.11.0
       with:
+        distribution: 'zulu'
         java-version: ${{ matrix.java }}
-    - name: Cache Maven packages
-      uses: actions/cache@v2
-      with:
-        path: ~/.m2
-        key: validate-m2-j${{ matrix.java }}-${{ hashFiles('**/pom.xml') }}
-        restore-keys: validate-m2-j${{ matrix.java }}
+        cache: 'maven'
     - name: Maven library-update
       run: mvn -B dependency:resolve dependency:resolve-plugins --settings $SETTINGS_FILE
       working-directory: RemoteSpiNNaker
@@ -112,12 +108,12 @@ jobs:
       run: mvn javadoc:aggregate --settings $SETTINGS_FILE
       working-directory: RemoteSpiNNaker
 
+    - name: Validate CITATION.cff
+      uses: dieghernan/cff-validator@main
+
     - name: "Post-Run: Purge SNAPSHOTs"
       # Do not cache SNAPSHOT dependencies; we don't use external snapshots
       # and we will always rebuild internal snapshots.
       run: mvn dependency:purge-local-repository --settings $SETTINGS_FILE -DsnapshotsOnly=true -DreResolve=false
       working-directory: RemoteSpiNNaker
       continue-on-error: true
-
-    - name: Validate CITATION.cff
-      uses: dieghernan/cff-validator@main
