@@ -28,7 +28,7 @@ limitations under the License.
 		<maven.compiler.release>11</maven.compiler.release>
 
         <resteasy.version>6.2.4.Final</resteasy.version>
-        <jackson.version>2.15.0</jackson.version>
+        <jackson.version>2.15.1</jackson.version>
         <!--
         <springsecurity.version>5.7.5</springsecurity.version>
         -->
