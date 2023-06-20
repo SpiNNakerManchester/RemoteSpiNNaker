@@ -117,7 +117,6 @@ switchversion() {
     gitclone SpiNNMachine https://github.com/SpiNNakerManchester/SpiNNMachine.git $VERSION
     gitclone SpiNNStorageHandlers https://github.com/SpiNNakerManchester/SpiNNStorageHandlers.git $VERSION
     gitclone PACMAN https://github.com/SpiNNakerManchester/PACMAN.git $VERSION
-    gitclone DataSpecification https://github.com/SpiNNakerManchester/DataSpecification.git $VERSION
     gitclone spalloc https://github.com/SpiNNakerManchester/spalloc.git $spalloc_version
     gitclone spinn_common https://github.com/SpiNNakerManchester/spinn_common.git $VERSION
     gitclone sPyNNaker https://github.com/SpiNNakerManchester/sPyNNaker.git $VERSION
