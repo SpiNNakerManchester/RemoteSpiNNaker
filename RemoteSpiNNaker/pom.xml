@@ -19,7 +19,7 @@ limitations under the License.
     <modelVersion>4.0.0</modelVersion>
     <groupId>uk.ac.manchester.cs.spinnaker</groupId>
     <artifactId>RemoteSpiNNaker</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>7.0.0-a6</version>
     <packaging>pom</packaging>
     <inceptionYear>2014</inceptionYear>
 
